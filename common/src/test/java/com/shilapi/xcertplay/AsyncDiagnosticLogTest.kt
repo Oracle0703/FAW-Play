@@ -5,6 +5,45 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class AsyncDiagnosticLogTest {
+    @Test fun blockedDiskKeepsOpenAndCloseNonblockingAndLifecycleAdmissionBounded() {
+        val entered = java.util.concurrent.CountDownLatch(1)
+        val release = java.util.concurrent.CountDownLatch(1)
+        @Suppress("UNCHECKED_CAST")
+        val writer = AsyncDiagnosticLog::class.java.getDeclaredField("writer").apply { isAccessible = true }
+            .get(AsyncDiagnosticLog) as BoundedDiagnosticWriter<() -> Unit>
+        writer.enqueueControl { entered.countDown(); release.await() }
+        val folder = Files.createTempDirectory("faw-slow-log-lifecycle").toFile()
+        val targets = mutableListOf<SessionLogFile>()
+        try {
+            assertTrue(entered.await(2, java.util.concurrent.TimeUnit.SECONDS))
+            repeat(8) { index ->
+                targets.add(AsyncDiagnosticLog.open(folder.resolve("session-$index/log"), "session")!!)
+            }
+            assertNull(AsyncDiagnosticLog.open(folder.resolve("overflow/log"), "session"))
+            targets.forEach { AsyncDiagnosticLog.close(it) }
+            assertFalse(folder.resolve("session-0/log").exists())
+            assertFalse(AsyncDiagnosticLog.flush(5))
+        } finally { release.countDown(); assertTrue(AsyncDiagnosticLog.flush(2_000)); folder.deleteRecursively() }
+    }
+
+    @Test fun newSessionRotatesOnlyAfterClosingThePreviousPhysicalTarget() {
+        val folder = Files.createTempDirectory("diplay-session-order").toFile()
+        val file = folder.resolve("diplay.log")
+        val old = AsyncDiagnosticLog.open(file, "old session")!!
+        AsyncDiagnosticLog.append(old, "old evidence")
+        val current = AsyncDiagnosticLog.open(file, "new session")!!
+        AsyncDiagnosticLog.append(old, "late old callback")
+        AsyncDiagnosticLog.append(current, "current evidence")
+        AsyncDiagnosticLog.close(old, "old closed")
+        AsyncDiagnosticLog.close(current, "new closed")
+        assertTrue(AsyncDiagnosticLog.flush(2_000))
+        val currentText = file.readText()
+        assertTrue(currentText.contains("current evidence"))
+        assertFalse(currentText.contains("old evidence"))
+        assertFalse(currentText.contains("late old callback"))
+        assertTrue(folder.resolve("previous.log").readText().contains("old evidence"))
+        folder.deleteRecursively()
+    }
     @Test fun queuedEvidenceIsRedactedAndTimestampedBeforeUsingItsCapturedFileTarget() {
         val folder = Files.createTempDirectory("diplay-async-log").toFile()
         val old = SessionLogFile(folder.resolve("old.log"))

@@ -1,0 +1,7 @@
+{
+  "upstream": "https://github.com/xiph/opus",
+  "tag": "v1.5.2",
+  "archiveSha256": "9480e329e989f70d69886ded470c7f8cfe6c0667cc4196d4837ac9e668fb7404",
+  "vendoredFiles": 318,
+  "license": "BSD-3-Clause"
+}

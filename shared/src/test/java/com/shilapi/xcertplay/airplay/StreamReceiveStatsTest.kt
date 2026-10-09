@@ -65,4 +65,21 @@ class StreamReceiveStatsTest {
         assertTrue(output.last().contains("packets=1 bytes=20 readMaxMs=0"))
         assertTrue(output.last().contains("seqForwardGaps=1"))
     }
+
+    @Test fun timestampStepsHandleWrapLatePacketsAndWindowReset() {
+        val output = mutableListOf<String>()
+        val stats = StreamReceiveStats("audio", output::add) { 0 }
+        stats.received(44, 1, -320)
+        stats.received(44, 2, 0)
+        stats.received(44, 1, -320)
+        stats.received(44, 3, 320)
+        stats.received(44, 3, 320)
+        stats.flush(true)
+        assertTrue(output.last().contains("rtpStepMin=320 rtpStepMax=320"))
+        stats.received(44, 4, 640)
+        stats.flush(true)
+        assertTrue(output.last().contains("rtpStepMin=320 rtpStepMax=320"))
+        stats.flush(true)
+        assertTrue(output.last().contains("rtpStepMin=0 rtpStepMax=0"))
+    }
 }

@@ -34,6 +34,7 @@ internal class CarPlayNightModeController(
         private set
     private var mode = CarPlayNightMode.SYSTEM
     private var systemNight = initialNight
+    private var vehicleNight: Boolean? = null
     private var threshold = AmbientLightThreshold()
     private var delaySeconds = 2
     private var resumed = false
@@ -75,8 +76,15 @@ internal class CarPlayNightModeController(
     fun systemChanged(night: Boolean) {
         systemNight = night
         val ambientFallback = mode == CarPlayNightMode.AMBIENT &&
+            vehicleNight == null &&
             (!light.available || (resumed && !listening))
         if (mode == CarPlayNightMode.SYSTEM || ambientFallback) applyNight(night)
+    }
+
+    /** OEM day/night state is already classified; it is not a lux measurement. */
+    fun vehicleChanged(night: Boolean?) {
+        vehicleNight = night
+        if (resumed && mode == CarPlayNightMode.AMBIENT) applyMode()
     }
 
     private fun applyMode() {
@@ -85,7 +93,11 @@ internal class CarPlayNightModeController(
             CarPlayNightMode.DAY -> applyNight(false)
             CarPlayNightMode.NIGHT -> applyNight(true)
             CarPlayNightMode.AMBIENT -> {
-                if (!light.available) {
+                val vehicle = vehicleNight
+                if (vehicle != null) {
+                    stopListening()
+                    applyNight(vehicle)
+                } else if (!light.available) {
                     applyNight(systemNight)
                 } else if (resumed && !listening) {
                     listening = light.start(::onLux)

@@ -2,6 +2,8 @@ package com.shilapi.xcertplay.media
 
 /** Diagnostic link between the touch uplink and the next video frame, read by [VideoStats]. */
 internal object TouchLatencyProbe {
+    @Volatile var maxQueueWaitNs = 0L
+    @Synchronized fun onQueueWait(nanos: Long) { maxQueueWaitNs = maxOf(maxQueueWaitNs, nanos) }
     @Volatile private var pendingTouchNs = 0L
     @Volatile var maxSendNs = 0L
 

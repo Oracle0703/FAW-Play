@@ -6,7 +6,6 @@ import android.content.pm.PackageManager
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Switch
-import com.shilapi.xcertplay.host.R
 import org.junit.After
 import org.junit.Before
 import org.junit.Assert.*
@@ -50,6 +49,7 @@ class LocationReportingSettingsTest {
         locationSwitch().performClick()
         assertTrue(AirPlayPersistence.loadLocationReportingEnabled(context))
         requireNotNull(controller).recreate()
+        selectSettingsTab(activity, "导航与 HUD")
         assertTrue(locationSwitch().isChecked)
 
         locationSwitch().performClick()
@@ -88,8 +88,10 @@ class LocationReportingSettingsTest {
     }
 
     @Test fun eitherToggleDirectionStopsTheOldSessionAndOpensANewHostWithSavedSetting() {
-        shadowOf(context).grantPermissions(Manifest.permission.ACCESS_FINE_LOCATION)
-        AirPlayPersistence.saveWirelessEnabled(context, false)
+        shadowOf(context).grantPermissions(Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.BLUETOOTH_CONNECT,
+            Manifest.permission.BLUETOOTH_SCAN)
+        DiPlayPreferences.savePhone(context, "02:00:00:00:00:02", "Test iPhone")
         openSettings()
         // Authentication assets are deliberately absent from unit tests. Model an already
         // provisioned, connected host without constructing transports or native decoders.
@@ -115,11 +117,12 @@ class LocationReportingSettingsTest {
     private fun openSettings() {
         controller = Robolectric.buildActivity(DiPlayActivity::class.java,
             Intent(context, DiPlayActivity::class.java).putExtra("page", "settings")).setup()
+        selectSettingsTab(activity, "导航与 HUD")
     }
 
     private fun locationSwitch(): Switch = descendants(activity.window.decorView)
         .filterIsInstance<Switch>()
-        .single { it.contentDescription == activity.getString(R.string.report_location_to_iphone) }
+        .single { it.text.toString() == "车机位置上报" }
 
     private fun descendants(view: View): Sequence<View> = sequence {
         yield(view)

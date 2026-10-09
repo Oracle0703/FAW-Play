@@ -13,49 +13,49 @@ class ClusterTurnOverlayExpiryTest {
     @Test fun silentRouteClearsThePublishedCardWithoutAnotherPhonePacket() = withRoute { route, advance, events ->
         advance(120_000_000_000L)
         assertNull(route.currentApple())
-        BydNavigationOutputs.refreshTurnOverlay()
+        FawNavigationOutputs.refreshTurnOverlay()
         assertNull(events.last())
         assertEquals(2, events.size)
-        BydNavigationOutputs.refreshTurnOverlay()
+        FawNavigationOutputs.refreshTurnOverlay()
         assertEquals(2, events.size)
     }
 
     @Test fun emptyManeuverListClearsTheCardAfterItsGracePeriod() = withRoute { route, advance, events ->
-        route.accept(BydHudRouteState.ROUTE_GUIDANCE_UPDATE, tlv(0x0d))
+        route.accept(FawHudRouteState.ROUTE_GUIDANCE_UPDATE, tlv(0x0d))
         advance(8_000_000_000L)
-        BydNavigationOutputs.refreshTurnOverlay()
+        FawNavigationOutputs.refreshTurnOverlay()
         assertNull(events.last())
-        route.accept(BydHudRouteState.ROUTE_GUIDANCE_UPDATE, tlv(0x0d, 0, 7))
-        BydNavigationOutputs.refreshTurnOverlay()
+        route.accept(FawHudRouteState.ROUTE_GUIDANCE_UPDATE, tlv(0x0d, 0, 7))
+        FawNavigationOutputs.refreshTurnOverlay()
         assertEquals(3, events.size)
         assertEquals(150, events.last()!!.distanceMeters)
     }
 
     @Test fun endingTheSessionClearsTheTurnCardImmediately() = withRoute { route, _, events ->
-        BydNavigationOutputs.endNow()
+        FawNavigationOutputs.endNow()
         assertNull(route.currentApple())
         assertNull(events.last())
         assertEquals(2, events.size)
     }
 
-    private fun withRoute(test: (BydHudRouteState, (Long) -> Unit, MutableList<ClusterTurnGuidance?>) -> Unit) {
+    private fun withRoute(test: (FawHudRouteState, (Long) -> Unit, MutableList<ClusterTurnGuidance?>) -> Unit) {
         var now = 0L
-        val field = BydNavigationOutputs::class.java.getDeclaredField("overlayRoute").apply { isAccessible = true }
-        val route = field.get(BydNavigationOutputs) as BydHudRouteState
-        val clock = BydHudRouteState::class.java.getDeclaredField("nanoTime").apply { isAccessible = true }
+        val field = FawNavigationOutputs::class.java.getDeclaredField("overlayRoute").apply { isAccessible = true }
+        val route = field.get(FawNavigationOutputs) as FawHudRouteState
+        val clock = FawHudRouteState::class.java.getDeclaredField("nanoTime").apply { isAccessible = true }
         val previousClock = clock.get(route)
         route.clear()
         clock.set(route, { now })
-        route.accept(BydHudRouteState.ROUTE_GUIDANCE_MANEUVER_UPDATE,
+        route.accept(FawHudRouteState.ROUTE_GUIDANCE_MANEUVER_UPDATE,
             tlv(0x01, 0, 7) + tlv(0x03, 1))
-        route.accept(BydHudRouteState.ROUTE_GUIDANCE_UPDATE,
+        route.accept(FawHudRouteState.ROUTE_GUIDANCE_UPDATE,
             tlv(0x01, 1) + tlv(0x0a, 0, 0, 0, 150) + tlv(0x0d, 0, 7))
         val events = mutableListOf<ClusterTurnGuidance?>()
         try {
-            BydNavigationOutputs.setTurnOverlayListener { events += it }
+            FawNavigationOutputs.setTurnOverlayListener { events += it }
             test(route, { now = it }, events)
         } finally {
-            BydNavigationOutputs.setTurnOverlayListener(null)
+            FawNavigationOutputs.setTurnOverlayListener(null)
             route.clear()
             clock.set(route, previousClock)
         }

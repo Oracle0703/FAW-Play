@@ -8,8 +8,12 @@ import android.net.wifi.p2p.WifiP2pConfig
 import android.net.wifi.p2p.WifiP2pGroup
 import android.net.wifi.p2p.WifiP2pInfo
 import android.net.wifi.p2p.WifiP2pManager
+import android.os.Build
 import com.shilapi.xcertplay.network.P2pResetRequiredException
+import com.shilapi.xcertplay.network.WifiP2pChannels
 import com.shilapi.xcertplay.network.WifiP2pGroupManager
+import com.shilapi.xcertplay.network.WirelessStartupException
+import com.shilapi.xcertplay.network.WirelessStartupFailure
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
@@ -63,6 +67,117 @@ class WifiP2pGroupManagerTest {
             background { manager.start(5000) }
             assertEquals(listOf(5180), radio.requests.map { it?.groupOwnerBand })
         }
+    }
+
+    @Test @Config(sdk = [28]) fun android9UsesLegacyCreationAndRealGroupParametersAcrossReconnects() {
+        repeat(3) {
+            WifiP2pGroupManager(context).use { manager ->
+                val info = background { manager.start(3000) }
+                assertEquals("DIRECT-system-test", info.ssid)
+                assertEquals("test-generated-key", info.passphrase)
+                assertEquals(2437, info.frequencyMHz)
+                assertEquals(6, info.channel)
+                assertEquals("WIFI_P2P", info.backend.name)
+            }
+        }
+        assertEquals(3, radio.legacyRequests)
+        assertEquals(3, radio.removals)
+        assertNull(radio.group)
+    }
+
+    @Test @Config(sdk = [28]) fun android9DoesNotGuessFrequencyOrUseTheInternetWifiChannel() {
+        radio.legacyFrequencyReported = false
+        WifiP2pGroupManager(context).use { manager ->
+            val error = failure { manager.start(300) }
+            assertTrue(error.message!!.contains("frequencyMHz=unknown"))
+            assertEquals(WirelessStartupFailure.HOTSPOT_CONFIGURATION,
+                (error as WirelessStartupException).reason)
+        }
+        assertEquals(1, radio.legacyRequests)
+        assertEquals(1, radio.removals)
+        assertEquals(5180, context.getSystemService(WifiManager::class.java).connectionInfo.frequency)
+    }
+
+    @Test @Config(sdk = [28]) fun hs5DoesNotWaitForAnUnavailableFrequency() {
+        val model = Build.MODEL
+        val device = Build.DEVICE
+        try {
+            ReflectionHelpers.setStaticField(Build::class.java, "MODEL", "HONG QI")
+            ReflectionHelpers.setStaticField(Build::class.java, "DEVICE", "t1c_acrn")
+            radio.legacyFrequencyReported = false
+            WifiP2pGroupManager(context).use { manager ->
+                val info = background { manager.start(1000) }
+                assertEquals(0, info.channel)
+                assertNull(info.frequencyMHz)
+                assertEquals("DIRECT-system-test", info.ssid)
+                assertEquals("test-generated-key", info.passphrase)
+                assertEquals("WIFI_P2P", info.backend.name)
+            }
+            assertEquals(1, radio.legacyRequests)
+            assertEquals(1, radio.removals)
+        } finally {
+            ReflectionHelpers.setStaticField(Build::class.java, "MODEL", model)
+            ReflectionHelpers.setStaticField(Build::class.java, "DEVICE", device)
+        }
+    }
+
+    @Test @Config(sdk = [28]) fun android9UsesAnUnspecifiedChannelWhenTheLiveGroupHasNoFrequency() {
+        radio.legacyFrequencyReported = false
+        repeat(2) {
+            WifiP2pGroupManager(context).use { manager ->
+                val info = background { manager.start(4000) }
+                assertEquals(0, info.channel)
+                assertNull(info.frequencyMHz)
+                assertEquals("DIRECT-system-test", info.ssid)
+                assertEquals("test-generated-key", info.passphrase)
+                assertEquals("WIFI_P2P", info.backend.name)
+                manager.onCarPlayConfirmed()
+                assertNull(context.getSharedPreferences("carplay_wifi_p2p_success", 0)
+                    .getString("confirmed", null))
+            }
+        }
+        assertEquals(2, radio.legacyRequests)
+        assertEquals(2, radio.removals)
+        assertNull(radio.group)
+    }
+
+    @Test @Config(sdk = [28]) fun android9ReclaimsOnlyItsRecordedRetainedGroup() {
+        radio.group = radio.makeGroup(null)
+        context.getSharedPreferences("carplay_wifi_p2p", Context.MODE_PRIVATE).edit()
+            .putString("owned_ssid", "DIRECT-system-test").commit()
+        WifiP2pGroupManager(context).use { manager -> background { manager.start(3000) } }
+        assertEquals(1, radio.legacyRequests)
+        assertEquals(2, radio.removals)
+    }
+
+    @Test @Config(sdk = [28]) fun android9LateCloseCannotRemoveANewerGroupWithTheSameSystemName() {
+        val old = WifiP2pGroupManager(context)
+        val previous = background { old.start(3000) }
+        radio.group = null
+        val current = WifiP2pGroupManager(context)
+        val next = background { current.start(3000) }
+        assertEquals(previous.ssid, next.ssid)
+        background { old.close() }
+        assertNotNull(radio.group)
+        assertEquals(0, radio.removals)
+        background { current.close() }
+        assertEquals(1, radio.removals)
+    }
+
+    @Test @Config(sdk = [28]) fun android9UnansweredCreateIsBoundedAndNeverRetried() {
+        radio.noCreateReply = true
+        WifiP2pGroupManager(context).use { manager ->
+            assertTrue(failure { manager.start(100) }.message!!.contains("group creation"))
+        }
+        assertEquals(1, radio.legacyRequests)
+        assertEquals(0, radio.removals)
+    }
+
+    @Test @Config(sdk = [28]) fun android9ManualChannelDoesNotInvokeANewerApi() {
+        WifiP2pGroupManager(context, preferredChannel = 149).use { manager ->
+            assertTrue(failure { manager.start(100) }.message!!.contains("Choose Auto"))
+        }
+        assertEquals(0, radio.legacyRequests)
     }
 
     private val memory get() = context.getSharedPreferences("carplay_wifi_p2p_success", Context.MODE_PRIVATE)
@@ -303,6 +418,83 @@ class WifiP2pGroupManagerTest {
         assertEquals(0, radio.removals)
     }
 
+    @Test @Config(sdk = [28]) fun hs5ReinstallPreservesUnknownSystemOwnerAndRequiresExplicitReset() = withHs5 {
+        val existing = radio.makeGroup(null)
+        radio.group = existing
+        context.getSharedPreferences("carplay_wifi_p2p", 0).edit().clear().commit()
+        WifiP2pGroupManager(context).use { manager ->
+            assertTrue(failure { manager.start(3000) } is P2pResetRequiredException)
+        }
+        assertSame(existing, radio.group)
+        assertEquals(0, radio.legacyRequests)
+        assertEquals(0, radio.removals)
+    }
+
+    @Test @Config(sdk = [28]) fun hs5ReinstallDoesNotRemoveAGroupJoinedAsClient() = withHs5 {
+        val joined = radio.makeGroup(null).also { shadowOf(it).setIsGroupOwner(false) }
+        radio.group = joined
+        WifiP2pGroupManager(context).use { manager ->
+            assertTrue(failure { manager.start(3000) } is P2pResetRequiredException)
+        }
+        assertSame(joined, radio.group)
+        assertEquals(0, radio.removals)
+    }
+
+    @Test @Config(sdk = [28]) fun hs5RecordedOwnerCannotBeReplacedByAnUnrelatedGroup() = withHs5 {
+        context.getSharedPreferences("carplay_wifi_p2p", 0).edit()
+            .putString("owned_ssid", "DIRECT-previous-faw-group").commit()
+        val unrelated = radio.makeGroup(null)
+        radio.group = unrelated
+        WifiP2pGroupManager(context).use { manager ->
+            assertTrue(failure { manager.start(3000) } is P2pResetRequiredException)
+        }
+        assertSame(unrelated, radio.group)
+        assertEquals(0, radio.removals)
+    }
+
+    @Test @Config(sdk = [28]) fun otherAndroid9DevicesDoNotResetAnUnknownOwnerGroup() {
+        val existing = radio.makeGroup(null)
+        radio.group = existing
+        WifiP2pGroupManager(context).use { manager ->
+            assertTrue(failure { manager.start(3000) } is P2pResetRequiredException)
+        }
+        assertSame(existing, radio.group)
+        assertEquals(0, radio.removals)
+    }
+
+    @Test @Config(sdk = [28]) fun hs5ExperimentSetsBeforeCreateAndClearsOnlyItsOwnRestriction() = withHs5 {
+        radio.reportedFrequency = 5180
+        val prefs = context.getSharedPreferences("carplay_wifi_p2p", 0)
+        val manager = WifiP2pGroupManager(context, preferredChannel = WifiP2pChannels.PREFER_5_GHZ)
+        background { manager.start(3000) }
+        assertEquals(listOf("set:36", "create"), radio.channelOrder)
+        assertTrue(prefs.getBoolean("channel_limit_pending", false))
+        background { manager.close() }
+        assertEquals(listOf("set:36", "create", "set:0"), radio.channelOrder)
+        assertFalse(prefs.getBoolean("channel_limit_pending", true))
+    }
+
+    @Test @Config(sdk = [28]) fun unknownHs5GroupPreventsAnyExperimentalSetter() = withHs5 {
+        radio.group = radio.makeGroup(null)
+        WifiP2pGroupManager(context, preferredChannel = 149).use { manager ->
+            assertTrue(failure { manager.start(3000) } is P2pResetRequiredException)
+        }
+        assertTrue(radio.channelOrder.isEmpty()); assertEquals(0, radio.removals)
+    }
+
+    private fun withHs5(block: () -> Unit) {
+        val model = Build.MODEL
+        val device = Build.DEVICE
+        try {
+            ReflectionHelpers.setStaticField(Build::class.java, "MODEL", "HONG QI")
+            ReflectionHelpers.setStaticField(Build::class.java, "DEVICE", "t1c_acrn")
+            block()
+        } finally {
+            ReflectionHelpers.setStaticField(Build::class.java, "MODEL", model)
+            ReflectionHelpers.setStaticField(Build::class.java, "DEVICE", device)
+        }
+    }
+
     @Test fun closeLeavesAnotherAppsReplacementGroupRunning() {
         val logs = mutableListOf<String>()
         val manager = WifiP2pGroupManager(context, logs::add)
@@ -401,6 +593,12 @@ class WifiP2pGroupManagerTest {
 
     @Implements(WifiP2pManager::class)
     class P2pRadio : ShadowWifiP2pManager() {
+        val channelOrder = mutableListOf<String>()
+        @Implementation override fun setWifiP2pChannels(channel: WifiP2pManager.Channel, listen: Int, operating: Int, listener: WifiP2pManager.ActionListener) {
+            assertEquals(0, listen); channelOrder.add("set:$operating"); listener.onSuccess()
+        }
+        var legacyRequests = 0
+        var legacyFrequencyReported = true
         val requests = mutableListOf<WifiP2pConfig?>()
         var group: WifiP2pGroup? = null
         var removals = 0
@@ -440,18 +638,31 @@ class WifiP2pGroupManagerTest {
             }
         }
 
+        @Implementation override fun createGroup(channel: WifiP2pManager.Channel, listener: WifiP2pManager.ActionListener) {
+            legacyRequests++
+            channelOrder.add("create")
+            createGroup(channel, null, listener)
+        }
+
         @Implementation override fun removeGroup(channel: WifiP2pManager.Channel, listener: WifiP2pManager.ActionListener) {
             removals++
             group = null
             listener.onSuccess()
         }
 
-        fun makeGroup(config: WifiP2pConfig?) = WifiP2pGroup().apply {
+        fun makeGroup(config: WifiP2pConfig?) = (if (Build.VERSION.SDK_INT < 29 && legacyFrequencyReported)
+            VendorGroup(reportedFrequency ?: 2437) else WifiP2pGroup()).apply {
             shadowOf(this).setIsGroupOwner(true)
             shadowOf(this).setNetworkName(config?.networkName ?: "DIRECT-system-test")
             shadowOf(this).setPassphrase(if (missingCredentials) null else config?.passphrase ?: "test-generated-key")
             shadowOf(this).setInterface("p2p-test-missing")
-            ReflectionHelpers.setField(this, "mFrequency", reportedFrequency ?: config?.groupOwnerBand ?: 2437)
+            if (Build.VERSION.SDK_INT >= 29)
+                ReflectionHelpers.setField(this, "mFrequency", reportedFrequency ?: config?.groupOwnerBand ?: 2437)
         }
+    }
+
+    // A public getter backported by some Android 9 car frameworks.
+    class VendorGroup(private val actualMHz: Int) : WifiP2pGroup() {
+        override fun getFrequency(): Int = actualMHz
     }
 }

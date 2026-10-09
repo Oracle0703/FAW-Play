@@ -29,12 +29,14 @@ import com.shilapi.xcertplay.airplay.AirPlayKnobState
 import com.shilapi.xcertplay.airplay.AirPlayDeviceInfo
 import com.shilapi.xcertplay.airplay.AirPlayIdentity
 import com.shilapi.xcertplay.airplay.AirPlayMediaHandler
+import com.shilapi.xcertplay.airplay.AirPlayPhoneState
 import com.shilapi.xcertplay.airplay.AirPlaySession
 import com.shilapi.xcertplay.airplay.AirPlaySessionListener
 import com.shilapi.xcertplay.airplay.PairingStore
 import com.shilapi.xcertplay.airplay.VideoInCar
 import com.shilapi.xcertplay.airplay.VideoPlaybackDelivery
-import com.shilapi.xcertplay.hud.BydNavigationOutputs
+import com.shilapi.xcertplay.hud.FawNavigationOutputs
+import com.shilapi.xcertplay.media.HongqiBluetoothMediaHandoff
 import com.shilapi.xcertplay.iap2.session.Iap2Session
 import com.shilapi.xcertplay.mfi.Iap2MfiAuthenticationClient
 import com.shilapi.xcertplay.mfi.MfiAuthenticationClient
@@ -168,8 +170,8 @@ class CarPlayController(
             "A location provider is required when location reporting is enabled"
         }
         WifiScanPause.restoreIfNeeded(context.applicationContext)
-        BydNavigationOutputs.start(context.applicationContext)
-        BydNavigationOutputs.setClusterStreamControl(::applyClusterUi)
+        FawNavigationOutputs.start(context.applicationContext)
+        FawNavigationOutputs.setClusterStreamControl(::applyClusterUi)
     }
 
     private enum class Phase { IDLE, MFI, WIRELESS, IPHONE, REENUMERATION, DATAPATHS, CONTROL }
@@ -180,6 +182,8 @@ class CarPlayController(
     private val usbManager = context.getSystemService(UsbManager::class.java)
     private val bluetoothAdapter =
         appContext.getSystemService(BluetoothManager::class.java)?.adapter
+    private val bluetoothMediaHandoff = HongqiBluetoothMediaHandoff(appContext)
+    @Volatile private var wirelessBluetoothDevice: BluetoothDevice? = null
     private val iphoneHost = IphoneUsbHost(
         appContext,
         usbManager,
@@ -284,7 +288,7 @@ class CarPlayController(
         override fun onSessionActive(session: AirPlaySession) {
             val replacement = activeSession !== session
             if (replacement) {
-                BydNavigationOutputs.start(appContext)
+                FawNavigationOutputs.start(appContext)
                 com.shilapi.xcertplay.glance.CarPlayGlance.setConnected(true)
                 // The gear may have changed since /info.
                 if (videoListener != null) {
@@ -293,6 +297,12 @@ class CarPlayController(
                 }
             }
             activeSession = session
+            media.onSessionActive(session)
+            if (config.transport == CarPlayTransport.WIRELESS) {
+                wirelessBluetoothDevice?.let { device ->
+                    bluetoothMediaHandoff.start(device) { !closed && activeSession === session }
+                }
+            }
             if (replacement) restoreDashboardContent(session)
             debugLog(
                 "AirPlay session active controller=${session.controllerId ?: "unknown"} " +
@@ -302,9 +312,12 @@ class CarPlayController(
         }
 
         override fun onSessionEnded(session: AirPlaySession) {
+            SiriPlaybackRecovery.onSessionEnded(session)
+            AirPlayPhoneState.forgetCalls(session)
             if (activeSession === session) {
                 activeSession = null
-                BydNavigationOutputs.endNow()
+                bluetoothMediaHandoff.stop()
+                FawNavigationOutputs.endNow()
                 com.shilapi.xcertplay.glance.CarPlayGlance.setConnected(false)
                 videoListener?.onVideoSessionEnded()
                 synchronized(playbackStatus) {
@@ -355,6 +368,10 @@ class CarPlayController(
         }
 
         override fun onCommand(session: AirPlaySession, type: String, params: Map<String, Any?>) {
+            if (activeSession === session) {
+                CallPlaybackRecovery.onPhoneState(this@CarPlayController, session, type)
+                SiriPlaybackRecovery.onModesChanged(this@CarPlayController, session, type)
+            }
             debugLog(
                 "AirPlay command type=$type params=${params.keys.sorted().joinToString(",")}",
             )
@@ -454,7 +471,14 @@ class CarPlayController(
         if (closed) return false
         val session = activeSession ?: return false
         return try {
-            touchExecutor.execute { session.sendTouch(contacts) }
+            val token = session.mainScreenSessionToken() ?: return false
+            val queuedAt = System.nanoTime()
+            touchExecutor.execute {
+                if (!closed && activeSession === session && session.mainScreenSessionToken() === token) {
+                    com.shilapi.xcertplay.media.TouchLatencyProbe.onQueueWait(System.nanoTime() - queuedAt)
+                    session.sendTouch(contacts)
+                }
+            }
             true
         } catch (_: Exception) {
             false
@@ -525,8 +549,15 @@ class CarPlayController(
     fun requestSiri(): Boolean {
         if (closed) return false
         val session = activeSession ?: return false
+        val token = activeAirPlaySessionToken() ?: return false
         return try {
-            touchExecutor.execute { session.invokeSiri() }
+            touchExecutor.execute {
+                if (!closed && activeSession === session && activeAirPlaySessionToken() === token) {
+                    val playback = synchronized(playbackStatus) { playbackStatus.nowPlaying }
+                    SiriPlaybackRecovery.onRequested(session, playback)
+                    session.invokeSiri()
+                }
+            }
             true
         } catch (_: Exception) {
             false
@@ -537,7 +568,28 @@ class CarPlayController(
         if (closed) return false
         val session = activeSession ?: return false
         return try {
-            touchExecutor.execute { session.sendMedia(index) }
+            SiriPlaybackRecovery.onMediaButton(session, index)
+            touchExecutor.execute {
+                if (!closed && activeSession === session) session.sendMedia(index)
+            }
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    /** Momentary telephone HID key; the iPhone handles the current call context. */
+    fun sendTelephonyButton(index: Int): Boolean {
+        if (closed || (index != 1 && index != 3)) return false
+        val token = activeAirPlaySessionToken() ?: return false
+        val session = activeSession ?: return false
+        if (activeAirPlaySessionToken() !== token) return false
+        return try {
+            touchExecutor.execute {
+                if (!closed && activeSession === session && activeAirPlaySessionToken() === token) {
+                    session.sendTelephony(index)
+                }
+            }
             true
         } catch (_: Exception) {
             false
@@ -551,14 +603,15 @@ class CarPlayController(
             dashboardMapOutputVisible = false
         }
         firstTcpWatchdog?.terminate()
+        bluetoothMediaHandoff.stop()
         startupTimer.shutdownNow()
         (hotspot as? ManualHotspotManager)?.close()
         val teardownStarted = System.nanoTime()
         connectionDiagnostic("teardown begin transport=${config.transport}")
         videoGate?.close()
-        BydNavigationOutputs.endNow()
+        FawNavigationOutputs.endNow()
         com.shilapi.xcertplay.glance.CarPlayGlance.setConnected(false)
-        BydNavigationOutputs.clearClusterStreamControl(::applyClusterUi)
+        FawNavigationOutputs.clearClusterStreamControl(::applyClusterUi)
         closeReceivers()
         availabilityPollGeneration.incrementAndGet()
         wirelessGeneration.incrementAndGet()
@@ -609,6 +662,8 @@ class CarPlayController(
             start()
         }
     }
+
+    fun dashboardContentUrl(): String? = activeSession?.clusterUrl()
 
     /**
      * Switches what the dashboard shows to another of the iPhone's cluster contents without reconnecting;
@@ -698,12 +753,22 @@ class CarPlayController(
 
     // HUD (SOME/IP) and cluster (AMap broadcast) keep separate state so one failing cannot stall the other.
     private fun onRouteFrame(frame: com.shilapi.xcertplay.iap2.wire.Iap2Frame) {
-        BydNavigationOutputs.onFrame(frame)
+        if (closed) return
+        activeSession?.let { AirPlayPhoneState.observeCallState(it, frame) }
+        FawNavigationOutputs.onFrame(frame)
         com.shilapi.xcertplay.glance.CarPlayGlance.onFrame(frame)
         synchronized(playbackStatus) {
-            val previousPlaying = playbackStatus.playing
-            playbackStatus.acceptUpdate(frame)?.let { it to (it.playing != previousPlaying) }
-        }?.let { (update, playingChanged) ->
+            val previous = playbackStatus.nowPlaying
+            playbackStatus.acceptUpdate(frame)?.let {
+                Triple(it, it.playing != previous.playing, it.sourceApp != previous.sourceApp)
+            }
+        }?.let { (update, playingChanged, sourceChanged) ->
+            if (playingChanged || sourceChanged) {
+                debugLog("Audio: iPhone playback playing=${update.playing} " +
+                    "sourceChanged=$sourceChanged sourceKnown=${update.sourceApp != null}")
+            }
+            CallPlaybackRecovery.onPlayback(activeSession, update)
+            SiriPlaybackRecovery.onPlayback(activeSession, update)
             nowPlayingListener?.invoke(update)
             if (playingChanged) playbackListener?.invoke(update.playing)
         }
@@ -1077,8 +1142,10 @@ class CarPlayController(
     }
 
     private fun runWireless(generation: Int) {
+        var bootstrapTransport: BluetoothRfcommDuplexStream? = null
+        var bootstrapSession: Iap2Session? = null
         try {
-            debugLog("wireless bring-up generation=$generation starting")
+            debugLog("wireless bring-up generation=$generation atNs=${System.nanoTime()} starting")
             closeWirelessStack(generation = generation)
             if (
                 closed ||
@@ -1115,6 +1182,10 @@ class CarPlayController(
             }
             pauseWifiScans(hotspotInfo.backend)
             val startedHotspot = hotspot
+            media.setWirelessDiagnosticSource {
+                if (isStaleWirelessRun(generation)) "generation=$generation wireless=stale"
+                else "generation=$generation ${startedHotspot?.connectionDiagnosticSnapshot() ?: "wireless=unavailable"}"
+            }
             wirelessConnectionProof.begin(generation) {
                 if (!isStaleWirelessRun(generation)) startedHotspot?.onCarPlayConfirmed()
             }
@@ -1171,6 +1242,7 @@ class CarPlayController(
                 ?: throw IOException("Bluetooth adapter is unavailable")
             if (!adapter.isEnabled) throw IOException("Bluetooth is not enabled")
             val device = selectWirelessBluetoothDevice(adapter)
+            wirelessBluetoothDevice = device
             val hostBluetoothMac = accessoryBluetoothMac(adapter)
             debugLog(
                 "wireless selected Bluetooth target name=${device.name ?: "unknown"} " +
@@ -1274,12 +1346,14 @@ class CarPlayController(
                 if (isStaleWirelessRun(generation)) return
                 BluetoothRfcommDuplexStream(socket).also { bluetoothStream = it }
             }
+            bootstrapTransport = stream
             val channel = Iap2Session.openWireless(
                 stream,
                 traceContext = "wireless-rfcomm",
                 onTrace = ::debugLog,
                 onArtwork = ::onArtworkTransfer,
             )
+            bootstrapSession = channel
             synchronized(wirelessResourceLock) {
                 if (isStaleWirelessRun(generation)) {
                     channel.close()
@@ -1336,10 +1410,12 @@ class CarPlayController(
                 timeoutMillis = controlLoopTimeoutMillis(),
                 beforeStartSession = { startedHotspot?.validateReady() },
                 onStartSessionSent = { watchdog.startSessionSent(it.sentAtNanos) },
-                onIncoming = ::onRouteFrame,
+                onIncoming = { frame ->
+                    if (!isStaleWirelessRun(generation)) onRouteFrame(frame)
+                },
                 onProgress = { message ->
                     diagnostics.controlProgress(message)
-                    debugLog(message)
+                    debugLog("wireless generation=$generation atNs=${System.nanoTime()} $message")
                 },
             )
             if (isStaleWirelessRun(generation)) {
@@ -1357,34 +1433,24 @@ class CarPlayController(
                             "tunnelReady=${wirelessTunnelReady.get()} " +
                             "wirelessActive=${wirelessActiveReported.get()}",
                     )
-                    if (!wirelessActiveReported.get()) {
-                        val handoffInProgress = isWirelessHandoffInProgress(
-                            handoffRequested = wirelessHandoffRequested.get(),
-                            tunnelActive = wirelessTunnelChannel != null,
-                            sessionActive = activeSession != null,
-                        )
-                        if (!handoffInProgress) {
-                            throw IOException(
-                                "Wireless CarPlay control channel closed before tunnel iAP2 ready",
-                            )
-                        }
-                        debugLog(
-                            "wireless Bluetooth bootstrap closed during handoff; " +
-                                "keeping the Wi-Fi AirPlay tunnel alive",
-                        )
+                    if (!preserveWifiAfterBootstrap(generation, "eof")) {
+                        throw IOException("Wireless bootstrap closed without current-session video proof")
                     }
                 }
-                Iap2WirelessControlTerminal.TIMED_OUT ->
-                    if (!wirelessActiveReported.get()) {
-                        onStatus(CarPlayStatus.ControlEnded)
+                Iap2WirelessControlTerminal.TIMED_OUT -> {
+                    if (!preserveWifiAfterBootstrap(generation, "timeout")) {
+                        throw IOException("Wireless bootstrap timed out without current-session video proof")
                     }
+                }
             }
         } catch (error: Throwable) {
             if (isStaleWirelessRun(generation)) {
                 return
             }
-            if (wirelessActiveReported.get() && error !is Error) {
-                debugLog("wireless RFCOMM control ended after tunnel handoff: ${error.message}")
+            val expectedTransportFailure = bootstrapTransport?.causedByTransport(error) == true ||
+                error is com.shilapi.xcertplay.transport.Iap2ChannelClosedException && bootstrapSession?.isClosed == true
+            if (expectedTransportFailure && preserveWifiAfterBootstrap(generation, "transport_io")) {
+                debugLog("wireless RFCOMM transport ended; current Wi-Fi session retained")
             } else {
                 debugLog("wireless bring-up failed", error)
                 if (error is Error) throw error
@@ -1433,24 +1499,26 @@ class CarPlayController(
                         onReady = {
                             onWirelessTunnelReady(generation)
                         },
-                        onIncoming = ::onRouteFrame,
-                        onProgress = { message -> debugLog("iAP tunnel $message") },
+                        onIncoming = { frame ->
+                            if (!isStaleWirelessRun(generation) && wirelessTunnelChannel === channel) {
+                                onRouteFrame(frame)
+                            }
+                        },
+                        onProgress = { message -> debugLog("iAP tunnel generation=$generation atNs=${System.nanoTime()} $message") },
                     )
                     if (closed || generation != wirelessGeneration.get()) return@execute
+                    connectionDiagnostic("runtime end generation=$generation atNs=${System.nanoTime()} terminal=${result.terminal}")
                     when (result.terminal) {
                         Iap2WirelessControlTerminal.TIMED_OUT ->
-                            onStatus(CarPlayStatus.ControlEnded)
+                            fail(IOException("Wireless runtime iAP2 timed out"), generation)
                         Iap2WirelessControlTerminal.CHANNEL_CLOSED ->
-                            onStatus(CarPlayStatus.Failed("Wireless iAP2 tunnel closed"))
+                            fail(IOException("Wireless runtime iAP2 tunnel closed"), generation)
                     }
                 } catch (error: Throwable) {
                     if (!closed && generation == wirelessGeneration.get()) {
+                        connectionDiagnostic("runtime first error generation=$generation class=${diagnosticFailureClass(error)} atNs=${System.nanoTime()}")
                         debugLog("tunneled iAP2 control failed", error)
-                        onStatus(
-                            CarPlayStatus.Failed(
-                                error.message ?: error.javaClass.simpleName,
-                            ),
-                        )
+                        fail(error, generation)
                     }
                 } finally {
                     if (wirelessTunnelChannel === channel) wirelessTunnelChannel = null
@@ -1511,7 +1579,7 @@ class CarPlayController(
 
             override fun onDebugLog(message: String) {
                 if (isStaleWirelessRun(generation)) return
-                sessionListener.onDebugLog(message)
+                sessionListener.onDebugLog(if (message.contains(CONNECTION_DIAGNOSTIC_PREFIX)) "generation=$generation $message" else message)
             }
 
             // Passed on explicitly: without these the car's video player never opened over Wi-Fi.
@@ -1553,8 +1621,11 @@ class CarPlayController(
                     return@Thread
                 }
                 debugLog("wireless handoff ready; closing Bluetooth bootstrap transport")
-                closeBluetoothBootstrapTransport()
-                onStatus(CarPlayStatus.WirelessActive)
+                synchronized(wirelessResourceLock) {
+                    if (generation != wirelessGeneration.get() || closed) return@Thread
+                    closeBluetoothBootstrapTransport()
+                    onStatus(CarPlayStatus.WirelessActive, generation)
+                }
             },
             "xcertplay-wireless-handoff",
         ).apply {
@@ -1586,18 +1657,7 @@ class CarPlayController(
                         ) {
                             return@Thread
                         }
-                        if (wirelessConnectionProof.hasRenderedFrame(generation)) {
-                            // Some iPhones/firmware combinations establish video but never
-                            // request the type-130 iAP2 tunnel. Do not tear down a proven live
-                            // CarPlay session just because that optional control channel did not
-                            // arrive; that teardown causes the visible reconnect loop.
-                            debugLog(
-                                "wireless handoff tunnel iAP2 unavailable after first video frame; " +
-                                    "preserving the active CarPlay session",
-                            )
-                            onStatus(CarPlayStatus.WirelessActive)
-                            return@Thread
-                        }
+                        if (preserveWifiAfterBootstrap(generation, "handoff_watchdog")) return@Thread
                         closeWirelessStack(generation = generation)
                         if (generation == wirelessGeneration.get()) {
                             fail(IOException("Wireless CarPlay handoff timed out waiting for tunnel iAP2"), generation)
@@ -1612,6 +1672,17 @@ class CarPlayController(
             WIRELESS_HANDOFF_TIMEOUT_MILLIS,
         )
     }
+
+    private fun preserveWifiAfterBootstrap(generation: Int, reason: String): Boolean =
+        synchronized(wirelessResourceLock) {
+            if (isStaleWirelessRun(generation) ||
+                !wirelessConnectionProof.hasRenderedFrame(generation, activeSession)) return@synchronized false
+            connectionDiagnostic("bootstrap ended=$reason generation=$generation atNs=${System.nanoTime()} proof=current_session_first_frame")
+            closeBluetoothBootstrapTransport()
+            // Tunnel authentication remains a separate fact; a later type-130 can complete it.
+            onStatus(CarPlayStatus.WirelessActive, generation)
+            true
+        }
 
     private fun closeBluetoothBootstrapTransport() {
         val activeCsm = csm
@@ -2022,13 +2093,7 @@ class CarPlayController(
 
     private fun startWirelessHotspot(generation: Int): WirelessHotspotInfo {
         val readyDeadline = System.nanoTime() + WirelessStartupPolicy.HOTSPOT_READY_MILLIS * 1_000_000
-        val hotspotMode = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q &&
-            config.wirelessHotspotMode == WirelessHotspotMode.WIFI_P2P
-        ) {
-            WirelessHotspotMode.LOCAL_ONLY_HOTSPOT
-        } else {
-            config.wirelessHotspotMode
-        }
+        val hotspotMode = config.wirelessHotspotMode
         if (com.shilapi.xcertplay.network.CarHotspotSettings.shouldEnable(
                 appContext, config.transport == CarPlayTransport.WIRELESS, hotspotMode,
             )
@@ -2117,7 +2182,7 @@ class CarPlayController(
         val bonded = adapter.bondedDevices.orEmpty()
         config.wirelessBluetoothDeviceAddress?.let { selected ->
             return bonded.firstOrNull { it.address.equals(selected, ignoreCase = true) }
-                ?: throw IOException("The selected iPhone is no longer paired. Choose it again in DiPlay.")
+                ?: throw IOException("The selected iPhone is no longer paired. Choose it again in FAW Play.")
         }
         val iPhones = bonded.filter { device ->
             device.name?.contains("iPhone", ignoreCase = true) == true
@@ -2222,6 +2287,7 @@ class CarPlayController(
     private fun closeWirelessStack(service: CarPlayVpnService? = vpnService, generation: Int? = null) =
         synchronized(wirelessResourceLock) {
             if (generation != null && generation != wirelessGeneration.get()) return@synchronized
+            connectionDiagnostic("close begin generation=${wirelessGeneration.get()} atNs=${System.nanoTime()}")
             val owner = firstTcpWatchdog?.listener
             firstTcpWatchdog?.terminate()
             val diagnostics = wirelessDiagnostics
@@ -2229,11 +2295,14 @@ class CarPlayController(
             diagnostics?.close()
             wirelessConnectionProof.clear()
             media.setIapTunnelHandler(null)
+            media.setWirelessDiagnosticSource { "wireless=closed" }
             val activeTunnel = wirelessTunnelChannel
             wirelessTunnelChannel = null
             if (activeTunnel != null) closeBestEffort("tunneled iAP2 link") { activeTunnel.close() }
 
             closeBluetoothBootstrapTransport()
+            bluetoothMediaHandoff.stop()
+            wirelessBluetoothDevice = null
 
             val activeBonjour = bonjour
             bonjour = null
@@ -2249,6 +2318,7 @@ class CarPlayController(
             wirelessActiveReported.set(false)
 
             if (service != null && owner != null) closeBestEffort("AirPlay service") { service.detachWireless(owner) }
+            connectionDiagnostic("close end generation=${wirelessGeneration.get()} atNs=${System.nanoTime()}")
         }
 
     private fun isBluetoothDeviceConnected(device: BluetoothDevice): Boolean = try {
@@ -2462,7 +2532,11 @@ class CarPlayController(
             if (closed || generation != null && generation != wirelessGeneration.get()) return
             val wireless = config.transport == CarPlayTransport.WIRELESS
             if (wireless) {
-                if (!wirelessFailureReported.compareAndSet(false, true)) return
+                if (!wirelessFailureReported.compareAndSet(false, true)) {
+                    connectionDiagnostic("failure duplicate generation=${wirelessGeneration.get()} class=${diagnosticFailureClass(error)} atNs=${System.nanoTime()}")
+                    return
+                }
+                connectionDiagnostic("failure first generation=${wirelessGeneration.get()} class=${diagnosticFailureClass(error)} atNs=${System.nanoTime()}")
                 firstTcpWatchdog?.terminate()
             }
             val causes = generateSequence(error) { it.cause }.toList()

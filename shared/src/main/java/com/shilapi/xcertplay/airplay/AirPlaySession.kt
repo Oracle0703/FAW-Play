@@ -42,6 +42,8 @@ interface AirPlaySessionListener {
 
 /** Stream transport seam; media decode/render is supplied by a later layer. */
 interface AirPlayMediaHandler {
+    fun setWirelessDiagnosticSource(source: () -> String) {}
+    fun onSessionActive(session: AirPlaySession) {}
     fun onScreen(session: AirPlaySession, type: Int, stream: Map<String, Any?>): Int? = null
     fun onAudio(session: AirPlaySession, type: Int, stream: Map<String, Any?>): Map<String, Any?>? = null
     fun onDataStream(session: AirPlaySession, stream: Map<String, Any?>): Map<String, Any?>? = null
@@ -80,6 +82,9 @@ class AirPlaySession(
     private var clusterStreamSetups = 0
     @Volatile private var mainScreenToken: Any? = null
 
+    val diagnosticId: Long = connectionIds.incrementAndGet()
+    private val controlTimeline = TransportTimeline { debugLog("session=$diagnosticId control $it") }
+    private val eventTimeline = TransportTimeline { debugLog("session=$diagnosticId event $it") }
     private val closed = AtomicBoolean(false)
     private val notified = AtomicBoolean(false)
     private var eventServer: ServerSocket? = null
@@ -131,6 +136,8 @@ class AirPlaySession(
 
     override fun close() {
         if (!closed.compareAndSet(false, true)) return
+        controlTimeline.event("close initiator=session")
+        eventTimeline.event("close initiator=session")
         mainScreenToken = null
         clearClusterContent()
         safeClose(socket)
@@ -308,10 +315,13 @@ class AirPlaySession(
         return try {
             val bytes = cipher.encrypt(head.toByteArray(Charsets.US_ASCII) + body)
             val output = socket.getOutputStream()
+            eventTimeline.beginWrite()
             output.write(bytes)
             output.flush()
+            eventTimeline.written()
             true
         } catch (error: Exception) {
+            eventTimeline.failure("write", error.javaClass.simpleName)
             Log.w(TAG, "airplay event command failed type=${command["type"]}", error)
             close()
             false
@@ -348,8 +358,9 @@ class AirPlaySession(
         sendHidReport(AirPlayHid.KNOB_HID_UID, AirPlayHid.knobReport(AirPlayKnobState(select = down)))
 
     fun sendMedia(index: Int) {
-        sendHidReport(AirPlayHid.MEDIA_HID_UID, AirPlayHid.mediaReport(index))
-        sendHidReport(AirPlayHid.MEDIA_HID_UID, AirPlayHid.mediaReport(0))
+        val pressed = sendHidReport(AirPlayHid.MEDIA_HID_UID, AirPlayHid.mediaReport(index))
+        val released = sendHidReport(AirPlayHid.MEDIA_HID_UID, AirPlayHid.mediaReport(0))
+        Log.i(TAG, "airplay media index=$index pressed=$pressed released=$released")
     }
 
     fun sendTelephony(index: Int) {
@@ -358,8 +369,9 @@ class AirPlaySession(
     }
 
     fun invokeSiri() {
-        sendCommand(linkedMapOf("type" to "requestSiri", "params" to linkedMapOf("siriAction" to 2)))
-        sendCommand(linkedMapOf("type" to "requestSiri", "params" to linkedMapOf("siriAction" to 3)))
+        val pressed = sendCommand(linkedMapOf("type" to "requestSiri", "params" to linkedMapOf("siriAction" to 2)))
+        val released = sendCommand(linkedMapOf("type" to "requestSiri", "params" to linkedMapOf("siriAction" to 3)))
+        Log.i(TAG, "airplay Siri pressed=$pressed released=$released")
     }
 
     fun sendIapMessage(data: ByteArray, timeoutMillis: Long = 0L): Boolean {
@@ -429,8 +441,11 @@ class AirPlaySession(
         var closeReason = "session closed"
         try {
             while (!closed.get()) {
+                controlTimeline.beginRead()
                 val count = input.read(buffer)
+                controlTimeline.read()
                 if (count < 0) {
+                    controlTimeline.failure("read", "EOF")
                     closeReason = "peer EOF"
                     break
                 }
@@ -441,6 +456,7 @@ class AirPlaySession(
                     val decrypted = try {
                         activeCipher.decrypt(encBuf)
                     } catch (error: Exception) {
+                        controlTimeline.failure("decrypt", error.javaClass.simpleName)
                         closeReason = "control decrypt failed: ${error.message ?: error.javaClass.simpleName}"
                         Log.e(TAG, "airplay $closeReason encrypted=${encBuf.size}", error)
                         break
@@ -489,6 +505,7 @@ class AirPlaySession(
                     )
                     val wire = RtspMessage.buildResponse(request, response)
                     trace("airplay control tx wireHex=${wire.toHex()}")
+                    controlTimeline.beginWrite()
                     output.write(cipher?.encrypt(wire) ?: wire)
                     if (cipher == null && pairVerify.controlKeys != null) {
                         val keys = pairVerify.controlKeys!!
@@ -497,9 +514,11 @@ class AirPlaySession(
                     }
                 }
                 output.flush()
+                controlTimeline.written()
                 notifySetupResponseSent()
             }
         } catch (error: Exception) {
+            if (!closed.get()) controlTimeline.failure("io", error.javaClass.simpleName)
             closeReason = "control I/O failed: ${error.message ?: error.javaClass.simpleName}"
             if (!closed.get()) Log.e(TAG, "airplay $closeReason", error)
         } finally {
@@ -715,6 +734,8 @@ class AirPlaySession(
         } else if (type == "requestUI") {
             listener.onHostUiRequested(this)
         }
+        AirPlayPhoneState.observe(this, type, params)
+        AirPlaySpeechState.observe(this, type, params)
         listener.onCommand(this, type, params)
         return RtspMessage.Response(status = 200)
     }
@@ -848,13 +869,16 @@ class AirPlaySession(
             var plaintext = ByteArray(0)
             val buffer = ByteArray(READ_CHUNK_BYTES)
             while (!closed.get()) {
+                eventTimeline.beginRead()
                 val count = input.read(buffer)
-                if (count < 0) break
+                eventTimeline.read()
+                if (count < 0) { if (!closed.get()) eventTimeline.failure("read", "EOF"); break }
                 val cipher = eventCipher ?: break
                 encrypted += buffer.copyOf(count)
                 val decrypted = try {
                     cipher.decrypt(encrypted)
                 } catch (error: Exception) {
+                    eventTimeline.failure("decrypt", error.javaClass.simpleName)
                     Log.e(TAG, "airplay event decrypt failed encrypted=${encrypted.size}", error)
                     break
                 }
@@ -863,6 +887,7 @@ class AirPlaySession(
                 val parsed = RtspMessage.parseMessages(plaintext)
                 plaintext = parsed.rest
                 for (message in parsed.messages) {
+                    AirPlayCommandDiagnostics.response(message)
                     if (message.method.startsWith("RTSP/") || message.method.startsWith("HTTP/")) continue
                     debugLog(
                         "airplay event rx ${message.method} ${message.path} cseq=${message.headers["cseq"] ?: "-"} body=${message.body.size}",
@@ -874,14 +899,18 @@ class AirPlaySession(
                     )
                     trace("airplay event tx wireHex=${response.toHex()}")
                     synchronized(eventWriteLock) {
+                        eventTimeline.beginWrite()
                         output.write(cipher.encrypt(response))
                         output.flush()
+                        eventTimeline.written()
                     }
                 }
             }
         } catch (error: Exception) {
+            if (!closed.get()) eventTimeline.failure("io", error.javaClass.simpleName)
             if (!closed.get()) Log.e(TAG, "airplay event read failed", error)
         } finally {
+            eventTimeline.event("close initiator=event_reader")
             debugLog("airplay event connection closed")
             videoPlaybackAvailability.setEventReady(false)
             if (eventSocket === socket) eventSocket = null
@@ -898,6 +927,7 @@ class AirPlaySession(
     }
 
     private companion object {
+        private val connectionIds = java.util.concurrent.atomic.AtomicLong()
         const val TAG = "xcertplay-usb"
         const val PLIST_CONTENT_TYPE = "application/x-apple-binary-plist"
         const val PAIRING_CONTENT_TYPE = "application/pairing+tlv8"

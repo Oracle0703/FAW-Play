@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FAW Play · 仪表调节</title>
+<style>
+:root{color-scheme:dark;--bg:#11151c;--panel:#1b212b;--line:#333e4d;--muted:#a7b3c5;--red:#db5c58;--green:#66d6a6}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#f2f5fa;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;font-size:16px}
+main{max-width:1320px;padding:30px;margin:auto}header{display:flex;align-items:center;gap:18px;margin-bottom:26px}h1{font-size:27px;margin:0}header span{color:var(--muted)}.brand{width:5px;height:45px;background:var(--red);border-radius:4px}
+button,select,input{font:inherit}button,select{border:1px solid var(--line);border-radius:10px;color:inherit;background:#252f3d;padding:11px 15px}button{cursor:pointer}button:hover{border-color:#7b899d}button:disabled{opacity:.4;cursor:default}.primary{background:#852f34;border-color:#ad4046}.devices{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.devices select{min-width:260px;flex:1}
+.status{padding:14px 0;min-height:50px;color:var(--muted)}.status.ok{color:var(--green)}.status.error{color:#ffb0a6}.grid{display:grid;grid-template-columns:350px 1fr;gap:22px}.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px}h2{font-size:20px;margin:0 0 18px}.tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px}.tabs button{flex:1}.tabs .active{border-color:var(--red);background:#49272d}
+.field{margin:18px 0 25px}.label{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.label input{width:90px;padding:7px;border:1px solid var(--line);border-radius:8px;background:#121923;color:white;text-align:right}input[type=range]{width:100%;accent-color:var(--red)}.fine{display:flex;gap:8px;margin-top:8px}.fine button{flex:1;padding:8px}small,.hint{color:var(--muted);font-size:14px;line-height:1.7}.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}.preview{width:100%;border-radius:10px;background:#101820;display:block}.caption{margin:14px 0 0}.secondary{margin-top:22px}.cmd{background:#101720;border:1px solid var(--line);border-radius:10px;padding:14px;font:13px/1.65 ui-monospace,Menlo,monospace;word-break:break-all;color:#c9d8ee}.footer{margin:22px 0;color:var(--muted);font-size:14px;line-height:1.7}.badge{font-size:12px;background:#24392f;color:#8ce5b9;padding:4px 9px;border-radius:6px;margin-left:auto}.tools{display:flex;gap:8px;flex-wrap:wrap}.target-note{min-height:43px}
+@media(max-width:950px){.grid{grid-template-columns:1fr}.fields{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.card{padding:18px}main{padding:18px}.tabs{max-width:440px}}@media(max-width:560px){.fields{display:block}header{flex-wrap:wrap}.badge{margin-left:0}}
+</style>
+<main>
+<header><div class="brand"></div><div><h1>FAW Play · 仪表调节</h1><span>转向提示 / 到达与里程信息栏 / CarPlay 原生内容</span></div><div class="badge">NAVI30 配套工具</div></header>
+<div class="devices"><select id="device" aria-label="ADB 设备"><option value="">正在查找设备…</option></select><button id="refresh">刷新设备</button><button id="read">读取车机参数</button></div>
+<div id="status" class="status" role="status" aria-live="polite">尚未连接车机。</div>
+<section class="card" style="margin-bottom:22px"><h2>仪表导航内容</h2>
+<div class="devices"><select id="content" aria-label="仪表导航内容"><option value="MAP_WITH_CUSTOM_CARD">地图＋当前可调提示框</option><option value="INSTRUMENTS">CarPlay 原生仪表组合</option><option value="TURN_CARD">CarPlay 原生导航卡片</option></select><button id="switchContent" class="primary">切换仪表内容</button></div>
+<p class="hint">原生内容由 iPhone 提供，切换不会重连 CarPlay。原生模式下不叠加本地提示框；位置参数保留，切回第一项即可恢复。是否包含高德路口／车道放大图，需要看 iPhone 实际输出。</p></section>
+<div class="grid">
+<section class="card"><div class="tabs"><button data-target="tbt">转向提示</button><button data-target="ete" class="active">到达／里程信息栏</button></div>
+<div id="note" class="hint target-note">调整箭头、路口距离和道路名称。</div>
+<div class="fields">
+<div class="field"><div class="label"><label for="x">横向位置 X</label><input id="xn" type="number" min="0" max="1919" step="1" aria-label="横向位置数值"></div><input id="x" type="range" min="0" max="1919" step="1"><div class="fine"><button data-key="x" data-step="-10">← 10</button><button data-key="x" data-step="10">10 →</button></div></div>
+<div class="field"><div class="label"><label for="y">纵向位置 Y</label><input id="yn" type="number" min="0" max="719" step="1" aria-label="纵向位置数值"></div><input id="y" type="range" min="0" max="719" step="1"><div class="fine"><button data-key="y" data-step="-10">↑ 10</button><button data-key="y" data-step="10">10 ↓</button></div></div>
+<div class="field"><div class="label"><label for="width">宽度 px</label><input id="widthn" type="number" min="80" max="1920" step="1" aria-label="宽度像素"></div><input id="width" type="range" min="80" max="1920" step="1"><div class="fine"><button data-key="width" data-step="-10">宽度 −10</button><button data-key="width" data-step="10">宽度 +10</button></div></div>
+<div class="field"><div class="label"><label for="height">高度 px</label><input id="heightn" type="number" min="40" max="720" step="1" aria-label="高度像素"></div><input id="height" type="range" min="40" max="720" step="1"><div class="fine"><button data-key="height" data-step="-10">高度 −10</button><button data-key="height" data-step="10">高度 +10</button></div></div>
+<div class="field"><div class="label"><label for="scale">字号／图标 %</label><input id="scalen" type="number" min="50" max="150" step="1" aria-label="字号图标百分比"></div><input id="scale" type="range" min="50" max="150" step="1"><div class="fine"><button data-key="scale" data-step="-5">缩小 5%</button><button data-key="scale" data-step="5">放大 5%</button></div></div>
+</div>
+<small>连接成功后自动同步、自动保存。X/Y 是提示框左上角；0/0 在画布左上。宽度、高度与字号独立调整。提示框太小时，超出的文字会省略或裁切；可缩小字号。框会限制在画布内。</small>
+<div class="actions"><button id="apply" class="primary">立即同步</button><button id="reset">恢复本项默认</button></div>
+</section>
+<section class="card"><h2>位置预览</h2><canvas id="preview" class="preview" width="1920" height="720" aria-label="仪表位置示意图"></canvas>
+<p class="hint caption">这是 1920 × 720 投屏画布的位置示意，不是实机截图。水温和车速位置按你的实拍图估算；最终请看仪表确认。</p>
+<div class="actions tools"><button id="export">导出当前参数</button><button id="original">恢复 NAVI29 原布局</button></div>
+<div class="secondary"><h2>对应 ADB 命令</h2><div id="command" class="cmd"></div></div>
+</section>
+</div>
+<p class="footer">车辆停稳后调整。请保持 CarPlay 导航和仪表飞屏开启：三指左滑开启，右滑关闭。关闭面板或断开 ADB 后，已保存的布局仍然有效。断开 USB 不会主动中断 CarPlay。</p>
+</main>
+<script>
+'use strict';
+const token='__SESSION_TOKEN__';
+const $=id=>document.getElementById(id);
+const defaults={tbt:{x:1396,y:81,scale:69,width:457,height:164,custom:false},ete:{x:90,y:622,scale:80,width:450,height:45,custom:false}};
+const fields=['x','y','width','height','scale'];
+const limits={x:[0,1919],y:[0,719],width:[80,1920],height:[40,720],scale:[50,150]};
+let state=structuredClone(defaults),target='ete',connected=false,pending=new Map(),syncing=false,loading=false,restoreArmed=false,timer,contentSupported=false;
+const context=$('preview').getContext('2d');
+function status(text,kind=''){ $('status').textContent=text; $('status').className='status '+kind; }
+async function api(path,payload){
+  const options=payload?{method:'POST',headers:{'Content-Type':'application/json','X-FAW-Session':token},body:JSON.stringify(payload)}:{};
+  const response=await fetch(path,options);const data=await response.json();
+  if(!response.ok||data.error)throw new Error(data.error||'操作失败');return data;
+}
+function ready(){return connected&&Boolean($('device').value);}
+function controls(){
+  const busy=syncing||loading;
+  $('apply').disabled=$('reset').disabled=$('original').disabled=!ready()||busy;
+  $('read').disabled=!$('device').value||busy;
+  $('refresh').disabled=$('device').disabled=$('export').disabled=busy;
+  $('switchContent').disabled=$('content').disabled=!ready()||busy||!contentSupported;
+  document.querySelectorAll('.fields input,[data-step],[data-target]').forEach(element=>element.disabled=busy);
+}
+function updateFields(){
+  restoreArmed=false;$('original').textContent='恢复 NAVI29 原布局';
+  for(const key of fields)$(key).value=$(key+'n').value=state[target][key];
+  document.querySelectorAll('[data-target]').forEach(b=>b.classList.toggle('active',b.dataset.target===target));
+  $('note').textContent=target==='tbt'?'调整箭头、路口距离和道路名称。':'调整整条到达时间／剩余时间／里程信息栏；没有单独的“47 分”框。';
+  const p=state[target];
+  $('command').textContent='adb shell am broadcast --include-stopped-packages -n com.shihab.diplay/com.shilapi.xcertplay.ClusterLayoutReceiver -a com.shihab.diplay.action.CLUSTER_LAYOUT --es op set --es target '+target+' --ei x '+p.x+' --ei y '+p.y+' --ei width '+p.width+' --ei height '+p.height+' --ei scale '+p.scale;
+  draw();controls();
+}
+function box(p){return {x:Math.max(0,Math.min(p.x,1920-p.width)),y:Math.max(0,Math.min(p.y,720-p.height)),w:p.width,h:p.height,s:p.scale/100};}
+function clipped(b,draw){context.save();context.beginPath();context.rect(b.x,b.y,b.w,b.h);context.clip();draw();context.restore();}
+function fit(label,maxWidth){if(context.measureText(label).width<=maxWidth)return label;while(label.length&&context.measureText(label+'…').width>maxWidth)label=label.slice(0,-1);return label+'…';}
+function pill(x,y,w,h,fill='#141a21d9'){context.fillStyle=fill;context.beginPath();context.roundRect(x,y,w,h,Math.min(10.65,h*.12));context.fill();context.strokeStyle='#dee6f01c';context.lineWidth=2;context.stroke();}
+function text(label,x,y,size,color='#eef4ff',weight='400'){context.font=weight+' '+size+'px -apple-system, sans-serif';context.fillStyle=color;context.fillText(label,x,y);}
+function outline(b){context.strokeStyle='#81edb8';context.lineWidth=5;context.setLineDash([13,8]);context.strokeRect(b.x-6,b.y-6,b.w+12,b.h+12);context.setLineDash([]);}
+function draw(){
+  context.clearRect(0,0,1920,720);context.fillStyle='#132a37';context.fillRect(0,0,1920,720);
+  context.strokeStyle='#224557';context.lineWidth=2;
+  for(let x=0;x<=1920;x+=120){context.beginPath();context.moveTo(x,0);context.lineTo(x,720);context.stroke();}
+  for(let y=0;y<=720;y+=120){context.beginPath();context.moveTo(0,y);context.lineTo(1920,y);context.stroke();}
+  pill(85,80,460,170,'#424258');text('0',260,202,90);text('P',443,143,38);text('km/h',421,196,30);
+  text('仪表地图区域',810,400,30,'#829dab');
+  context.fillStyle='#99afc0';context.fillRect(210,671,230,8);text('水温',150,692,22);text('130    90    50',219,711,22);
+  context.fillRect(1510,671,230,8);text('油量',1770,692,22);text('0    1/2    1',1510,711,22);
+  const turn=box(state.tbt),s=turn.s,contentY=turn.y+(turn.h-160*s)/2;
+  pill(turn.x,turn.y,turn.w,turn.h);
+  clipped(turn,()=>{
+    const chip=122*s,gap=16*s,textWidth=turn.w-chip-gap-32*s;
+    context.font='700 '+53*s+'px -apple-system,sans-serif';
+    const distance=fit('320 米',textWidth),distanceWidth=context.measureText(distance).width;
+    context.font=40*s+'px -apple-system,sans-serif';
+    const road=fit('驶入下一条道路',textWidth);
+    const groupWidth=chip+(textWidth>0?gap+Math.max(distanceWidth,context.measureText(road).width):0);
+    const chipX=turn.x+(turn.w-groupWidth)/2;
+    pill(chipX,contentY+20*s,chip,chip,'#ffffff16');
+    text('↑',chipX+24*s,contentY+115*s,94*s,'#f8fafc','600');
+    if(textWidth<=0)return;
+    text(distance,chipX+chip+gap,turn.y+turn.h/2-6*s,53*s,'#f8fafc','700');
+    text(road,chipX+chip+gap,turn.y+turn.h/2+42*s,40*s,'#b7c3d2');
+  });
+  const info=box(state.ete),infoY=info.y+(info.h-80*info.s)/2;
+  pill(info.x,info.y,info.w,info.h);
+  clipped(info,()=>{
+    context.font=37*info.s+'px -apple-system,sans-serif';
+    const label=fit('01:50 到达  ·  47 分  ·  25.0 公里',info.w-32);
+    text(label,info.x+(info.w-context.measureText(label).width)/2,info.y+info.h/2+13*info.s,37*info.s,'#e6edf6');
+  });
+  outline(target==='tbt'?turn:info);
+}
+function change(key,value){
+  const [min,max]=limits[key];
+  if(!Number.isFinite(value))return;
+  state[target][key]=Math.round(Math.max(min,Math.min(max,value)));
+  updateFields();
+  if(ready()){
+    pending.set(target,{serial:$('device').value,target,...state[target]});
+    status('位置已预览，正在等待同步…');clearTimeout(timer);timer=setTimeout(flush,350);
+  }else status('仅预览：连接车机并读取参数后，才能同步到仪表。');
+}
+async function flush(){
+  clearTimeout(timer);if(syncing||!ready())return;
+  syncing=true;controls();
+  try{
+    while(pending.size){
+      const [name,job]=pending.entries().next().value;pending.delete(name);
+      const reply=await api('/api/layout',{op:'set',serial:job.serial,target:name,x:job.x,y:job.y,width:job.width,height:job.height,scale:job.scale});
+      if(job.serial!==$('device').value)continue;
+      if(!pending.has(name))state[name]=reply[name];
+      status('已保存到车机。仪表提示已通知刷新；需要保持导航飞屏开启。','ok');
+    }
+  }catch(error){pending.clear();connected=false;status(error.message,'error');}
+  finally{syncing=false;updateFields();}
+}
+async function read(){
+  if(syncing||loading)return;
+  loading=true;controls();
+  try{await readSelected();}finally{loading=false;controls();}
+}
+async function readSelected(){
+  pending.clear();clearTimeout(timer);connected=false;controls();
+  const serial=$('device').value;if(!serial)return;
+  status('正在读取 App 的仪表参数…');
+  try{
+    const reply=await api('/api/layout',{op:'get',serial});
+    if(serial!==$('device').value)return;
+    state={tbt:reply.tbt,ete:reply.ete};connected=reply.supported===true;
+    contentSupported=reply.contentSelection===true;
+    if(contentSupported&&Array.from($('content').options).some(o=>o.value===reply.content))$('content').value=reply.content;
+    updateFields();
+    status(connected?'已连接。移动滑块会自动保存并刷新仪表。':'调试接口可用，但当前设备不是已适配的红旗 HS5。仅允许读取和预览。',connected?'ok':'error');
+  }catch(error){status(error.message,'error');controls();}
+}
+async function refresh(){
+  if(syncing||loading)return;
+  loading=true;
+  const previous=$('device').value;connected=false;pending.clear();controls();status('正在查找 ADB 设备…');
+  try{
+    const data=await api('/api/devices');$('device').replaceChildren();
+    const available=data.devices.filter(d=>d.state==='device');
+    if(!available.length){$('device').add(new Option('未找到已授权的 ADB 设备',''));status(data.devices.some(d=>d.state==='unauthorized')?'设备未授权：请在车机允许 USB 调试。':'未连接车机。请检查 USB 和东软工程模式里的 ADB 开关。');}
+    else{for(const d of available)$('device').add(new Option(d.name+' · '+d.serial,d.serial));if(available.some(d=>d.serial===previous))$('device').value=previous;await readSelected();}
+  }catch(error){status(error.message,'error');}
+  finally{loading=false;controls();}
+}
+async function reset(original=false){
+  if(!ready()||syncing||loading)return;
+  if(original&&!restoreArmed){
+    restoreArmed=true;$('original').textContent='再次点击确认恢复';
+    status('恢复后，转向提示与整条信息栏将恢复原位置。再次点击确认；更改其他参数可取消。');return;
+  }
+  clearTimeout(timer);pending.clear();syncing=true;controls();
+  try{
+    const reply=await api('/api/layout',{op:original?'original':'reset',serial:$('device').value,target});
+    state={tbt:reply.tbt,ete:reply.ete};status(original?'已恢复 NAVI29 原布局。':'已恢复本项默认布局。','ok');
+  }catch(error){status(error.message,'error');}
+  finally{syncing=false;updateFields();}
+}
+async function switchContent(){
+  if(!ready()||syncing||loading||!contentSupported)return;
+  if(pending.size){await flush();if(!ready())return;}
+  syncing=true;controls();
+  try{
+    const reply=await api('/api/layout',{op:'content',serial:$('device').value,content:$('content').value});
+    $('content').value=reply.content;
+    const url=reply.content==='TURN_CARD'?'maps:/car/instrumentcluster/instructioncard':reply.content==='INSTRUMENTS'?'maps:/car/instrumentcluster':'maps:/car/instrumentcluster/map';
+    status(reply.displayedUrl===url?'切换命令已发送到 iPhone。请看仪表确认原生内容；本地布局参数已保留。':reply.sessionRunning?'内容选择已保存，仪表视频恢复后应用。':'内容选择已保存，下次连接 CarPlay 时应用。','ok');
+  }catch(error){status(error.message,'error');}
+  finally{syncing=false;controls();}
+}
+for(const key of fields){
+  $(key).addEventListener('input',e=>change(key,Number(e.target.value)));
+  $(key+'n').addEventListener('change',e=>change(key,Number(e.target.value)));
+}
+document.querySelectorAll('[data-step]').forEach(b=>b.addEventListener('click',()=>change(b.dataset.key,state[target][b.dataset.key]+Number(b.dataset.step))));
+document.querySelectorAll('[data-target]').forEach(b=>b.addEventListener('click',()=>{target=b.dataset.target;updateFields();}));
+$('device').addEventListener('change',read);$('refresh').addEventListener('click',refresh);$('read').addEventListener('click',read);
+$('apply').addEventListener('click',()=>{if(ready())pending.set(target,{serial:$('device').value,target,...state[target]});flush();});
+$('reset').addEventListener('click',()=>reset());$('original').addEventListener('click',()=>reset(true));
+$('switchContent').addEventListener('click',switchContent);
+$('export').addEventListener('click',()=>{
+  const profile={protocol:2,canvas:{width:1920,height:720},confirmedOnDevice:ready()&&!pending.size&&!syncing,tbt:state.tbt,ete:state.ete};
+  const url=URL.createObjectURL(new Blob([JSON.stringify(profile,null,2)],{type:'application/json'}));
+  const a=document.createElement('a');a.href=url;a.download='FAW-Play-仪表参数.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+});
+updateFields();refresh();
+</script>
+</html>

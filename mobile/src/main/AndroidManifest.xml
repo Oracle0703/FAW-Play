@@ -18,6 +18,23 @@
             android:name="android.allow_multiple_resumed_activities"
             android:value="true" />
 
+        <!-- App-list tags from an APK visible on the owner's 2025 Hongqi HS5.
+             The standalone shortcut was vehicle-tested; this integrated build
+             still needs its own vehicle verification. -->
+        <meta-data android:name="Group" android:value="GROUP CARPLAY" />
+        <meta-data android:name="Domain" android:value="DOMAIN CARPLAY" />
+        <meta-data android:name="Ability" android:value="com.shilapi.xcertplay.DiPlayActivity" />
+        <meta-data android:name="MoreApp" android:value="true" />
+
+        <activity android:name="com.shilapi.xcertplay.DiPlayActivity">
+            <intent-filter tools:node="removeAll" />
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
         <receiver
             android:name="com.shilapi.xcertplay.BootReceiver"
             android:enabled="true"

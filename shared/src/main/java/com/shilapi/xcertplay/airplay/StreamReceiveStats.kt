@@ -19,6 +19,9 @@ internal class StreamReceiveStats(
     private var maxInterArrivalNs = 0L
     private var maxProcessNs = 0L
     private var lastTimestamp: Int? = null
+    private var lastForwardTimestamp: Int? = null
+    private var timestampStepMin: Long? = null
+    private var timestampStepMax = 0L
     private var nextSequence: Int? = null
     private var forwardGapPackets = 0
     private var sequenceGapEvents = 0
@@ -60,7 +63,20 @@ internal class StreamReceiveStats(
                 nextSequence = (sequence + 1) and 0xffff
             } else lateOrDuplicate++
         }
-        if (timestamp != null) lastTimestamp = timestamp
+        if (timestamp != null) {
+            val previous = lastForwardTimestamp
+            if (previous == null) {
+                lastForwardTimestamp = timestamp
+            } else {
+                val step = (timestamp.toLong() - previous.toLong()) and 0xffff_ffffL
+                if (step in 1L..0x7fff_ffffL) {
+                    timestampStepMin = minOf(timestampStepMin ?: step, step)
+                    timestampStepMax = maxOf(timestampStepMax, step)
+                    lastForwardTimestamp = timestamp
+                }
+            }
+            lastTimestamp = timestamp
+        }
     }
 
     fun processed() {
@@ -78,7 +94,8 @@ internal class StreamReceiveStats(
             "seqGapLast=[$lastSequenceGap] seqGapAtMs=$lastSequenceGapAtMs ended=$ended " +
             "windowMs=${(now - windowStart).coerceAtLeast(0) / 1_000_000} " +
             "readsOver250Ms=$readsOver250Ms seqGapAfterReadOver250Ms=$seqGapAfterReadOver250Ms " +
-            "seqMissingAfterReadOver250Ms=$seqMissingAfterReadOver250Ms") }
+            "seqMissingAfterReadOver250Ms=$seqMissingAfterReadOver250Ms " +
+            "rtpStepMin=${timestampStepMin ?: 0} rtpStepMax=$timestampStepMax") }
         windowStart = now
         packets = 0
         bytes = 0
@@ -94,6 +111,8 @@ internal class StreamReceiveStats(
         lastSequenceGap = "none"
         lastSequenceGapAtMs = -1L
         lateOrDuplicate = 0
+        timestampStepMin = null
+        timestampStepMax = 0
     }
 
     private fun Int.toUnsignedLong(): Long = toLong() and 0xffff_ffffL

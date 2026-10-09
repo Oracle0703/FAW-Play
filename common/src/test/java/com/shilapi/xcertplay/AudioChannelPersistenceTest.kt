@@ -1,12 +1,14 @@
 package com.shilapi.xcertplay
 
 import android.content.Context
+import android.content.pm.PackageManager
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
@@ -17,11 +19,31 @@ class AudioChannelPersistenceTest {
 
     @Before fun clearPreferences() {
         prefs.edit().clear().apply()
+        shadowOf(context.packageManager).setSystemFeature(PackageManager.FEATURE_AUTOMOTIVE, false)
     }
 
     @Test fun freshInstallUsesAutomaticRouting() {
         assertEquals(0, AirPlayPersistence.loadMediaAudioChannel(context))
         assertEquals(0, AirPlayPersistence.loadNavigationAudioChannel(context))
+    }
+
+    @Test fun automotiveDefaultsToFocusForFactoryVolumeControls() {
+        shadowOf(context.packageManager).setSystemFeature(PackageManager.FEATURE_AUTOMOTIVE, true)
+        assertEquals(true, AirPlayPersistence.loadAudioFocusEnabled(context))
+    }
+
+    @Test fun phoneKeepsTheExistingFocusDefault() {
+        assertEquals(false, AirPlayPersistence.loadAudioFocusEnabled(context))
+    }
+
+    @Test fun savedFocusChoiceIsPreservedOnBothDeviceTypes() {
+        for (automotive in listOf(false, true)) {
+            shadowOf(context.packageManager).setSystemFeature(PackageManager.FEATURE_AUTOMOTIVE, automotive)
+            for (enabled in listOf(false, true)) {
+                AirPlayPersistence.saveAudioFocusEnabled(context, enabled)
+                assertEquals(enabled, AirPlayPersistence.loadAudioFocusEnabled(context))
+            }
+        }
     }
 
     @Test fun legacyNavigationChannelIsInheritedWithoutChangingMedia() {

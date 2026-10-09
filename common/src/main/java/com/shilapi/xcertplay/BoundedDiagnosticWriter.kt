@@ -9,10 +9,14 @@ internal class BoundedDiagnosticWriter<T : Any>(
     private val write: (T) -> Unit,
 ) : Closeable {
     private val monitor = Object()
-    private val pending = ArrayDeque<T>()
+    private data class Task<T>(val value: T, val control: Boolean)
+    private val pending = ArrayDeque<Task<T>>()
+    private var controlCount = 0
+    private var entryCount = 0
     private var closed = false
     private var active = false
     private var dropped = 0L
+    private var failures = 0L
 
     init {
         require(maxPending > 0)
@@ -25,16 +29,31 @@ internal class BoundedDiagnosticWriter<T : Any>(
     /** Never waits for disk. Under overload, discard the oldest pending entry. */
     fun enqueue(entry: T): Boolean = synchronized(monitor) {
         if (closed) return@synchronized false
-        if (pending.size == maxPending) {
-            pending.removeFirst()
+        if (entryCount == maxPending) {
+            val iterator = pending.iterator()
+            while (iterator.hasNext()) {
+                if (!iterator.next().control) { iterator.remove(); break }
+            }
+            entryCount--
             dropped++
         }
-        pending.addLast(entry)
+        pending.addLast(Task(entry, false))
+        entryCount++
+        monitor.notifyAll()
+        true
+    }
+
+    /** Lifecycle/barrier work has a separate bound and cannot be evicted by log traffic. */
+    fun enqueueControl(entry: T): Boolean = synchronized(monitor) {
+        if (closed || controlCount >= 24) return@synchronized false
+        pending.addLast(Task(entry, true))
+        controlCount++
         monitor.notifyAll()
         true
     }
 
     internal val pendingCount: Int get() = synchronized(monitor) { pending.size }
+    internal val failedCount: Long get() = synchronized(monitor) { failures }
     internal val droppedCount: Long get() = synchronized(monitor) { dropped }
 
     private fun drain() {
@@ -43,11 +62,13 @@ internal class BoundedDiagnosticWriter<T : Any>(
                 while (pending.isEmpty() && !closed) monitor.wait()
                 if (pending.isEmpty()) return
                 active = true
-                pending.removeFirst()
+                pending.removeFirst().also {
+                    if (it.control) controlCount-- else entryCount--
+                }
             }
             // Disk failures or a broken diagnostic callback must not stop later writes.
             try {
-                runCatching { write(next) }
+                runCatching { write(next.value) }.onFailure { synchronized(monitor) { failures++ } }
             } finally {
                 synchronized(monitor) {
                     active = false

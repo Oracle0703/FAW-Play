@@ -36,7 +36,7 @@ The nine new deterministic tests reproduce six failures on source `1f8bab9`, wit
 
 ## Change provenance and verification
 
-PR 158 feature sources: `BydVehicleSettingsBackend`, `Byd13CatalogProbeMain`, `BydVehicleCapabilityProbe`, `BydVehicleFields`, mode-aware `BydOutputSettings`, supporting ADB/battery/parked-state/wheel-speed reads, their tests, the four host active-setting calls, vehicle/location UI and localized resources. Guard `bc76616` still publishes battery data only after a snapshot is persisted/accepted and only in the selected legacy mode; held candidates stay outside runtime data.
+PR 158 feature sources: `FawVehicleSettingsBackend`, `Byd13CatalogProbeMain`, `FawVehicleCapabilityProbe`, `BydVehicleFields`, mode-aware `FawOutputSettings`, supporting ADB/battery/parked-state/wheel-speed reads, their tests, the four host active-setting calls, vehicle/location UI and localized resources. Guard `bc76616` still publishes battery data only after a snapshot is persisted/accepted and only in the selected legacy mode; held candidates stay outside runtime data.
 
 Integration-specific edits: `DiPlayActivity`, `BydAdbSettingsUiTest`, `BydSettingsReconnectTest`, `CarHotspotSwitchTest`, the hotspot and stale-probe cases in `BydVehicleDataSettingsTest`, the conflict resolutions in resources/`LocalAdb`/navigation/testing documents, and this rationale. Existing PR 164 grant/setup/controller/network sources and the safety parent's diagnostic sources are unchanged.
 

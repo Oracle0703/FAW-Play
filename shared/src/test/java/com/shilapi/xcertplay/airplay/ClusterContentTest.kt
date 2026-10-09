@@ -106,6 +106,23 @@ class ClusterContentTest {
         } finally { session.close() }
     }
 
+    @Test fun nativeModesUseTheAltScreenWithoutReplacingTheMainCarPlayScreen() {
+        for (content in listOf(CarPlayClusterDisplay.Content.INSTRUMENTS, CarPlayClusterDisplay.Content.TURN_CARD)) {
+            val session = session(CarPlayClusterDisplay.MAP_URL)
+            try {
+                setup(session)
+                val event = eventReady(session)
+                assertTrue(session.setClusterUrl(content.url, send = true))
+                val commands = commands(event)
+                assertEquals(listOf("showUI", "forceKeyFrame"), commands.map { it["type"] })
+                assertEquals(content.url, (commands.first()["params"] as Map<*, *>)["url"])
+                assertEquals(AirPlayInfoPlist.ALT_UUID, (commands.first()["params"] as Map<*, *>)["uuid"])
+                assertEquals(content.url, session.clusterUrl())
+                assertEquals(1, session.clusterStream)
+            } finally { session.close() }
+        }
+    }
+
     @Test fun aPausedSelectionStaysPendingUntilResume() {
         val session = session(CarPlayClusterDisplay.MAP_URL)
         try {

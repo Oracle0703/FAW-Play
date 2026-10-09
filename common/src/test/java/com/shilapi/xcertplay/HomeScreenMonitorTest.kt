@@ -31,7 +31,7 @@ class HomeScreenMonitorTest {
     }
 
     @Test
-    fun isHomePackageRecognizesBYDAndThirdPartyLaunchers() {
+    fun isHomePackageRecognizesFAWAndThirdPartyLaunchers() {
         val monitor = HomeScreenMonitor(context) {}
         val isHomeMethod = HomeScreenMonitor::class.java.getDeclaredMethod("isHomePackage", String::class.java).apply {
             isAccessible = true

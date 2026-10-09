@@ -17,6 +17,7 @@ import java.net.DatagramSocket
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.locks.LockSupport
 
 /**
  * Captures one PCM microphone stream and sends it back to the phone as sealed CarPlay RTP.
@@ -156,14 +157,18 @@ internal class MicrophoneUplink(
                 val status = effect.setEnabled(true)
                 if (status == AudioEffect.SUCCESS && effect.enabled) {
                     Log.i(TAG, "microphone effect=$name enabled=true")
+                    runCatching { onDiagnostic("Microphone: effect=$name enabled=true") }
                     return effect
                 }
                 Log.w(TAG, "microphone effect=$name could not be enabled status=$status")
+                runCatching { onDiagnostic("Microphone: effect=$name enabled=false status=$status") }
             } else {
                 Log.i(TAG, "microphone effect=$name unavailable")
+                runCatching { onDiagnostic("Microphone: effect=$name available=false") }
             }
         } catch (error: RuntimeException) {
             Log.w(TAG, "microphone effect=$name unavailable; continuing without it", error)
+            runCatching { onDiagnostic("Microphone: effect=$name available=false error=${error.javaClass.simpleName}") }
         }
         effect?.let(::releaseEffect)
         return null
@@ -178,15 +183,20 @@ internal class MicrophoneUplink(
     }
 
     private fun capture(recorder: AudioRecord, socket: DatagramSocket) {
+        runCatching { android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_AUDIO) }
         val frame = ByteArray(config.frameBytes)
-        val readBuffer = ByteArray(maxOf(frame.size, MIN_READ_BYTES))
+        val readBuffer = ByteArray(frame.size)
+        val pacer = MicrophoneFramePacer(frame.size,
+            config.samplesPerPacket * 1_000_000_000L / config.sampleRate)
         val counters = MicrophoneCounters()
         val routeInfo = { routeType(recorder) }
         var filled = 0
         try {
             while (running.get()) {
                 stats.reading()
-                val count = recorder.read(readBuffer, 0, readBuffer.size, AudioRecord.READ_BLOCKING)
+                // A blocking HAL read can delay several 20 ms RTP frames and then release
+                // them together. Poll capture while independently pacing completed frames.
+                val count = recorder.read(readBuffer, 0, readBuffer.size, AudioRecord.READ_NON_BLOCKING)
                 stats.read(count)
                 if (count < 0) {
                     if (running.get()) {
@@ -195,10 +205,6 @@ internal class MicrophoneUplink(
                     }
                     return
                 }
-                if (count == 0) {
-                    stats.flush(routeType = routeInfo)
-                    continue
-                }
                 var offset = 0
                 while (offset < count && running.get()) {
                     val copied = minOf(frame.size - filled, count - offset)
@@ -206,11 +212,19 @@ internal class MicrophoneUplink(
                     filled += copied
                     offset += copied
                     if (filled == frame.size) {
-                        sendFrame(socket, counters, frame)
+                        stats.pcm(frame)
+                        pacer.offer(frame)
                         filled = 0
                     }
                 }
+                pacer.poll(System.nanoTime())?.let { ready ->
+                    // Overflow drops old PCM, so reflect the missing samples in RTP time.
+                    counters.timestamp += ready.skippedFrames * config.rtpSamplesPerPacket
+                    sendFrame(socket, counters, ready.pcm)
+                }
                 stats.flush(routeType = routeInfo)
+                LockSupport.parkNanos(pacer.pollDelayNs(System.nanoTime()))
+                if (Thread.currentThread().isInterrupted) return
             }
         } catch (error: Exception) {
             if (running.get()) {
@@ -218,6 +232,8 @@ internal class MicrophoneUplink(
                 stats.failure(MicrophoneFailureStage.CAPTURE, error)
             }
         } finally {
+            runCatching { onDiagnostic("Microphone: pacing prefillFrames=4 capacityFrames=6 " +
+                "droppedFrames=${pacer.droppedFrames} underruns=${pacer.underruns}") }
             stats.flush(ended = true, routeType = routeInfo)
             running.set(false)
             release()
@@ -236,7 +252,7 @@ internal class MicrophoneUplink(
                 socket = socket,
                 counters = counters,
                 body = body,
-                samples = config.samplesPerPacket,
+                samples = config.rtpSamplesPerPacket,
             )
         }
     }
@@ -318,7 +334,6 @@ internal class MicrophoneUplink(
 
     private companion object {
         const val TAG = "xcertplay-usb"
-        const val MIN_READ_BYTES = 2_048
         const val CLOSE_JOIN_MILLIS = 500L
     }
 }

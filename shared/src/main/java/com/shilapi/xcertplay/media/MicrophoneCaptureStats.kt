@@ -28,6 +28,11 @@ internal class MicrophoneCaptureStats(
     private var lastSentNs: Long? = null
     private var sendGapMaxNs = 0L
     private var routedDeviceType: Int? = null
+    private var pcmSamples = 0L
+    private var pcmEnergy = 0L
+    private var pcmPeak = 0
+    private var pcmSilentFrames = 0L
+    private var pcmClippedSamples = 0L
 
     fun started(routeType: Int?) {
         routedDeviceType = routeType
@@ -51,6 +56,22 @@ internal class MicrophoneCaptureStats(
         emptyEncodedFrames += emptyCount.coerceAtLeast(0)
     }
 
+    /** Levels only; no voice samples or encoded data are retained in diagnostics. */
+    fun pcm(frame: ByteArray) {
+        var peak = 0
+        for (i in 0 until frame.size - 1 step 2) {
+            val sample = (((frame[i + 1].toInt() and 255) shl 8) or
+                (frame[i].toInt() and 255)).toShort().toInt()
+            val magnitude = kotlin.math.abs(sample)
+            peak = maxOf(peak, magnitude)
+            pcmEnergy += sample.toLong() * sample
+            pcmSamples++
+            if (magnitude >= 32760) pcmClippedSamples++
+        }
+        pcmPeak = maxOf(pcmPeak, peak)
+        if (peak == 0) pcmSilentFrames++
+    }
+
     fun sent() {
         val now = nowNs()
         lastSentNs?.let { sendGapMaxNs = maxOf(sendGapMaxNs, (now - it).coerceAtLeast(0)) }
@@ -72,7 +93,9 @@ internal class MicrophoneCaptureStats(
             "captureBytes=$capturedBytes reads=$reads zeroReads=$zeroReads readErrors=$readErrors " +
             "readMaxMs=${readMaxNs / 1_000_000} encodedFrames=$encodedFrames " +
             "emptyEncodedFrames=$emptyEncodedFrames udpSent=$udpSent sendErrors=$sendErrors " +
-            "sendGapMaxMs=${sendGapMaxNs / 1_000_000} ended=$ended")
+            "sendGapMaxMs=${sendGapMaxNs / 1_000_000} " +
+            "inputRms=${if (pcmSamples == 0L) 0 else kotlin.math.sqrt(pcmEnergy.toDouble() / pcmSamples).toInt()} " +
+            "inputPeak=$pcmPeak silentFrames=$pcmSilentFrames clippedSamples=$pcmClippedSamples ended=$ended")
         windowStart = now
         capturedBytes = 0
         reads = 0
@@ -84,6 +107,11 @@ internal class MicrophoneCaptureStats(
         udpSent = 0
         sendErrors = 0
         sendGapMaxNs = 0
+        pcmSamples = 0
+        pcmEnergy = 0
+        pcmPeak = 0
+        pcmSilentFrames = 0
+        pcmClippedSamples = 0
     }
 
     private fun emit(message: String) { runCatching { report(message) } }
@@ -98,7 +126,8 @@ internal class MicrophoneCaptureStats(
                 else -> "other" to "MIC"
             }
             return "type=$type source=$source codec=${config.codec.name} " +
-                "rate=${config.sampleRate} channels=${config.channels} frameMs=${config.frameMillis}"
+                "rate=${config.sampleRate} channels=${config.channels} frameMs=${config.frameMillis} " +
+                "bitrate=${config.bitrate ?: 0} rtpClock=${config.rtpClockRate} rtpSamples=${config.rtpSamplesPerPacket}"
         }
 
         private fun failureMessage(

@@ -67,6 +67,7 @@ internal object CarPlayMediaKeys {
         }
         appContext = context.applicationContext
         controller = next
+        HongqiWheelControls.attach(context, next)
         next.playbackListener = { playing -> onIphonePlaying(next, playing) }
         next.nowPlayingListener = { update -> onNowPlayingChanged(next, update) }
         next.artworkListener = { id, bytes -> onArtworkChanged(next, id, bytes) }
@@ -80,6 +81,7 @@ internal object CarPlayMediaKeys {
         expected.nowPlayingListener = null
         expected.artworkListener = null
         controller = null
+        HongqiWheelControls.detach(expected)
         releaseLocked()
     }
 
@@ -92,7 +94,9 @@ internal object CarPlayMediaKeys {
     private fun onIphonePlaying(expected: CarPlayController, playing: Boolean) {
         if (playing) mainHandler.post {
             synchronized(this) {
-                if (controller === expected) regainFocusLocked()
+                if (controller !== expected) return@synchronized
+                activateLocked()
+                publishPlaybackStateLocked()
             }
         }
     }
@@ -109,11 +113,15 @@ internal object CarPlayMediaKeys {
                 if (nowPlaying.elapsedMillis != update.elapsedMillis) elapsedUpdatedAt = SystemClock.elapsedRealtime()
                 val metadataChanged = metadataChanged(nowPlaying, update) || artwork !== previousArtwork
                 nowPlaying = update
+                // Autoplay can report playback before the first audio-track lifecycle callback.
+                // Only initialize here: periodic metadata must not reclaim a user-selected source.
+                val needsActivation = update.playing && session == null
+                if (needsActivation) activateLocked()
                 // The iPhone repeats NowPlayingUpdate about twice a second for the position alone.
                 // Republishing the metadata each time sent a copy of the artwork through system_server
                 // to every media listener, and on a DiLink 5.0 Tang that exhausted memory within
                 // minutes. The position goes in the playback state.
-                if (metadataChanged) session?.setMetadata(androidMetadata(update, shownArtworkLocked()))
+                if (metadataChanged && !needsActivation) session?.setMetadata(androidMetadata(update, shownArtworkLocked()))
                 publishPlaybackStateLocked()
             }
         }
@@ -152,11 +160,15 @@ internal object CarPlayMediaKeys {
     }
 
     private fun updateLocked(active: Boolean) {
-        val context = appContext ?: return
-        if (controller == null) return
+        if (appContext == null || controller == null) return
         mediaAudioActive = active
-        if (active && session == null) start(context) else if (active) regainFocusLocked()
+        if (active) activateLocked()
         publishPlaybackStateLocked()
+    }
+
+    private fun activateLocked() {
+        val context = appContext ?: return
+        if (session == null) start(context) else regainFocusLocked()
     }
 
     private fun start(context: Context) {
@@ -177,8 +189,8 @@ internal object CarPlayMediaKeys {
         val granted = audio?.requestAudioFocus(request) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
         focusRequest = request
         focusHeld = granted
-        session = MediaSession(context, "DiPlay CarPlay").apply {
-            setCallback(callback, mainHandler)
+        session = MediaSession(context, "FAW Play CarPlay").apply {
+            if (com.shilapi.xcertplay.shared.BuildConfig.FAW_WHEEL_CONTROL_ENABLED) setCallback(callback, mainHandler)
             setMetadata(androidMetadata(nowPlaying, shownArtworkLocked()))
             isActive = true
         }
@@ -210,7 +222,7 @@ internal object CarPlayMediaKeys {
         }
         session?.setPlaybackState(
             PlaybackState.Builder()
-                .setActions(ACTIONS)
+                .setActions(if (com.shilapi.xcertplay.shared.BuildConfig.FAW_WHEEL_CONTROL_ENABLED) ACTIONS else 0L)
                 .setState(
                     if (playing) PlaybackState.STATE_PLAYING else PlaybackState.STATE_PAUSED,
                     nowPlaying.elapsedMillis ?: PlaybackState.PLAYBACK_POSITION_UNKNOWN,
@@ -224,6 +236,11 @@ internal object CarPlayMediaKeys {
     }
 
     private fun send(index: Int, source: String) {
+        if (!com.shilapi.xcertplay.shared.BuildConfig.FAW_WHEEL_CONTROL_ENABLED) return
+        // This method runs inside MediaSession.Callback, where Android 9 exposes
+        // the controller responsible for the transport command.
+        val caller = runCatching { synchronized(this) { session }?.currentControllerInfo }.getOrNull()
+        Log.i(TAG, "media command source=$source index=$index caller=${caller?.packageName ?: "unknown"} uid=${caller?.uid ?: -1}")
         // While the car's video player is on screen the wheel drives it: a CarPlay play/pause would
         // make the iPhone end the video session.
         if (CarPlayVideo.onMediaKey(index)) {

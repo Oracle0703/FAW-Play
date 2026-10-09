@@ -36,6 +36,9 @@ internal class WirelessConnectionProof<S : Any> {
     @Synchronized fun hasRenderedFrame(generation: Int): Boolean =
         this.generation == generation && session != null && rendered
 
+    @Synchronized fun hasRenderedFrame(generation: Int, current: S?): Boolean =
+        this.generation == generation && current != null && session === current && rendered
+
     @Synchronized fun end(generation: Int, session: S) {
         if (this.generation != generation || this.session !== session) return
         this.session = null

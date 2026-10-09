@@ -50,6 +50,7 @@ internal class ClusterMapPresentation(
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        com.shilapi.xcertplay.hud.HongqiNavigation.preparePresentation(this)
         val size = sizeOf(display)
         val adaptive = DiLink51ClusterLayout.supported()
         val plan = if (adaptive) DiLink51ClusterLayout.plan(size.x, size.y, theme) else null
@@ -131,6 +132,12 @@ internal class ClusterMapPresentation(
     /** Hides the placeholder once the phone streams the cluster screen. */
     fun setStreamActive(active: Boolean) {
         waitingLabel?.visibility = if (active) View.GONE else View.VISIBLE
+        com.shilapi.xcertplay.hud.HongqiNavigation.streamActive(this, active)
+    }
+
+    override fun onStop() {
+        com.shilapi.xcertplay.hud.HongqiNavigation.presentationStopped(this)
+        super.onStop()
     }
 
     /** Window alpha hides the pixels without destroying the TextureView/decoder surface. */
@@ -163,6 +170,9 @@ internal class ClusterMapPresentation(
 
         /** Keep the 5/5.1 selection order, then try the measured DiLink 4 projection display. */
         fun findDisplay(context: Context, theme: DiLink51ClusterLayout.Theme = DiLink51ClusterLayout.theme(context)): Display? {
+            if (com.shilapi.xcertplay.hud.HongqiNavigation.supported()) {
+                return com.shilapi.xcertplay.hud.HongqiNavigation.findDisplay(context)
+            }
             val displays = context.getSystemService(DisplayManager::class.java)
                 ?.getDisplays(DisplayManager.DISPLAY_CATEGORY_PRESENTATION) ?: return null
             val name = DiLink51ClusterLayout.displayName(
@@ -193,7 +203,7 @@ internal class ClusterMapPresentation(
 
         fun diagnosticReport(context: Context): String = buildString {
             appendLine("clusterEnabled=${AirPlayPersistence.loadClusterMapEnabled(context)}")
-            appendLine("navigationReceiverAvailable=${com.shilapi.xcertplay.hud.BydOutputSettings.navigationAvailable(context)}")
+            appendLine("navigationReceiverAvailable=${com.shilapi.xcertplay.hud.FawOutputSettings.navigationAvailable(context)}")
             appendLine("allDisplays=${describeDisplays(context)}")
             val presentations = context.getSystemService(DisplayManager::class.java)
                 ?.getDisplays(DisplayManager.DISPLAY_CATEGORY_PRESENTATION).orEmpty()

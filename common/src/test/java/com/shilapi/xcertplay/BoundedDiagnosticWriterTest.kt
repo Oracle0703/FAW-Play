@@ -7,6 +7,24 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class BoundedDiagnosticWriterTest {
+    @Test(timeout = 5_000) fun lifecycleTasksSurviveOverflowAndStayInOrder() {
+        val entered = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        val values = Collections.synchronizedList(mutableListOf<Int>())
+        val writer = BoundedDiagnosticWriter<Int>(2) {
+            if (it == -1) { entered.countDown(); release.await() }
+            values.add(it)
+        }
+        try {
+            writer.enqueueControl(-1)
+            assertTrue(entered.await(2, TimeUnit.SECONDS))
+            writer.enqueue(1); writer.enqueueControl(-2)
+            writer.enqueue(2); writer.enqueue(3); writer.enqueueControl(-3)
+            release.countDown()
+            assertTrue(writer.awaitIdle(2_000))
+            assertEquals(listOf(-1, -2, 2, 3, -3), values.toList())
+        } finally { release.countDown(); writer.close() }
+    }
     @Test(timeout = 5_000) fun aBlockedWriterCannotBlockEnqueueAndOnlyTheLatest64PendingEntriesSurvive() {
         val entered = CountDownLatch(1)
         val release = CountDownLatch(1)

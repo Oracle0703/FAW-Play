@@ -1,5 +1,7 @@
 package com.shilapi.xcertplay.airplay
 
+import com.shilapi.xcertplay.media.MicrophoneCapabilities
+
 /**
  * Builds the /info response the phone reads before it requests media streams.
  *
@@ -57,7 +59,7 @@ object AirPlayInfoPlist {
         info["hidDevices"] = listOf(
             AirPlayHid.touchHidDevice(config.main.widthPixels, config.main.heightPixels, MAIN_UUID),
             AirPlayHid.knobHidDevice(MAIN_UUID),
-            AirPlayHid.mediaHidDevice(MAIN_UUID),
+            AirPlayHid.mediaHidDevice(),
             AirPlayHid.telephonyHidDevice(MAIN_UUID),
         )
         if (config.icons.isNotEmpty()) {
@@ -137,7 +139,8 @@ object AirPlayInfoPlist {
         val opus = 0x70000000
         val aacLc = if (is48) 0x800000 else 0x400000
         val pcmInput = if (microphone) pcmMono else null
-        val wirelessInput = if (microphone) pcmMono or opus else null
+        val voiceFormats = pcmMono or if (!microphone || MicrophoneCapabilities.supportsOpusEncoding()) opus else 0
+        val wirelessInput = if (microphone) voiceFormats else null
 
         return listOf(
             format(100, "compatibility", pcm, pcmInput),
@@ -145,8 +148,10 @@ object AirPlayInfoPlist {
             format(100, "default", pcm or opus, wirelessInput),
             format(100, "alert", pcm or opus),
             format(100, "media", pcm),
-            format(100, "telephony", pcmMono or opus, wirelessInput),
-            format(100, "speechRecognition", pcmMono or opus, wirelessInput),
+            // These streams are duplex: offering an output codec also requires a
+            // matching microphone encoder. Older ROMs may only have an Opus decoder.
+            format(100, "telephony", voiceFormats, wirelessInput),
+            format(100, "speechRecognition", voiceFormats, wirelessInput),
             format(101, "default", pcm or opus),
             format(102, "media", aacLc),
         )

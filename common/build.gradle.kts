@@ -11,6 +11,8 @@ android {
 
     defaultConfig {
         minSdk = 28
+        manifestPlaceholders["fawClusterTuningEnabled"] =
+            providers.gradleProperty("fawClusterTuning").getOrElse("false")
     }
 
     compileOptions {

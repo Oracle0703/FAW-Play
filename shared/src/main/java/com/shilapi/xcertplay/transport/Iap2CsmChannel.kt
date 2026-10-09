@@ -159,7 +159,7 @@ class Iap2CsmChannel private constructor(
     private fun checkOpen() {
         synchronized(stateLock) {
             terminalFailure?.let { throw it }
-            if (closed) throw IOException("CSM channel is closed")
+            if (closed) throw Iap2ChannelClosedException()
         }
     }
 
@@ -243,3 +243,5 @@ class Iap2CsmChannel private constructor(
             Iap2CsmChannel(Iap2LinkChannel.openTunnel(underlying, onArtwork))
     }
 }
+
+internal class Iap2ChannelClosedException : java.io.IOException("CSM channel is closed")

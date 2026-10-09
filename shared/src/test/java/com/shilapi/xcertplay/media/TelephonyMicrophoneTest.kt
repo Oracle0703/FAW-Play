@@ -69,7 +69,7 @@ class TelephonyMicrophoneTest {
         ShadowAudioRecord.clearSource()
     }
 
-    @Test fun telephonyEnablesEffectsOnItsRecorderAndRestoresThePreviousMode() {
+    @Test fun telephonyEnablesEffectsOnItsRecorderAndReleasesItsMode() {
         manager.mode = AudioManager.MODE_RINGTONE
         sink.onMicrophoneStarted(telephony, config("telephony"))
         val record = awaitCapture()
@@ -85,7 +85,7 @@ class TelephonyMicrophoneTest {
         }
 
         sink.onMicrophoneStopped(telephony)
-        assertEquals(AudioManager.MODE_RINGTONE, manager.mode)
+        assertEquals(AudioManager.MODE_NORMAL, manager.mode)
         assertTrue(ShadowAudioEffect.getAudioEffects().isEmpty())
         assertEquals(AudioRecord.STATE_UNINITIALIZED, record.state)
     }
@@ -135,7 +135,7 @@ class TelephonyMicrophoneTest {
         assertEquals(AudioManager.MODE_IN_COMMUNICATION, manager.mode)
         assertEquals(2, ShadowAudioEffect.getAudioEffects().size)
         sink.onMicrophoneStopped(telephony)
-        assertEquals(AudioManager.MODE_RINGTONE, manager.mode)
+        assertEquals(AudioManager.MODE_NORMAL, manager.mode)
         assertTrue(ShadowAudioEffect.getAudioEffects().isEmpty())
     }
 
@@ -157,22 +157,29 @@ class TelephonyMicrophoneTest {
         assertTrue(ShadowAudioEffect.getAudioEffects().isEmpty())
     }
 
-    @Test fun duplicateStartDoesNotOverwriteTheOriginalModeOrCreateMoreEffects() {
+    @Test fun duplicateStartDoesNotCreateMoreEffectsAndReleasesItsMode() {
         manager.mode = AudioManager.MODE_RINGTONE
         sink.onMicrophoneStarted(telephony, config("telephony"))
         awaitCapture()
         sink.onMicrophoneStarted(telephony, config("telephony"))
         assertEquals(microphoneLog(), 2, ShadowAudioEffect.getAudioEffects().size)
         sink.onMicrophoneStopped(telephony)
-        assertEquals(AudioManager.MODE_RINGTONE, manager.mode)
+        assertEquals(AudioManager.MODE_NORMAL, manager.mode)
     }
 
-    @Test fun failedRecorderInitializationRestoresThePreviousMode() {
+    @Test fun failedRecorderInitializationReleasesItsMode() {
         manager.mode = AudioManager.MODE_RINGTONE
         sink.onMicrophoneStarted(telephony, config("telephony").copy(sampleRate = 1))
-        assertEquals(AudioManager.MODE_RINGTONE, manager.mode)
+        assertEquals(AudioManager.MODE_NORMAL, manager.mode)
         assertNull(recorder.get())
         assertTrue(ShadowAudioEffect.getAudioEffects().isEmpty())
+    }
+
+    @Test fun failedCallCaptureDoesNotRetainTheOemCallMode() {
+        manager.mode = AudioManager.MODE_IN_CALL
+        sink.onMicrophoneStarted(telephony, config("telephony").copy(sampleRate = 1))
+        assertEquals(AudioManager.MODE_NORMAL, manager.mode)
+        assertNull(recorder.get())
     }
 
     @Test fun unavailableEffectsDoNotPreventRecording() {

@@ -4,13 +4,13 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class WirelessStartupRetryBudgetTest {
-    @Test fun stopsAfterFiveRetriesWithExistingBackoff() {
+    @Test fun stopsAfterFiveRetriesWithFasterBoundedBackoff() {
         val budget = WirelessStartupRetryBudget()
-        assertEquals(listOf(2_000L, 4_000L, 8_000L, 16_000L, 30_000L), List(5) { budget.nextDelayMillis() })
+        assertEquals(listOf(1_000L, 2_000L, 4_000L, 8_000L, 10_000L), List(5) { budget.nextDelayMillis() })
         assertNull(budget.nextDelayMillis())
         assertEquals(5, budget.retries)
         budget.manualRetry()
-        assertEquals(2_000L, budget.nextDelayMillis())
+        assertEquals(1_000L, budget.nextDelayMillis())
     }
 
     @Test fun onlyContinuousVideoSessionResetsBudget() {

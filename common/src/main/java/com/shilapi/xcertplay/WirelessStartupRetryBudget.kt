@@ -10,7 +10,7 @@ internal class WirelessStartupRetryBudget {
 
     fun nextDelayMillis(): Long? {
         if (retries >= WirelessStartupPolicy.MAX_STARTUP_RETRIES) return null
-        return (2_000L * (1L shl retries++)).coerceAtMost(30_000L)
+        return (1_000L * (1L shl retries++)).coerceAtMost(10_000L)
     }
 
     fun firstFrame(session: Any, nowMillis: Long): Boolean {

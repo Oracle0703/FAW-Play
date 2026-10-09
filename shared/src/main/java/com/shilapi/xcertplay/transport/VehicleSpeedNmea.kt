@@ -29,6 +29,8 @@ interface VehicleSpeedSource {
 object PascdEncoder {
     fun encode(reading: VehicleSpeedReading): String? {
         val samples = reading.samples.takeIf { it.isNotEmpty() } ?: return null
+        if (samples.any { it.elapsedMillis < 0 || !it.metersPerSecond.isFinite() || it.metersPerSecond < 0 } ||
+            samples.zipWithNext().any { (a, b) -> b.elapsedMillis < a.elapsedMillis }) return null
         val start = samples.first().elapsedMillis
         val body = buildString {
             append("PASCD,").append(format("%.3f", start / 1000.0)).append(",C,")
@@ -58,6 +60,7 @@ class VehicleSpeedLocationProvider(
 
     override fun onRequested(components: Set<Int>) {
         speedRequested = Iap2LocationMessages.VEHICLE_SPEED_DATA in components
+        if (!speedRequested) speed.stop()
         position.onRequested(components)
     }
 

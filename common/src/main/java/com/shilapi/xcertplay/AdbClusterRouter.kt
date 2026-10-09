@@ -1,8 +1,6 @@
 package com.shilapi.xcertplay
 
 import android.content.Context
-import com.shilapi.xcertplay.adb.AdbKeys
-import com.shilapi.xcertplay.adb.LocalAdb
 import java.io.File
 
 /** Strictly measured DiLink 4 target, discovered afresh through the authorized shell. */
@@ -11,8 +9,7 @@ internal object AdbClusterRouter {
     data class Result(val success: Boolean, val report: String)
 
     /** Existing public cluster displays always win, even when the experimental switch is saved. */
-    fun enabled(context: Context): Boolean = AirPlayPersistence.loadAdbClusterEnabled(context) &&
-        !DiLink51ClusterLayout.supported() && ClusterMapPresentation.findDisplay(context) == null
+    fun enabled(context: Context): Boolean = false
 
     // Match only the base logical display, not a device's layer-stack number or override record.
     internal fun displayId(dump: String): Int? {
@@ -54,43 +51,9 @@ internal object AdbClusterRouter {
         return matches.singleOrNull()?.takeIf { it > 0 }
     }
 
-    fun launch(context: Context, token: String, prepare: (Int) -> Boolean): Result {
-        var success = false
-        val text = buildString {
-            appendLine("ADB direct cluster launch capturedAt=${java.util.Date()}")
-            try {
-                LocalAdb(AdbKeys.load(context)).use { adb ->
-                    val access = adb.connect(mayAsk = false)
-                    appendLine("adbAccess=$access")
-                    if (access != LocalAdb.Access.READY) return@use
-                    val display = displayId(adb.shell("dumpsys display").orEmpty())
-                    appendLine("routeTarget=${display ?: "none"}")
-                    if (display == null || !enabled(context) || !prepare(display)) return@use
-                    val held = com.shilapi.xcertplay.hud.BydOemClusterNavi.holdForLaunch(context, token) {
-                        enabled(context) && prepare(display)
-                    }
-                    appendLine("stockMapHoldReady=$held")
-                    if (!held || !enabled(context) || !prepare(display)) return@use
-                    val output = adb.shell(launchCommand(context.packageName, display, token)).orEmpty()
-                    success = accepted(output)
-                    appendLine(output.take(1500))
-                    appendLine("launchAccepted=$success; awaiting actual display confirmation")
-                }
-            } catch (error: Exception) {
-                appendLine("routeError=${error.javaClass.simpleName}: ${error.message}")
-            }
-        }
-        // A failed diagnostic write must not leave launchPending stuck forever.
-        runCatching { File(context.filesDir, REPORT).writeText(text) }
-        return Result(success, text)
-    }
-
-    fun verify(context: Context, task: Int): Int? = runCatching {
-        LocalAdb(AdbKeys.load(context)).use { adb ->
-            if (adb.connect(mayAsk = false) != LocalAdb.Access.READY) null
-            else activityDisplay(adb.shell("dumpsys activity activities").orEmpty(), context.packageName, task)
-        }
-    }.getOrNull()
+    fun launch(context: Context, token: String, prepare: (Int) -> Boolean): Result =
+        Result(false, "本版本使用红旗原厂仪表接口。")
+    fun verify(context: Context, task: Int): Int? = null
 
     fun report(context: Context): String = File(context.filesDir, REPORT).let {
         if (it.isFile) it.readText() else "ADB cluster routing has not been run."

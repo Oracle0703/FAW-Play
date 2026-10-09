@@ -15,6 +15,9 @@ data class AudioStreamId(val type: Int, val audioType: String)
 
 /** Rendering seam for the decrypted CarPlay media streams. */
 interface MediaSink {
+    fun setWirelessDiagnosticSource(source: () -> String) {}
+    fun onCarPlaySessionActive(session: Any) {}
+    fun onCarPlaySessionEnded(session: Any) {}
     fun onVideoCodec(type: Int, codec: VideoCodec) {}
     fun onVideoConfig(type: Int, codecData: ByteArray) {}
     fun onVideoFrame(type: Int, naluBytes: ByteArray) {}
@@ -39,6 +42,9 @@ class CarPlayMediaEngine(
     private val microphoneEnabled: Boolean = false,
     private val audioCaptureDirectory: File? = null,
 ) : AirPlayMediaHandler {
+    override fun setWirelessDiagnosticSource(source: () -> String) { sink.setWirelessDiagnosticSource(source) }
+    override fun onSessionActive(session: AirPlaySession) { sink.onCarPlaySessionActive(session) }
+
     internal data class StreamKey(
         val session: AirPlaySession,
         val type: Int,
@@ -115,6 +121,7 @@ class CarPlayMediaEngine(
         return port
     }
 
+    @Synchronized
     override fun onAudio(session: AirPlaySession, type: Int, stream: Map<String, Any?>): Map<String, Any?>? {
         val audioType = stream["audioType"]?.toString()?.lowercase() ?: "default"
         // Concurrent streams may share a type (e.g. music, guidance and Siri can all arrive as
@@ -148,9 +155,14 @@ class CarPlayMediaEngine(
         val capture = audioCaptureDirectory?.let { AudioPacketCapture(it, type) }
         if (capture != null) audioCaptures[streamKey] = capture
         val audio = AudioStream(key, type, session::logDebug)
-        val (dataPort, controlPort) = audio.listen(
+        // Publish ownership before listen can deliver its first packet. Setup, callbacks and
+        // teardown share this monitor so a late callback cannot restart a closed microphone.
+        streams[streamKey] = audio
+        audioMeta[streamKey] = meta
+        val (dataPort, controlPort) = try { audio.listen(
             object : AudioStream.Listener {
-                override fun onStarted(firstSample: Int) {
+                override fun onStarted(firstSample: Int): Unit = synchronized(this@CarPlayMediaEngine) {
+                    if (streams[streamKey] !== audio) return@synchronized
                     meta.firstSample = firstSample
                     meta.originNs = System.nanoTime()
                     sink.onAudioStarted(streamId, format, firstSample)
@@ -158,7 +170,9 @@ class CarPlayMediaEngine(
                 }
 
                 override fun onRtp(rtp: ByteArray, sample: Int) =
-                    sink.onAudioRtp(streamId, format, rtp, sample)
+                    synchronized(this@CarPlayMediaEngine) {
+                        if (streams[streamKey] === audio) sink.onAudioRtp(streamId, format, rtp, sample)
+                    }
 
                 override fun onPacket(
                     wire: ByteArray,
@@ -166,12 +180,19 @@ class CarPlayMediaEngine(
                     sample: Int?,
                     error: Throwable?,
                 ) {
-                    capture?.record(wire, rtp, sample, error)
+                    synchronized(this@CarPlayMediaEngine) {
+                        if (streams[streamKey] === audio) capture?.record(wire, rtp, sample, error)
+                    }
                 }
             },
-        )
-        streams[streamKey] = audio
-        audioMeta[streamKey] = meta
+        ) } catch (error: Exception) {
+            streams.remove(streamKey, audio)
+            audio.close()
+            audioMeta.remove(streamKey)
+            pendingMicrophone.remove(streamKey)
+            audioCaptures.remove(streamKey)?.close()
+            throw error
+        }
         return linkedMapOf(
             "type" to type,
             "dataPort" to dataPort,
@@ -316,33 +337,40 @@ class CarPlayMediaEngine(
         return linkedMapOf("streams" to streams)
     }
 
+    @Synchronized
     override fun onTeardown(session: AirPlaySession, type: Int) {
         if (type == STREAM_TYPE_DATA) clearPendingIapTunnel(session)
         // TEARDOWN carries only the stream type; release every audioType variant of it.
         val tornDown = streams.keys.filter { it.session === session && it.type == type }
         tornDown.forEach { key ->
             val streamId = AudioStreamId(key.type, key.audioType)
+            // Invalidate and stop receive first; callbacks already inside this monitor have
+            // completed, and callbacks waiting for it will see that they no longer own the ID.
+            streams.remove(key)?.close()
             if (pendingMicrophone.remove(key) != null) sink.onMicrophoneStopped(streamId)
             audioMeta.remove(key)
             audioCaptures.remove(key)?.close()
             sink.onAudioStopped(streamId)
-            streams.remove(key)?.close()
         }
         if (isScreenStreamType(type)) sink.onScreenStreamActive(type, false)
     }
 
+    @Synchronized
     override fun onSessionClosed(session: AirPlaySession) {
+        sink.onCarPlaySessionEnded(session)
         clearPendingIapTunnel(session)
         videoSettingsChannels.remove(session)?.close()
         val sessionStreams = streams.keys.filter { it.session === session }
         sessionStreams
             .filter { isScreenStreamType(it.type) }
             .forEach { sink.onScreenStreamActive(it.type, false) }
-        sessionStreams.forEach { streams.remove(it)?.close() }
-        audioMeta.clear()
-        pendingMicrophone.clear()
-        audioCaptures.values.forEach(AudioPacketCapture::close)
-        audioCaptures.clear()
+        sessionStreams.forEach { key ->
+            streams.remove(key)?.close()
+            val id = AudioStreamId(key.type, key.audioType)
+            if (pendingMicrophone.remove(key) != null) sink.onMicrophoneStopped(id)
+            if (audioMeta.remove(key) != null) sink.onAudioStopped(id)
+            audioCaptures.remove(key)?.close()
+        }
     }
 
     private fun replacePendingIapTunnel(session: AirPlaySession, next: PendingIapTunnel) {
@@ -390,6 +418,15 @@ class CarPlayMediaEngine(
             formatBits and OPUS_24K != 0L -> 64_000
             else -> 48_000
         }
+        val microphoneRtpClock = if (format.codec == AudioCodecKind.OPUS) {
+            when {
+                formatBits and OPUS_48K != 0L -> 48_000
+                formatBits and OPUS_24K != 0L -> 24_000
+                else -> 16_000
+            }
+        } else {
+            format.sampleRate
+        }
         return MicrophoneConfig(
             audioType = format.audioType,
             sampleRate = format.sampleRate,
@@ -401,6 +438,7 @@ class CarPlayMediaEngine(
             key = key,
             codec = format.codec,
             bitrate = if (format.codec == AudioCodecKind.OPUS) opusBitrate else null,
+            rtpClockRate = microphoneRtpClock,
         )
     }
 

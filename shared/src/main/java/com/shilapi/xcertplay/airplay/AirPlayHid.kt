@@ -34,8 +34,9 @@ object AirPlayHid {
     fun knobHidDevice(displayUuid: String): Map<String, Any?> =
         hidDeviceEntry(KNOB_HID_UID, "xcertplay Knob", knobDescriptor, displayUuid)
 
-    fun mediaHidDevice(displayUuid: String): Map<String, Any?> =
-        hidDeviceEntry(MEDIA_HID_UID, "xcertplay Media", mediaDescriptor, displayUuid)
+    /** Consumer controls address the playing media app independently of display focus. */
+    fun mediaHidDevice(): Map<String, Any?> =
+        hidDeviceEntry(MEDIA_HID_UID, "xcertplay Media", mediaDescriptor, null)
 
     fun telephonyHidDevice(displayUuid: String): Map<String, Any?> =
         hidDeviceEntry(TELEPHONY_HID_UID, "xcertplay Telephony", telephonyDescriptor, displayUuid)
@@ -45,7 +46,7 @@ object AirPlayHid {
         for (slot in 0 until TOUCH_CONTACTS) {
             val offset = slot * BYTES_PER_FINGER
             report[offset] = slot.toByte()
-            val contact = contacts.getOrNull(slot) ?: continue
+            val contact = contacts.firstOrNull { it.id == slot } ?: continue
             report[offset + 1] = if (contact.down) 0x01 else 0x00
             writeU16Le(report, offset + 2, Math.round(contact.x.coerceAtLeast(0.0)).toInt())
             writeU16Le(report, offset + 4, Math.round(contact.y.coerceAtLeast(0.0)).toInt())
@@ -74,16 +75,17 @@ object AirPlayHid {
         uid: Int,
         name: String,
         descriptor: ByteArray,
-        displayUuid: String,
+        displayUuid: String?,
     ): Map<String, Any?> = linkedMapOf(
         "hidProductID" to 1L,
         "hidVendorID" to 2L,
         "hidCountryCode" to 0L,
         "uuid" to uid.toString(16),
         "name" to name,
-        "displayUUID" to displayUuid,
         "hidDescriptor" to descriptor,
-    )
+    ).apply {
+        if (displayUuid != null) put("displayUUID", displayUuid)
+    }
 
     private fun multitouchDescriptor(xMax: Int, yMax: Int): ByteArray {
         val bytes = ArrayList<Int>()

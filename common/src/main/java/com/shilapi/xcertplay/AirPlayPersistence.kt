@@ -77,7 +77,6 @@ object AirPlayPersistence {
     private const val KEY_CLUSTER_TURN_CARD_OVERLAY_X = "cluster_turn_card_overlay_x_percent"
     private const val KEY_CLUSTER_TURN_CARD_OVERLAY_Y = "cluster_turn_card_overlay_y_percent"
     private const val KEY_CENTER_MAP_FOLLOWS_DASHBOARD = "center_map_follows_dashboard"
-    private const val KEY_SETTINGS_GESTURE_FINGERS = "settings_gesture_fingers"
     private const val KEY_WIDTH_PHYSICAL_MM = "display_width_physical_mm"
     private const val KEY_PHYSICAL_SIZE_BASIS = "display_physical_size_basis"
     private const val KEY_MAX_DETECTED_WIDTH = "display_max_detected_width"
@@ -96,24 +95,19 @@ object AirPlayPersistence {
     private const val SAFE_AREA_KEY_PREFIX = "safe_area_"
     private const val CUSTOM_ICON_FILE = "airplay-icon.png"
 
-    const val DEFAULT_MANUFACTURER = "DiPlay"
-    const val DEFAULT_MODEL = "DiPlay"
-    const val DEFAULT_OEM_LABEL = "BYD"
+    const val DEFAULT_MANUFACTURER = "FAW Play"
+    const val DEFAULT_MODEL = "FAW Play"
+    const val DEFAULT_OEM_LABEL = "红旗"
     const val DEFAULT_MFI_I2C_PATH = "/dev/i2c-1"
 
-    fun loadAmbientDelaySeconds(context: Context): Int =
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getInt("ambient_delay_seconds", 2).coerceIn(0, 60)
+    fun loadAmbientDelaySeconds(context: Context): Int = 0
 
     fun saveAmbientDelaySeconds(context: Context, seconds: Int) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
             .putInt("ambient_delay_seconds", seconds.coerceIn(0, 60)).apply()
     }
 
-    fun loadDisplayScalePercent(context: Context): Int =
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getInt("display_scale_percent", loadDisplayScaleTenths(context) * 10)
-            .coerceIn(CarPlayDisplayScale.MIN_PERCENT, CarPlayDisplayScale.MAX_PERCENT)
+    fun loadDisplayScalePercent(context: Context): Int = 100
 
     fun saveDisplayScalePercent(context: Context, percent: Int) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
@@ -128,12 +122,7 @@ object AirPlayPersistence {
     private const val KEY_CLUSTER_TURN_CARD_OVERLAY_SIZE_PERCENT = "cluster_turn_card_overlay_size_percent"
     private const val KEY_CLUSTER_TURN_CARD_OPACITY = "cluster_turn_card_opacity_percent"
 
-    fun loadDisplayScaleTenths(context: Context): Int {
-        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        return CarPlayDisplayScale.sanitize(
-            prefs.getInt(KEY_DISPLAY_SCALE_TENTHS, CarPlayDisplayScale.DEFAULT_TENTHS),
-        )
-    }
+    fun loadDisplayScaleTenths(context: Context): Int = 10
 
     fun saveDisplayScaleTenths(context: Context, tenths: Int) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
@@ -141,14 +130,9 @@ object AirPlayPersistence {
             .apply()
     }
 
-    fun loadHevcEnabled(context: Context): Boolean =
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getBoolean(KEY_HEVC_ENABLED, false)
+    fun loadHevcEnabled(context: Context): Boolean = false
 
-    fun loadUiScalePercent(context: Context): Int = CarPlayUiScale.sanitize(
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getInt(KEY_UI_SCALE_PERCENT, CarPlayUiScale.DEFAULT),
-    )
+    fun loadUiScalePercent(context: Context): Int = 100
 
     fun saveUiScalePercent(context: Context, percent: Int) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
@@ -161,9 +145,7 @@ object AirPlayPersistence {
             .apply()
     }
 
-    fun loadHevcSoftwareDecoderEnabled(context: Context): Boolean =
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getBoolean(KEY_HEVC_SOFTWARE_DECODER, false)
+    fun loadHevcSoftwareDecoderEnabled(context: Context): Boolean = false
 
     fun saveHevcSoftwareDecoderEnabled(context: Context, enabled: Boolean) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
@@ -193,7 +175,8 @@ object AirPlayPersistence {
 
     fun loadAudioFocusEnabled(context: Context): Boolean =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getBoolean(KEY_AUDIO_FOCUS_ENABLED, false)
+            .getBoolean(KEY_AUDIO_FOCUS_ENABLED,
+                context.packageManager.hasSystemFeature(android.content.pm.PackageManager.FEATURE_AUTOMOTIVE))
 
     fun saveAudioFocusEnabled(context: Context, enabled: Boolean) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
@@ -225,14 +208,13 @@ object AirPlayPersistence {
             .apply()
     }
 
-    fun loadWirelessEnabled(context: Context): Boolean =
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getBoolean(KEY_WIRELESS_ENABLED, true)
+    fun loadWirelessEnabled(context: Context): Boolean {
+        ConnectionModePolicy.enforce(context)
+        return true
+    }
 
-    fun saveWirelessEnabled(context: Context, enabled: Boolean) {
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
-            .putBoolean(KEY_WIRELESS_ENABLED, enabled)
-            .apply()
+    fun saveWirelessEnabled(context: Context, @Suppress("UNUSED_PARAMETER") enabled: Boolean) {
+        ConnectionModePolicy.enforce(context)
     }
 
     fun loadMfiTarget(context: Context): MfiTarget {
@@ -282,34 +264,28 @@ object AirPlayPersistence {
     }
 
     fun loadWirelessHotspotMode(context: Context): WirelessHotspotMode {
-        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        val stored = prefs.getString(KEY_WIRELESS_HOTSPOT_MODE, null)
-        val mode = WirelessHotspotMode.entries.firstOrNull { it.name == stored }
-            ?: WirelessHotspotMode.MANUAL
-        val supported = if (mode == WirelessHotspotMode.LOCAL_ONLY_HOTSPOT ||
-            (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q && mode == WirelessHotspotMode.WIFI_P2P)
-        ) WirelessHotspotMode.MANUAL else mode
-        if (stored != supported.name) saveWirelessHotspotMode(context, supported)
-        return supported
+        ConnectionModePolicy.enforce(context)
+        return WirelessHotspotMode.WIFI_P2P
     }
 
-    fun saveWirelessHotspotMode(context: Context, mode: WirelessHotspotMode) {
-        val supported = if (mode == WirelessHotspotMode.LOCAL_ONLY_HOTSPOT) WirelessHotspotMode.MANUAL else mode
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
-            .putString(KEY_WIRELESS_HOTSPOT_MODE, supported.name)
-            .apply()
+    fun saveWirelessHotspotMode(context: Context, @Suppress("UNUSED_PARAMETER") mode: WirelessHotspotMode) {
+        ConnectionModePolicy.enforce(context)
     }
 
-    fun loadWifiP2pPreferredChannel(context: Context): Int = runCatching {
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getInt(KEY_WIFI_P2P_PREFERRED_CHANNEL, WifiP2pChannels.AUTO)
-            .takeIf(WifiP2pChannels::isValid) ?: WifiP2pChannels.AUTO
-    }.getOrDefault(WifiP2pChannels.AUTO)
+    fun loadWifiP2pPreferredChannel(context: Context): Int {
+        ConnectionModePolicy.enforce(context)
+        if (!WifiP2pChannels.legacySelectionSupported()) return WifiP2pChannels.AUTO
+        val value = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).all["wifi_channel_experiment"] as? Int
+        return value?.takeIf { it == WifiP2pChannels.PREFER_5_GHZ || it in WifiP2pChannels.experimentalChannels }
+            ?: WifiP2pChannels.AUTO
+    }
 
     fun saveWifiP2pPreferredChannel(context: Context, channel: Int) {
-        require(WifiP2pChannels.isValid(channel))
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
-            .putInt(KEY_WIFI_P2P_PREFERRED_CHANNEL, channel).apply()
+        ConnectionModePolicy.enforce(context)
+        if (!WifiP2pChannels.legacySelectionSupported()) return
+        require(channel == WifiP2pChannels.AUTO || channel == WifiP2pChannels.PREFER_5_GHZ ||
+            channel in WifiP2pChannels.experimentalChannels)
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putInt("wifi_channel_experiment", channel).apply()
     }
 
     fun loadExistingWifiSsid(context: Context): String =
@@ -401,7 +377,7 @@ object AirPlayPersistence {
 
     fun loadAutoStartOnBoot(context: Context): Boolean =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getBoolean(KEY_AUTO_START_ON_BOOT, false)
+            .getBoolean(KEY_AUTO_START_ON_BOOT, true)
 
     fun saveAutoStartOnBoot(context: Context, enabled: Boolean) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
@@ -419,11 +395,7 @@ object AirPlayPersistence {
             .apply()
     }
 
-    fun loadManufacturer(context: Context): String =
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getString(KEY_MANUFACTURER, null)
-            ?.takeIf { it.isNotBlank() }
-            ?: DEFAULT_MANUFACTURER
+    fun loadManufacturer(context: Context): String = "FAW Play"
 
     fun saveManufacturer(context: Context, manufacturer: String) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
@@ -431,11 +403,7 @@ object AirPlayPersistence {
             .apply()
     }
 
-    fun loadModel(context: Context): String =
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getString(KEY_MODEL, null)
-            ?.takeIf { it.isNotBlank() }
-            ?: DEFAULT_MODEL
+    fun loadModel(context: Context): String = "FAW Play"
 
     fun saveModel(context: Context, model: String) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
@@ -455,53 +423,32 @@ object AirPlayPersistence {
             .apply()
     }
 
-    fun loadAmbientLightThreshold(context: Context): AmbientLightThreshold = AmbientLightThreshold.fromStored(
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getInt(KEY_AMBIENT_LUX_THRESHOLD, AmbientLightThreshold.DEFAULT_LUX),
-    )
+    fun loadAmbientLightThreshold(context: Context): AmbientLightThreshold = AmbientLightThreshold(FawSystemParameters.AMBIENT_LUX)
 
     fun saveAmbientLightThreshold(context: Context, threshold: AmbientLightThreshold) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
             .putInt(KEY_AMBIENT_LUX_THRESHOLD, threshold.lux).apply()
     }
 
-    fun loadCarPlayNightMode(context: Context): CarPlayNightMode = CarPlayNightMode.fromKey(
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_CARPLAY_NIGHT_MODE, null),
-    )
+    fun loadCarPlayNightMode(context: Context): CarPlayNightMode = CarPlayNightMode.AMBIENT
 
     fun saveCarPlayNightMode(context: Context, mode: CarPlayNightMode) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
             .putString(KEY_CARPLAY_NIGHT_MODE, mode.key).apply()
     }
 
-    fun loadFps(context: Context): Int = AirPlayDisplaySettings.sanitizeFps(
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getInt(KEY_FPS, 30),
-    )
+    fun loadFps(context: Context): Int = FawSystemParameters.fps(context)
 
-    fun loadMediaBufferMillis(context: Context): Int = com.shilapi.xcertplay.media.MediaAudioBuffer.sanitize(
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getInt(KEY_MEDIA_BUFFER_MS, com.shilapi.xcertplay.media.MediaAudioBuffer.DEFAULT_MILLIS),
-    )
+    fun loadMediaBufferMillis(context: Context): Int = FawSystemParameters.MEDIA_BUFFER_MS
 
     fun saveMediaBufferMillis(context: Context, millis: Int) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
             .putInt(KEY_MEDIA_BUFFER_MS, com.shilapi.xcertplay.media.MediaAudioBuffer.sanitize(millis)).apply()
     }
 
-    fun saveFps(context: Context, fps: Int) {
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
-            .putInt(KEY_FPS, AirPlayDisplaySettings.sanitizeFps(fps))
-            .apply()
-    }
+    fun saveFps(context: Context, fps: Int) { FawSystemParameters.saveFps(context, fps) }
 
-    fun loadWidthPhysicalMm(context: Context): Int =
-        AirPlayDisplaySettings.sanitizeWidthPhysicalMm(
-            context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getInt(
-                KEY_WIDTH_PHYSICAL_MM,
-                com.shilapi.xcertplay.airplay.CarPlaySize.DEFAULT.widthMillimeters,
-            ),
-        )
+    fun loadWidthPhysicalMm(context: Context): Int = FawSystemParameters.WIDTH_MM
 
     fun saveWidthPhysicalMm(context: Context, widthPhysicalMm: Int) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
@@ -512,12 +459,7 @@ object AirPlayPersistence {
             .apply()
     }
 
-    fun loadPhysicalSizeBasis(context: Context): AirPlayPhysicalSizeBasis {
-        val stored = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getString(KEY_PHYSICAL_SIZE_BASIS, null)
-        return AirPlayPhysicalSizeBasis.entries.firstOrNull { it.name == stored }
-            ?: AirPlayDisplaySettings.DEFAULT_PHYSICAL_SIZE_BASIS
-    }
+    fun loadPhysicalSizeBasis(context: Context): AirPlayPhysicalSizeBasis = AirPlayPhysicalSizeBasis.WIDTH
 
     fun savePhysicalSizeBasis(context: Context, basis: AirPlayPhysicalSizeBasis) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
@@ -543,7 +485,9 @@ object AirPlayPersistence {
     }
 
     fun loadClusterMapEnabled(context: Context): Boolean =
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY_CLUSTER_MAP, false)
+        com.shilapi.xcertplay.shared.BuildConfig.FAW_NAVIGATION_OUTPUTS_ENABLED &&
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(
+            KEY_CLUSTER_MAP, com.shilapi.xcertplay.hud.HongqiNavigation.clusterDefault())
 
     fun loadAdbClusterEnabled(context: Context): Boolean = loadClusterMapEnabled(context) &&
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY_ADB_CLUSTER_ACTIVITY, false)
@@ -594,31 +538,34 @@ object AirPlayPersistence {
     }
 
     /** Whether to renegotiate resolution when entering/exiting freeform floating windows or launcher PiP. */
-    fun loadAdaptPipResolution(context: Context): Boolean =
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY_ADAPT_PIP_RESOLUTION, false)
+    fun loadAdaptPipResolution(context: Context): Boolean = true
 
     fun saveAdaptPipResolution(context: Context, enabled: Boolean) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(KEY_ADAPT_PIP_RESOLUTION, enabled).apply()
     }
 
-    fun loadClusterContent(context: Context): CarPlayClusterDisplay.Content =
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_CLUSTER_CONTENT, null)
+    fun loadClusterContent(context: Context): CarPlayClusterDisplay.Content {
+        val content = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_CLUSTER_CONTENT, null)
             ?.let { name -> CarPlayClusterDisplay.Content.entries.firstOrNull { it.name == name } }
             ?: if (AdbClusterRouter.enabled(context)) CarPlayClusterDisplay.Content.INSTRUMENTS else CarPlayClusterDisplay.Content.MAP
+        // HS5's stock navigator draws its own guidance above the map; sending instrument
+        // data alone does not put ETE/TBT into CarPlay's map-only video stream.
+        return if (com.shilapi.xcertplay.hud.HongqiNavigation.clusterDefault() &&
+            content == CarPlayClusterDisplay.Content.MAP) {
+            CarPlayClusterDisplay.Content.MAP_WITH_CUSTOM_CARD
+        } else content
+    }
 
     fun saveClusterContent(context: Context, content: CarPlayClusterDisplay.Content) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY_CLUSTER_CONTENT, content.name).apply()
         overlaySettingsListener?.invoke()
     }
 
-    /** Fingers for the swipe-down that opens settings; some head units reserve three. */
-    fun loadSettingsGestureFingers(context: Context): Int =
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getInt(KEY_SETTINGS_GESTURE_FINGERS, 3).coerceIn(2, 4)
+    /** Two fingers by default; HS5 reserves three for instrument projection. */
+    fun loadSettingsGestureFingers(context: Context): Int = SettingsGesturePolicy.load(context)
 
     fun saveSettingsGestureFingers(context: Context, fingers: Int) {
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
-            .putInt(KEY_SETTINGS_GESTURE_FINGERS, fingers.coerceIn(2, 4)).apply()
+        SettingsGesturePolicy.save(context, fingers)
     }
 
     fun loadCenterMapFollowsDashboard(context: Context): Boolean =
@@ -749,9 +696,7 @@ object AirPlayPersistence {
             .remove("cluster_safe_area_1920x720").apply()
     }
 
-    fun loadRightHandDrive(context: Context): Boolean =
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getBoolean(KEY_RIGHT_HAND_DRIVE, false)
+    fun loadRightHandDrive(context: Context): Boolean = false
 
     fun saveRightHandDrive(context: Context, rightHandDrive: Boolean) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
@@ -759,9 +704,7 @@ object AirPlayPersistence {
             .apply()
     }
 
-    fun loadHideTopBar(context: Context): Boolean =
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getBoolean(KEY_HIDE_TOP_BAR, true)
+    fun loadHideTopBar(context: Context): Boolean = true
 
     fun saveHideTopBar(context: Context, hide: Boolean) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
@@ -769,9 +712,7 @@ object AirPlayPersistence {
             .apply()
     }
 
-    fun loadHideBottomBar(context: Context): Boolean =
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getBoolean(KEY_HIDE_BOTTOM_BAR, true)
+    fun loadHideBottomBar(context: Context): Boolean = true
 
     fun saveHideBottomBar(context: Context, hide: Boolean) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
@@ -779,9 +720,7 @@ object AirPlayPersistence {
             .apply()
     }
 
-    fun loadSafeAreaDrawOutside(context: Context): Boolean =
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getBoolean(KEY_SAFE_AREA_DRAW_OUTSIDE, true)
+    fun loadSafeAreaDrawOutside(context: Context): Boolean = true
 
     fun saveSafeAreaDrawOutside(context: Context, drawOutside: Boolean) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
@@ -789,13 +728,7 @@ object AirPlayPersistence {
             .apply()
     }
 
-    fun loadSafeAreaRect(context: Context, widthPixels: Int, heightPixels: Int): SafeAreaRect? {
-        require(widthPixels > 0 && heightPixels > 0) { "Activity dimensions must be positive" }
-        return SafeAreaCodec.decode(
-            context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-                .getString(safeAreaKey(widthPixels, heightPixels), null),
-        )
-    }
+    fun loadSafeAreaRect(context: Context, widthPixels: Int, heightPixels: Int): SafeAreaRect? = null
 
     fun saveSafeAreaRect(
         context: Context,

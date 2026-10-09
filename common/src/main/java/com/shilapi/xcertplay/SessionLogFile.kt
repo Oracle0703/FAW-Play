@@ -24,7 +24,7 @@ internal class SessionLogFile(val file: File) : Closeable {
                 file.writeText("")
             }
             file.appendText(safe + "\n")
-        }
+        }.onFailure { writeFailures.incrementAndGet() }
         Unit
     }
     private fun rotate() {
@@ -38,6 +38,7 @@ internal class SessionLogFile(val file: File) : Closeable {
     }
     override fun close() = synchronized(lock) { closed = true }
     companion object {
+        val writeFailures = java.util.concurrent.atomic.AtomicLong()
         const val MAX_BYTES = 512 * 1024L
         private val ARCHIVE_NAMES = listOf("previous.log") + (2..7).map { "previous-$it.log" }
         val REPORT_NAMES = ARCHIVE_NAMES.reversed() + "diplay.log"

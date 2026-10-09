@@ -14,7 +14,14 @@ data class MicrophoneConfig(
     val key: ByteArray,
     val codec: AudioCodecKind = AudioCodecKind.LPCM,
     val bitrate: Int? = null,
+    val rtpClockRate: Int = sampleRate,
 ) {
+    // Keep the original Java constructor for callers that use the capture clock on wire.
+    constructor(audioType: String, sampleRate: Int, channels: Int, payloadType: Int,
+        frameMillis: Int, host: InetAddress, port: Int, key: ByteArray,
+        codec: AudioCodecKind, bitrate: Int?) : this(audioType, sampleRate, channels,
+        payloadType, frameMillis, host, port, key, codec, bitrate, sampleRate)
+
     val samplesPerPacket: Int
         get() = if (codec == AudioCodecKind.OPUS) {
             OPUS_SAMPLES_PER_PACKET
@@ -24,6 +31,14 @@ data class MicrophoneConfig(
 
     val frameBytes: Int
         get() = samplesPerPacket * channels * 2
+
+    /** CarPlay's negotiated Opus clock can differ from the encoder's 48 kHz PCM input. */
+    val rtpSamplesPerPacket: Int
+        get() = if (codec == AudioCodecKind.OPUS) {
+            maxOf(1, rtpClockRate * 20 / 1000)
+        } else {
+            samplesPerPacket
+        }
 
     private companion object {
         const val OPUS_SAMPLES_PER_PACKET = 960

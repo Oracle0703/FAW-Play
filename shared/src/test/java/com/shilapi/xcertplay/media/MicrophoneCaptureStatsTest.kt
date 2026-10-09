@@ -108,4 +108,20 @@ class MicrophoneCaptureStatsTest {
         assertEquals(4, reports.size)
         assertTrue(reports.all { it.length < 512 && '\n' !in it })
     }
+
+    @Test fun reportsOnlyAggregatePcmLevelsAndResetsEachWindow() {
+        val reports = mutableListOf<String>()
+        val stats = MicrophoneCaptureStats(config, reports::add) { 0 }
+        fun constant(sample: Int) = ByteArray(1920) { i ->
+            if (i % 2 == 0) sample.toByte() else (sample shr 8).toByte()
+        }
+        stats.pcm(constant(1000))
+        stats.pcm(constant(0))
+        stats.pcm(constant(-32768))
+        stats.flush(ended = true)
+        assertTrue(reports.last().contains("inputRms=18927 inputPeak=32768 silentFrames=1 clippedSamples=960"))
+        stats.flush(ended = true)
+        assertTrue(reports.last().contains("inputRms=0 inputPeak=0 silentFrames=0 clippedSamples=0"))
+        assertTrue(reports.all { it.length < 512 && "payload" !in it && "pcm=" !in it })
+    }
 }

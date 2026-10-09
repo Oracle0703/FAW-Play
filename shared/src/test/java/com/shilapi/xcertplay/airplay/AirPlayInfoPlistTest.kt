@@ -1,5 +1,6 @@
 package com.shilapi.xcertplay.airplay
 
+import com.shilapi.xcertplay.media.MicrophoneCapabilities
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -7,6 +8,36 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class AirPlayInfoPlistTest {
+    @Test
+    fun serializedMediaControlsAreIndependentOfDisplayFocus() {
+        val config = AirPlayConfig(
+            deviceName = "test",
+            deviceId = "02:00:00:00:00:02",
+            btMac = "02:00:00:00:00:02",
+            sourceVersion = "366.0",
+            main = AirPlayDisplayConfig(widthPixels = 1280, heightPixels = 720),
+        )
+        val info = BplistCodec.decode(BplistCodec.encode(AirPlayInfoPlist.build(config))) as Map<*, *>
+        val devices = (info["hidDevices"] as List<*>).map { it as Map<*, *> }
+        val media = devices.single { it["uuid"] == AirPlayHid.MEDIA_HID_UID.toString(16) }
+
+        assertEquals(4, devices.size)
+        assertFalse(media.containsKey("displayUUID"))
+        assertTrue(devices.filter { it !== media }.all { it["displayUUID"] == AirPlayInfoPlist.MAIN_UUID })
+        // Consumer-page array usages must stay in sync with the one-byte reports.
+        val expectedDescriptor = byteArrayOf(
+            0x05, 0x0c, 0x09, 0x01, 0xa1.toByte(), 0x01,
+            0x15, 0x00, 0x25, 0x06, 0x05, 0x0c,
+            0x0a, 0x00, 0x00, 0x0a, 0xb0.toByte(), 0x00, 0x0a, 0xb1.toByte(), 0x00,
+            0x0a, 0xcd.toByte(), 0x00, 0x0a, 0xb5.toByte(), 0x00, 0x0a, 0xb6.toByte(), 0x00,
+            0x0a, 0x9e.toByte(), 0x02, 0x75, 0x08, 0x95.toByte(), 0x01, 0x81.toByte(), 0x00, 0xc0.toByte(),
+        )
+        assertTrue(expectedDescriptor.contentEquals(media["hidDescriptor"] as ByteArray))
+        assertTrue(byteArrayOf(4).contentEquals(AirPlayHid.mediaReport(CarPlayMediaButton.NEXT)))
+        assertTrue(byteArrayOf(5).contentEquals(AirPlayHid.mediaReport(CarPlayMediaButton.PREVIOUS)))
+        assertTrue(byteArrayOf(0).contentEquals(AirPlayHid.mediaReport(0)))
+    }
+
     @Test
     fun defaultDisplayIncludesFullViewAndSafeAreas() {
         val info = AirPlayInfoPlist.build(
@@ -204,11 +235,11 @@ class AirPlayInfoPlistTest {
                 .containsKey("audioInputFormats"),
         )
         assertEquals(
-            0x70004154,
+            0x4154 or if (MicrophoneCapabilities.supportsOpusEncoding()) 0x70000000 else 0,
             defaultAudio(AirPlayInfoPlist.build(base.copy(microphone = true)))["audioInputFormats"],
         )
         assertEquals(
-            0x70004154,
+            0x4154 or if (MicrophoneCapabilities.supportsOpusEncoding()) 0x70000000 else 0,
             telephony(AirPlayInfoPlist.build(base.copy(microphone = true)))["audioInputFormats"],
         )
     }

@@ -46,7 +46,10 @@ interface Iap2LocationProvider : AutoCloseable {
 
 /** LIVI-compatible $GPGGA + $GPRMC encoding used by iAP2 0xFFFB. */
 object NmeaLocationEncoder {
-    fun encode(fix: CarPlayLocationFix): String {
+    fun encode(fix: CarPlayLocationFix): String = encode(fix, null)
+
+    /** Unknown satellite count/DOP/altitude remain empty; never invent GNSS measurements. */
+    fun encode(fix: CarPlayLocationFix, satellitesUsed: Int?): String {
         val timestamp = fix.timestampMillis
             ?.takeIf { it > 0 }
             ?.let(::ofEpochMilli)
@@ -61,22 +64,19 @@ object NmeaLocationEncoder {
 
         val latitude = degreesToNmea(fix.latitudeDegrees, latitude = true)
         val longitude = degreesToNmea(fix.longitudeDegrees, latitude = false)
-        val hdop = fix.accuracyMeters
-            ?.takeIf { it.isFinite() && it > 0 }
-            ?.let { min(50.0, max(0.5, it / 5.0)) }
-            ?: 1.0
+        val satellites = satellitesUsed?.takeIf { it in 1..99 }?.let { format("%02d", it) }.orEmpty()
         val altitude = fix.altitudeMeters
             ?.takeIf { it.isFinite() }
             ?.let { format("%.1f", it) }
-            ?: "0.0"
+            .orEmpty()
 
         val ggaBody = "GPGGA,$time,${latitude.value},${latitude.hemisphere}," +
-            "${longitude.value},${longitude.hemisphere},1,08,${format("%.1f", hdop)}," +
-            "$altitude,M,0.0,M,,"
+            "${longitude.value},${longitude.hemisphere},1,$satellites,," +
+            "$altitude,M,,M,,"
         val speedKnots = fix.speedMetersPerSecond
             ?.takeIf { it.isFinite() && it >= 0 }
             ?.let { format("%.2f", it * KNOTS_PER_METER_PER_SECOND) }
-            ?: "0.00"
+            .orEmpty()
         // Without a GPS direction (for example while parked) the course stays empty: 0.00 would say north.
         val course = fix.bearingDegrees
             ?.takeIf { it.isFinite() }

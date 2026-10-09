@@ -4,6 +4,22 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class WirelessConnectionProofTest {
+    @Test fun currentSessionProofRejectsEndedReplacedAndOldGenerationFrames() {
+        val old = Any(); val current = Any()
+        val proof = WirelessConnectionProof<Any>()
+        proof.begin(1) {}
+        proof.activate(1, old); proof.rendered(1, old)
+        assertEquals(true, proof.hasRenderedFrame(1, old))
+        assertEquals(false, proof.hasRenderedFrame(1, current))
+        proof.activate(1, current)
+        assertEquals(false, proof.hasRenderedFrame(1, old))
+        assertEquals(false, proof.hasRenderedFrame(1, current))
+        proof.rendered(1, current)
+        assertEquals(false, proof.hasRenderedFrame(2, current))
+        proof.end(1, current)
+        assertEquals(false, proof.hasRenderedFrame(1, current))
+    }
+
     @Test fun authenticationWithoutVideoDoesNotConfirm() {
         var saves = 0
         val proof = WirelessConnectionProof<Any>()

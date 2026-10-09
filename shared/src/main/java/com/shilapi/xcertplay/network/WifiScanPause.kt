@@ -3,8 +3,8 @@ package com.shilapi.xcertplay.network
 import android.content.Context
 import android.os.Build
 import android.util.Log
-import com.shilapi.xcertplay.hud.BydAdbShell
-import com.shilapi.xcertplay.hud.BydParcel
+import com.shilapi.xcertplay.hud.FawAdbShell
+import com.shilapi.xcertplay.hud.FawParcel
 import java.lang.reflect.Field
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
@@ -63,7 +63,7 @@ internal class WifiScanPause(
         }
 
         /** `void` replies carry only a zero exception word. */
-        fun accepted(output: String?): Boolean = BydParcel.words(output).firstOrNull() == 0L
+        fun accepted(output: String?): Boolean = FawParcel.words(output).firstOrNull() == 0L
 
         /**
          * Android 10 blocks direct reflection on this hidden constant but still allows the lookup when
@@ -95,7 +95,7 @@ private object ProcessWifiScanPause : WifiScanPauseControl {
     private val worker: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor {
         Thread(it, WifiScanPause.TAG).apply { isDaemon = true }
     }
-    private val adb = BydAdbShell(WifiScanPause.TAG)
+    private val adb = FawAdbShell(WifiScanPause.TAG)
     private var session: WifiScanPauseSession? = null
     private var retry: ScheduledFuture<*>? = null
 

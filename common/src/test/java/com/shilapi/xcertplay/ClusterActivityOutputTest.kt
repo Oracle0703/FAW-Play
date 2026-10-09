@@ -11,7 +11,7 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [29], manifest = Config.NONE)
 class ClusterActivityOutputTest {
-    @Test fun launchRejectsWrongTokenAndDisplayAndStopInvalidatesTheTicket() {
+    @Test fun legacyAdbRouteRejectsEvenACorrectTokenAndDisplay() {
         val app = org.robolectric.RuntimeEnvironment.getApplication()
         AirPlayPersistence.saveAdbClusterEnabled(app, true)
         val owner = Any()
@@ -26,12 +26,13 @@ class ClusterActivityOutputTest {
             assertFalse(ClusterActivityOutput.confirm(activity, "wrong", 7))
             assertFalse(ClusterActivityOutput.confirm(activity, token, 0))
             assertFalse(ClusterActivityOutput.confirm(activity, token, 8))
-            assertTrue(ClusterActivityOutput.confirm(activity, token, 7))
-            assertTrue(ClusterActivityOutput.hasConfirmedRoute())
+            assertFalse(AdbClusterRouter.enabled(app))
+            assertFalse(ClusterActivityOutput.confirm(activity, token, 7))
+            assertFalse(ClusterActivityOutput.hasConfirmedRoute())
             var restored = false
             ClusterActivityOutput.completeLaunch(token, current = true, accepted = false) { restored = true }
-            assertFalse(restored)
-            assertTrue(ClusterActivityOutput.hasConfirmedRoute())
+            assertTrue(restored)
+            assertFalse(ClusterActivityOutput.hasConfirmedRoute())
             ClusterActivityOutput.stopForSettings()
             assertFalse(ClusterActivityOutput.acceptsToken(token))
             assertFalse(ClusterActivityOutput.confirm(activity, token, 7))

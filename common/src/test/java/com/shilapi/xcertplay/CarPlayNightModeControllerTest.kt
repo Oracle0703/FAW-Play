@@ -265,4 +265,50 @@ class CarPlayNightModeControllerTest {
         assertFalse(f.controller.night)
     }
 
+    @Test fun vehicleNightStateWorksWithoutAnAndroidLightSensorOrSystemThemeChange() {
+        val f = Fixture(light = Light(available = false))
+        f.controller.vehicleChanged(true)
+        assertTrue(f.controller.night)
+        f.controller.systemChanged(false)
+        assertTrue(f.controller.night)
+        f.controller.vehicleChanged(false)
+        assertFalse(f.controller.night)
+        assertEquals(listOf(true, false), f.output)
+    }
+
+    @Test fun vehicleStateCancelsPendingLuxAndUnknownStateRestoresTheFallback() {
+        val f = Fixture()
+        f.light.emit(1f)
+        f.clock.advance(4_999)
+        f.controller.vehicleChanged(false)
+        f.clock.advance(10_000)
+        assertFalse(f.controller.night)
+        assertTrue(f.clock.tasks.isEmpty())
+        f.controller.vehicleChanged(null)
+        f.light.emit(1f)
+        f.clock.advance(5_000)
+        assertTrue(f.controller.night)
+    }
+
+    @Test fun failedVehicleSourceFallsBackToSystemWhenNoLuxSensorExists() {
+        val f = Fixture(light = Light(available = false))
+        f.controller.vehicleChanged(true)
+        f.controller.vehicleChanged(null)
+        assertFalse(f.controller.night)
+        f.controller.systemChanged(true)
+        assertTrue(f.controller.night)
+    }
+
+    @Test fun vehicleChangesRespectPausedAndFixedModes() {
+        val f = Fixture()
+        f.controller.pause()
+        f.controller.vehicleChanged(true)
+        assertFalse(f.controller.night)
+        f.controller.resume(false)
+        assertTrue(f.controller.night)
+        f.controller.configure(CarPlayNightMode.DAY, false)
+        f.controller.vehicleChanged(true)
+        assertFalse(f.controller.night)
+    }
+
 }

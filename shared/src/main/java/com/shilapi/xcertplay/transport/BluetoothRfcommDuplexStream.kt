@@ -24,6 +24,7 @@ class BluetoothRfcommDuplexStream(
     private var closed = false
     private var socketCloseStarted = false
     private var failure: IOException? = null
+    private val closedTransport = IOException("Bluetooth RFCOMM stream is closed")
 
     private val reader = Thread(::readLoop, "xcertplay-bluetooth-rfcomm-reader").apply {
         isDaemon = true
@@ -37,7 +38,7 @@ class BluetoothRfcommDuplexStream(
         synchronized(sendLock) {
             synchronized(lock) {
                 failure?.let { throw it }
-                if (closed) throw IOException("Bluetooth RFCOMM stream is closed")
+                if (closed) throw closedTransport
             }
             try {
                 output.write(data)
@@ -169,6 +170,12 @@ class BluetoothRfcommDuplexStream(
         pending.addFirst(tail)
         pendingBytes += tail.size
         return head
+    }
+
+    /** Only a failure raised by this captured transport is optional after Wi-Fi video starts. */
+    fun causedByTransport(error: Throwable): Boolean = synchronized(lock) {
+        val failed = failure
+        generateSequence(error) { it.cause }.take(16).any { it === failed || closed && it === closedTransport }
     }
 
     private fun fail(io: IOException) {

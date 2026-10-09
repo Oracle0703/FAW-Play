@@ -6,6 +6,11 @@ plugins {
 // Optional local-only input. CI and ordinary source builds contain no accessory identity.
 val localAuthenticationAssets = providers.environmentVariable("DIPLAY_AUTH_ASSETS_DIR")
     .orNull?.let { file(it).canonicalFile }
+val baselineTest = providers.gradleProperty("fawBaselineTest")
+    .map(String::toBooleanStrict).getOrElse(false)
+val clusterTuning = providers.gradleProperty("fawClusterTuning")
+    .map(String::toBooleanStrict).getOrElse(false)
+check(!baselineTest || !clusterTuning) { "Select either baseline testing or cluster layout tuning" }
 
 android {
     namespace = "com.shilapi.xcertplay"
@@ -17,8 +22,12 @@ android {
         applicationId = "com.shihab.diplay"
         minSdk = 28
         targetSdk = 37
-        versionCode = 31
-        versionName = "0.2.12"
+        versionCode = 84
+        versionName = when {
+            clusterTuning -> "0.2.12-FAW-NAVI30"
+            baselineTest -> "0.2.12-FAW-BASETEST1"
+            else -> "0.2.12-FAW-NAVI30"
+        }
 
     }
 

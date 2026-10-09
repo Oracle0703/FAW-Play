@@ -9,7 +9,7 @@ import android.widget.Toast
 import com.shilapi.xcertplay.airplay.CarPlayMediaButton
 import com.shilapi.xcertplay.airplay.VideoInCar
 import com.shilapi.xcertplay.host.R
-import com.shilapi.xcertplay.hud.BydNavigationOutputs
+import com.shilapi.xcertplay.hud.FawNavigationOutputs
 import com.shilapi.xcertplay.orchestration.CarPlayController
 import com.shilapi.xcertplay.orchestration.CarPlayVideoListener
 import java.util.concurrent.CompletableFuture
@@ -54,7 +54,7 @@ internal object CarPlayVideo : CarPlayVideoListener {
         next.videoListener = this
     }
 
-    override fun readParked(): Boolean? = appContext?.let(BydNavigationOutputs::parked)
+    override fun readParked(): Boolean? = appContext?.let(FawNavigationOutputs::parked)
 
     override fun onVideoAllowedChanged(allowed: Boolean) {
         if (!allowed) main.post { closePlayer("the car left P") }

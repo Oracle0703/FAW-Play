@@ -15,11 +15,7 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.Implements
 import org.robolectric.annotation.Implementation
 
-/**
- * The connection settings screen lives in [DiPlayActivity] and comes back to the projection screen
- * with FLAG_ACTIVITY_REORDER_TO_FRONT, so the projection screen is resumed, not recreated.
- * Settings saved while it was in the background must reach the next handshake.
- */
+/** Returning from the regular settings page must keep the enforced wireless policy. */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [29], manifest = Config.NONE, shadows = [HostConnectionSettingsRefreshTest.Bootstrap::class])
 class HostConnectionSettingsRefreshTest {
@@ -29,23 +25,21 @@ class HostConnectionSettingsRefreshTest {
         app.getSharedPreferences("xcertplay_airplay", Context.MODE_PRIVATE).edit().clear().commit()
     }
 
-    @Test fun projectionScreenUsesConnectionSettingsSavedWhileItWasInTheBackground() {
-        AirPlayPersistence.saveWirelessHotspotMode(app, WirelessHotspotMode.MANUAL)
-        AirPlayPersistence.saveManualHotspotSsid(app, "Old car")
+    @Test fun returningFromSettingsCannotRestoreRemovedTransportOrChannelChoices() {
         val host = Robolectric.buildActivity(CarPlayHostActivity::class.java).setup()
-        assertEquals(WirelessHotspotMode.MANUAL, runtimeConfig(host.get()).wirelessHotspotMode)
+        try {
+            assertEquals(WirelessHotspotMode.WIFI_P2P, runtimeConfig(host.get()).wirelessHotspotMode)
+            app.getSharedPreferences("xcertplay_airplay", 0).edit()
+                .putBoolean("wireless_enabled", false).putString("wireless_hotspot_mode", "MANUAL")
+                .putInt("wifi_p2p_preferred_channel", 149).commit()
 
-        // The user switches to a car hotspot with another name while the projection screen lives on.
-        AirPlayPersistence.saveWirelessHotspotMode(app, WirelessHotspotMode.WIFI_P2P)
-        AirPlayPersistence.saveManualHotspotSsid(app, "New car")
-        AirPlayPersistence.saveWifiP2pPreferredChannel(app, 149)
+            host.pause().resume()
 
-        host.pause().resume()
-
-        val config = runtimeConfig(host.get())
-        assertEquals(WirelessHotspotMode.WIFI_P2P, config.wirelessHotspotMode)
-        assertEquals("New car", config.manualHotspotSsid)
-        assertEquals(149, config.wifiP2pPreferredChannel)
+            val config = runtimeConfig(host.get())
+            assertEquals(com.shilapi.xcertplay.orchestration.CarPlayTransport.WIRELESS, config.transport)
+            assertEquals(WirelessHotspotMode.WIFI_P2P, config.wirelessHotspotMode)
+            assertEquals(0, config.wifiP2pPreferredChannel)
+        } finally { host.pause().stop().destroy() }
     }
 
     private fun runtimeConfig(host: CarPlayHostActivity): CarPlayRuntimeConfig {

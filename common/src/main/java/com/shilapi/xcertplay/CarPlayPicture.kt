@@ -58,7 +58,7 @@ internal object CarPlayPicture {
         else -> 0..200
     }
     fun value(prefs: SharedPreferences, key: String): Int =
-        prefs.getInt(key, defaultValue(key)).coerceIn(range(key))
+        defaultValue(key)
 
     fun matrix(prefs: SharedPreferences): ColorMatrix {
         val contrast = value(prefs, CONTRAST) / 100f
