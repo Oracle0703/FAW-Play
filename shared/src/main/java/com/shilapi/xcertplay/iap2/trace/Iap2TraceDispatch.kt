@@ -10,7 +10,7 @@ internal object Iap2TraceDispatch {
     val dropped = AtomicLong()
     private val worker = ThreadPoolExecutor(
         1, 1, 15L, TimeUnit.SECONDS, ArrayBlockingQueue(32),
-        { task -> Thread(task, "diplay-iap2-trace").apply { isDaemon = true } },
+        { task -> Thread(task, "xcertplay-iap2-trace").apply { isDaemon = true } },
         { _, _ -> dropped.incrementAndGet() },
     ).apply { allowCoreThreadTimeOut(true) }
 

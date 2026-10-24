@@ -12,15 +12,14 @@ import kotlin.math.min
  * for readiness, queue complete session-10 payloads, receive session-10 payloads, or close this
  * channel.  This class owns and closes [underlying].
  *
- * It deliberately does not parse CSM control messages, EA, media, UI, or Lockdown setup. The link
- * worker does handle the bounded request/reply flow for Now Playing artwork file transfers so those
- * replies cannot be delayed behind a blocking control-session consumer.
+ * It deliberately does not parse CSM control messages, EA, media, UI, or Lockdown setup. Session 12
+ * datagrams are queued for the xcertplay play-stack receiver so artwork replies are not handled
+ * inside this worker. DiPlay MFi authentication is not part of this channel.
  */
 class Iap2LinkChannel private constructor(
     private val underlying: BlockingDuplexByteStream,
     private val linkConfig: Iap2LinkConfig,
     private val initiateNegotiation: Boolean,
-    private val onArtwork: (Iap2ArtworkTransfer) -> Unit,
 ) : AutoCloseable {
     private data class Command(val sessionId: Int, val payload: ByteArray)
 
@@ -29,7 +28,8 @@ class Iap2LinkChannel private constructor(
     private var commandBytes = 0
     private val controls = ArrayDeque<ByteArray>()
     private var controlBytes = 0
-    private val fileTransfers = Iap2FileTransferReceiver()
+    private val fileTransfers = ArrayDeque<ByteArray>()
+    private var fileTransferBytes = 0
 
     private var ready = false
     private var peerMaxControlPayloadBytes: Int? = null
@@ -94,6 +94,23 @@ class Iap2LinkChannel private constructor(
         }
     }
 
+    /** Queues one file-transfer-session datagram, waiting for bounded queue capacity. */
+    internal fun sendFileTransferAwaitCapacity(bytes: ByteArray, timeoutMillis: Long): Boolean {
+        require(bytes.size <= Iap2LinkEngine.MAX_PAYLOAD_BYTES) {
+            "iAP2 file-transfer payload exceeds ${Iap2LinkEngine.MAX_PAYLOAD_BYTES} bytes"
+        }
+        require(timeoutMillis >= 0) { "timeoutMillis must not be negative" }
+        val copy = bytes.copyOf()
+        synchronized(lock) {
+            waitFor(timeoutMillis) {
+                terminated || closing || hasCommandCapacityLocked(copy.size)
+            }
+            throwTerminalFailureLocked()
+            if (terminated || closing) return false
+            return enqueueCommandLocked(Iap2LinkEngine.FILE_TRANSFER_SESSION_ID, copy)
+        }
+    }
+
     /** Returns the next control payload; returns null on timeout or clean close, and throws on failure. */
     fun recvControl(timeoutMillis: Long): ByteArray? {
         require(timeoutMillis >= 0) { "timeoutMillis must not be negative" }
@@ -103,6 +120,19 @@ class Iap2LinkChannel private constructor(
             if (controls.isEmpty()) return null
             val bytes = controls.removeFirst()
             controlBytes -= bytes.size
+            return bytes
+        }
+    }
+
+    /** Returns the next session-12 datagram, or null on timeout or clean close. */
+    internal fun recvFileTransfer(timeoutMillis: Long): ByteArray? {
+        require(timeoutMillis >= 0) { "timeoutMillis must not be negative" }
+        synchronized(lock) {
+            waitFor(timeoutMillis) { fileTransfers.isNotEmpty() || terminated }
+            throwTerminalFailureLocked()
+            if (fileTransfers.isEmpty()) return null
+            val bytes = fileTransfers.removeFirst()
+            fileTransferBytes -= bytes.size
             return bytes
         }
     }
@@ -188,7 +218,10 @@ class Iap2LinkChannel private constructor(
                     }
                 }
             } ?: return
-            engine.sendSession(command.sessionId, command.payload, nowMillis())
+            when (command.sessionId) {
+                Iap2LinkEngine.CONTROL_SESSION_ID -> engine.sendControl(command.payload, nowMillis())
+                Iap2LinkEngine.FILE_TRANSFER_SESSION_ID -> engine.sendFileTransfer(command.payload, nowMillis())
+            }
             if (isClosing()) return
         }
     }
@@ -230,18 +263,22 @@ class Iap2LinkChannel private constructor(
                     }
                 }
 
-                is Iap2LinkEngine.Event.Session -> {
-                    if (event.sessionId != Iap2LinkEngine.FILE_TRANSFER_SESSION_ID) continue
-                    val outcome = fileTransfers.accept(event.bytes)
-                    outcome.replies.forEach { reply ->
-                        engine.sendSession(Iap2LinkEngine.FILE_TRANSFER_SESSION_ID, reply, nowMillis())
-                    }
-                    outcome.completed?.let { completed ->
-                        try {
-                            onArtwork(completed)
-                        } catch (_: Exception) {
-                            // A UI/consumer callback cannot terminate the control link.
+                is Iap2LinkEngine.Event.FileTransfer -> {
+                    val overflow = synchronized(lock) {
+                        if (fileTransfers.size >= MAX_PENDING_FILE_TRANSFERS ||
+                            event.bytes.size > MAX_PENDING_FILE_TRANSFER_BYTES - fileTransferBytes
+                        ) {
+                            true
+                        } else {
+                            fileTransfers += event.bytes
+                            fileTransferBytes += event.bytes.size
+                            lock.notifyAll()
+                            false
                         }
+                    }
+                    if (overflow) {
+                        finish(IOException("iAP2 received file-transfer queue limit exceeded"))
+                        return false
                     }
                 }
 
@@ -280,6 +317,7 @@ class Iap2LinkChannel private constructor(
         controls.clear()
         controlBytes = 0
         fileTransfers.clear()
+        fileTransferBytes = 0
         terminalFailure = combineFailures(terminalFailure, failure)
         lock.notifyAll()
     }
@@ -357,6 +395,8 @@ class Iap2LinkChannel private constructor(
         private const val MAX_PENDING_COMMAND_BYTES = 1_048_576
         private const val MAX_PENDING_CONTROLS = 64
         private const val MAX_PENDING_CONTROL_BYTES = 1_048_576
+        private const val MAX_PENDING_FILE_TRANSFERS = 256
+        private const val MAX_PENDING_FILE_TRANSFER_BYTES = 16 * 1_048_576
 
         private val WIRED_LINK_CONFIG = Iap2LinkConfig(
             maxOutgoing = 4,
@@ -369,33 +409,24 @@ class Iap2LinkChannel private constructor(
         )
 
         /** Opens and immediately starts a wired iAP2 link, taking ownership of the supplied stream. */
-        fun open(
-            underlying: BlockingDuplexByteStream,
-            onArtwork: (Iap2ArtworkTransfer) -> Unit = {},
-        ): Iap2LinkChannel =
-            Iap2LinkChannel(underlying, WIRED_LINK_CONFIG, initiateNegotiation = true, onArtwork)
+        fun open(underlying: BlockingDuplexByteStream): Iap2LinkChannel =
+            Iap2LinkChannel(underlying, WIRED_LINK_CONFIG, initiateNegotiation = true)
                 .also { it.worker.start() }
 
         /**
          * Opens a wireless RFCOMM link. LIVI sends the iAP2 marker but lets the phone initiate
          * synchronization, and keeps acknowledgements enabled for Bluetooth.
          */
-        fun openWireless(
-            underlying: BlockingDuplexByteStream,
-            onArtwork: (Iap2ArtworkTransfer) -> Unit = {},
-        ): Iap2LinkChannel =
-            Iap2LinkChannel(underlying, WIRELESS_LINK_CONFIG, initiateNegotiation = false, onArtwork)
+        fun openWireless(underlying: BlockingDuplexByteStream): Iap2LinkChannel =
+            Iap2LinkChannel(underlying, WIRELESS_LINK_CONFIG, initiateNegotiation = false)
                 .also { it.worker.start() }
 
         /**
          * Opens the iAP2 link carried by an AirPlay type-130 tunnel. The accessory initiates
          * synchronization and zero-acknowledgement mode matches the Wi-Fi transport.
          */
-        fun openTunnel(
-            underlying: BlockingDuplexByteStream,
-            onArtwork: (Iap2ArtworkTransfer) -> Unit = {},
-        ): Iap2LinkChannel =
-            Iap2LinkChannel(underlying, WIRED_LINK_CONFIG, initiateNegotiation = true, onArtwork)
+        fun openTunnel(underlying: BlockingDuplexByteStream): Iap2LinkChannel =
+            Iap2LinkChannel(underlying, WIRED_LINK_CONFIG, initiateNegotiation = true)
                 .also { it.worker.start() }
 
         private fun nowMillis(): Long = System.nanoTime() / NANOS_PER_MILLISECOND

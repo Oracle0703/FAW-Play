@@ -1,4 +1,6 @@
-# Building DiPlay
+# Building the xcertplay play stack
+
+The active CarPlay and wireless CarPlay path is the xcertplay iAP2/AirPlay stack. Accessory MFi stays on the existing DiPlay provisioning below (`DIPLAY_AUTH_ASSETS_DIR` / `offline-mfi/identity.pk8` and `certificate.p7b`). Do not replace those documents with an xcertplay `.private/local-auth` tree. The repository does not contain the production identity; a car-test build fails closed until the holder supplies that directory.
 
 Requirements: JDK 25, Android SDK 37, NDK 28.2.13676358 and the included Gradle wrapper.
 

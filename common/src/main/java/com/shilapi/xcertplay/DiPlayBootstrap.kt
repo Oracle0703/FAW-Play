@@ -7,7 +7,12 @@ import com.shilapi.xcertplay.orchestration.MfiTarget
 import java.io.File
 import java.security.MessageDigest
 
-/** Installs the private beta's experimental identity. It has no remote fallback. */
+/**
+ * Installs the DiPlay MFi identity (`offline-mfi/identity.pk8` and `certificate.p7b`).
+ *
+ * The xcertplay play stack calls this only for [com.shilapi.xcertplay.orchestration.MfiTarget.LOCAL].
+ * Do not retarget it at xcertplay `local-auth` or synthesize a replacement key.
+ */
 internal object DiPlayBootstrap {
     @Volatile private var ready = false
 

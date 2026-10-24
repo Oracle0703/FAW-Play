@@ -6,6 +6,12 @@ import java.io.ByteArrayOutputStream
 data class Iap2ArtworkTransfer(val id: Int, val bytes: ByteArray)
 
 /**
+ * Datagram parser retained for unit coverage of the historical layout.
+ *
+ * The active xcertplay play stack completes session 12 in
+ * `com.shilapi.xcertplay.iap2.session.Iap2FileTransferReceiver`. This type is not installed on
+ * the link worker.
+ *
  * Bounded receiver for iAP2 file-transfer session datagrams.
  *
  * Datagram byte 0 is the transfer id. Byte 1 contains First/Last flags and a low-nibble opcode:

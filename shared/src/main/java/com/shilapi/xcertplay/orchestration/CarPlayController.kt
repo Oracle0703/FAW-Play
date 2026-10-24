@@ -42,6 +42,7 @@ import com.shilapi.xcertplay.hud.AutunnHudRouteState
 import com.shilapi.xcertplay.hud.AutunnLaneGuidanceState
 import com.shilapi.xcertplay.iap2.wire.Iap2Frame
 import com.shilapi.xcertplay.media.HongqiBluetoothMediaHandoff
+import com.shilapi.xcertplay.iap2.session.Iap2FileTransferReceiver
 import com.shilapi.xcertplay.iap2.session.Iap2Session
 import com.shilapi.xcertplay.mfi.Iap2MfiAuthenticationClient
 import com.shilapi.xcertplay.mfi.MfiAuthenticationClient
@@ -118,8 +119,12 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
 /**
- * Wires the complete wired or wireless CarPlay path: MFi coprocessor discovery, iPhone bring-up,
- * iAP2 control, transport setup, and the AirPlay media/input sessions.
+ * Wires the xcertplay wired or wireless CarPlay play stack: iPhone bring-up, iAP2 control,
+ * transport setup, and the AirPlay media/input sessions.
+ *
+ * MFi stays on the DiPlay path (`MfiTarget.LOCAL` plus `LocalMfiAuthenticationClient` reading
+ * `offline-mfi/identity.pk8` and `certificate.p7b`). This class does not switch that provisioning
+ * to xcertplay's `local-auth` documents.
  *
  * All blocking USB/I2C work runs on one worker executor. Status callbacks are delivered on the
  * main thread. This class is the integration seam only and is not evidence of hardware operation.
@@ -232,8 +237,10 @@ class CarPlayController(
     /** Told when retained iPhone now-playing metadata changes; may run on any thread. */
     @Volatile var nowPlayingListener: ((com.shilapi.xcertplay.media.CarPlayNowPlaying) -> Unit)? = null
 
-    /** Told when an iAP2 Now Playing artwork transfer completes; may run on the link worker. */
+    /** Told when an iAP2 Now Playing artwork transfer completes; may run on the xcertplay file-transfer worker. */
     @Volatile var artworkListener: ((Int, ByteArray) -> Unit)? = null
+    private val fileTransferReceivers =
+        java.util.IdentityHashMap<Iap2Session, Iap2FileTransferReceiver>()
 
     /** Video in car; set before [start] to offer it to the iPhone (with AirPlayConfig.videoInCar). */
     @Volatile var videoListener: CarPlayVideoListener? = null
@@ -252,7 +259,7 @@ class CarPlayController(
     @Volatile private var firstTcpWatchdog: FirstTcpWatchdog? = null
     @Volatile private var coldSessionProgress: WirelessSessionProgress<AirPlaySession>? = null
     private val startupTimer = java.util.concurrent.ScheduledThreadPoolExecutor(1) { task ->
-        Thread(task, "diplay-first-tcp-timeout").apply { isDaemon = true }
+        Thread(task, "xcertplay-first-tcp-timeout").apply { isDaemon = true }
     }.apply { removeOnCancelPolicy = true }
     @Volatile private var wirelessDiagnostics: WirelessStartupDiagnostics? = null
     @Volatile private var bluetoothSocket: BluetoothSocket? = null
@@ -1275,12 +1282,13 @@ class CarPlayController(
         fun release(name: String, action: () -> Unit): Boolean = closeBestEffort(name, action).also {
             if (!it) released = false
         }
+        stopFileTransferReceivers()
         if (config.transport == CarPlayTransport.WIRELESS) {
             if (!closeWirelessStack(service, mode = WirelessCloseMode.RELEASE).resourcesReleased) released = false
             if (release("Wi-Fi scan pause") { wifiScanPause?.close() }) wifiScanPause = null
         } else {
             release("VPN/NCM") { service?.detach() }
-            if (release("CSM") { csm?.close() }) csm = null
+            if (release("CSM") { csm?.let(::releasePlaySession) }) csm = null
         }
         if (release("USBMUX") { mux?.close() }) mux = null
         if (release("MFi") { mfiSession?.close() }) mfiSession = null
@@ -1582,6 +1590,45 @@ class CarPlayController(
         artworkListener?.invoke(transfer.id, transfer.bytes)
     }
 
+    /** Attaches the xcertplay session-12 receiver. DiPlay MFi is unchanged. */
+    private fun startFileTransferReceiver(session: Iap2Session) {
+        val receiver = synchronized(fileTransferReceivers) {
+            if (fileTransferReceivers.containsKey(session)) return
+            Iap2FileTransferReceiver(
+                session = session,
+                isArtworkCached = { false },
+                onArtwork = { artwork ->
+                    onArtworkTransfer(
+                        com.shilapi.xcertplay.transport.Iap2ArtworkTransfer(
+                            artwork.fileTransferId,
+                            artwork.bytes,
+                        ),
+                    )
+                },
+                onLog = ::debugLog,
+            ).also { fileTransferReceivers[session] = it }
+        }
+        receiver.start()
+    }
+
+    private fun stopFileTransferReceiver(session: Iap2Session?) {
+        if (session == null) return
+        val receiver = synchronized(fileTransferReceivers) { fileTransferReceivers.remove(session) }
+        receiver?.close()
+    }
+
+    private fun stopFileTransferReceivers() {
+        val receivers = synchronized(fileTransferReceivers) {
+            fileTransferReceivers.values.toList().also { fileTransferReceivers.clear() }
+        }
+        receivers.forEach { it.close() }
+    }
+
+    private fun releasePlaySession(session: Iap2Session) {
+        stopFileTransferReceiver(session)
+        session.close()
+    }
+
     private fun startMfi() {
         if (!authorizeNewConnection()) return
         availabilityPollGeneration.incrementAndGet()
@@ -1614,7 +1661,9 @@ class CarPlayController(
     }
 
     private fun openLocalMfi(directory: java.io.File) {
-        debugLog("mfi discovery backend=LocalOffline remoteFallback=disabled")
+        // DiPlay MFi: directory load of offline-mfi/identity.pk8 and certificate.p7b.
+        // Do not replace this with xcertplay local-auth streams or generated test identities.
+        debugLog("mfi discovery backend=LocalOffline remoteFallback=disabled diplayMfi=kept")
         executor.execute {
             try {
                 val signatures = AtomicInteger(0)
@@ -2011,7 +2060,7 @@ class CarPlayController(
                     if (!isStaleWirelessRun(generation)) {
                         connectionDiagnostic("wireless startup stalled stage=post-tcp-${stage.name.lowercase()} generation=$generation")
                         fail(IOException("Wireless CarPlay startup stalled after TCP: $stage"), generation)
-                        Thread({ closeWirelessStack(generation = generation) }, "diplay-session-startup-cleanup")
+                        Thread({ closeWirelessStack(generation = generation) }, "xcertplay-session-startup-cleanup")
                             .apply { isDaemon = true; start() }
                     }
                 },
@@ -2204,12 +2253,12 @@ class CarPlayController(
                 traceContext = "wireless-rfcomm",
                 traceEnabled = { appContext.getSharedPreferences("xcertplay_airplay", Context.MODE_PRIVATE).getBoolean("debug_logs_enabled", false) },
                 onTrace = ::debugLog,
-                onArtwork = ::onArtworkTransfer,
             )
+            startFileTransferReceiver(channel)
             bootstrapSession = channel
             synchronized(wirelessResourceLock) {
                 if (isStaleWirelessRun(generation)) {
-                    channel.close()
+                    releasePlaySession(channel)
                     return
                 }
                 csm = channel
@@ -2341,15 +2390,15 @@ class CarPlayController(
                 traceContext = "wireless-tunnel",
                 traceEnabled = { appContext.getSharedPreferences("xcertplay_airplay", Context.MODE_PRIVATE).getBoolean("debug_logs_enabled", false) },
                 onTrace = ::debugLog,
-                onArtwork = ::onArtworkTransfer,
             )
         } catch (error: Throwable) {
             debugLog("Could not open the tunneled iAP2 link", error)
             return false
         }
+        startFileTransferReceiver(channel)
         synchronized(wirelessResourceLock) {
             if (isStaleWirelessRun(generation) || !isWirelessSessionCandidate(session)) {
-                channel.close()
+                releasePlaySession(channel)
                 return false
             }
             val previous = wirelessTunnelChannel
@@ -2358,8 +2407,8 @@ class CarPlayController(
                 // Once RECORD selects a session, only that session may replace the old link.
                 if ((wirelessTunnelSession !== session && activeSession !== session &&
                         wirelessTunnelSession?.isClosed() == false && !previous.isClosed) ||
-                    !closeBestEffort("replaced tunneled iAP2 link") { previous.close() }) {
-                    channel.close()
+                    !closeBestEffort("replaced tunneled iAP2 link") { releasePlaySession(previous) }) {
+                    releasePlaySession(channel)
                     return false
                 }
             }
@@ -2426,7 +2475,7 @@ class CarPlayController(
         } catch (error: Throwable) {
             clearWirelessTunnel(channel)
             endVehicleNavigationLink(channel)
-            closeBestEffort("tunneled iAP2 link") { channel.close() }
+            closeBestEffort("tunneled iAP2 link") { releasePlaySession(channel) }
             debugLog("iAP2 tunnel executor rejected the link", error)
             false
         }
@@ -2450,7 +2499,7 @@ class CarPlayController(
                 }
                 fail(WirelessStartupException(WirelessStartupFailure.FIRST_TCP_TIMEOUT,
                     "No AirPlay TCP after CarPlay StartSession"), generation)
-                Thread({ closeWirelessStack(generation = generation) }, "diplay-startup-cleanup")
+                Thread({ closeWirelessStack(generation = generation) }, "xcertplay-startup-cleanup")
                     .apply { isDaemon = true; start() }
             }
         },
@@ -2504,7 +2553,7 @@ class CarPlayController(
                     } else { fail(failure, generation); true }
                 }
             }
-            if (current) Thread({ closeWirelessStack(generation = generation) }, "diplay-p2p-recovery-cleanup")
+            if (current) Thread({ closeWirelessStack(generation = generation) }, "xcertplay-p2p-recovery-cleanup")
                 .apply { isDaemon = true; start() }
         } }
     }
@@ -2822,7 +2871,7 @@ class CarPlayController(
         var released = true
         val activeCsm = csm
         if (activeCsm != null) {
-            if (closeBestEffort("wireless CSM") { activeCsm.close() }) csm = null else released = false
+            if (closeBestEffort("wireless CSM") { releasePlaySession(activeCsm) }) csm = null else released = false
         }
 
         val activeStream = bluetoothStream
@@ -3166,8 +3215,8 @@ class CarPlayController(
                 traceContext = "wired",
                 traceEnabled = { appContext.getSharedPreferences("xcertplay_airplay", Context.MODE_PRIVATE).getBoolean("debug_logs_enabled", false) },
                 onTrace = ::debugLog,
-                onArtwork = ::onArtworkTransfer,
             )
+            startFileTransferReceiver(csm)
             this.csm = csm
             debugLog("wired iAP2 CSM channel opened")
 
@@ -3517,7 +3566,7 @@ class CarPlayController(
             // Music/video must stop before Bonjour or platform group removal can block.
             if (service != null && owner != null) release("AirPlay service") { service.detachWireless(owner) }
             val activeTunnel = wirelessTunnelChannel
-            if (activeTunnel != null && release("tunneled iAP2 link") { activeTunnel.close() }) wirelessTunnelChannel = null
+            if (activeTunnel != null && release("tunneled iAP2 link") { releasePlaySession(activeTunnel) }) wirelessTunnelChannel = null
             if (wirelessTunnelChannel == null) wirelessTunnelSession = null
 
             if (!closeBluetoothBootstrapTransport()) released = false

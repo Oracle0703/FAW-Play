@@ -30,13 +30,12 @@ class Iap2LinkEngineFileTransferTest {
 
         val datagram = byteArrayOf(0x81.toByte(), 4, 0, 0, 0, 0, 0, 0, 0, 5, 0, 2)
         engine.feed(packet(0x40, 2, 99, Iap2LinkEngine.FILE_TRANSFER_SESSION_ID, datagram), 2)
-        val event = engine.pollEvent() as Iap2LinkEngine.Event.Session
-        assertEquals(Iap2LinkEngine.FILE_TRANSFER_SESSION_ID, event.sessionId)
+        val event = engine.pollEvent() as Iap2LinkEngine.Event.FileTransfer
         assertArrayEquals(datagram, event.bytes)
         engine.takeOutput()
 
         val start = byteArrayOf(0x81.toByte(), 1)
-        engine.sendSession(Iap2LinkEngine.FILE_TRANSFER_SESSION_ID, start, 3)
+        engine.sendFileTransfer(start, 3)
         val reply = engine.takeOutput()
         assertEquals(Iap2LinkEngine.FILE_TRANSFER_SESSION_ID, reply[7].toInt() and 0xff)
         assertArrayEquals(start, reply.copyOfRange(9, 11))

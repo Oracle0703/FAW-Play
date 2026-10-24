@@ -12,7 +12,9 @@ import kotlin.math.min
  * It keeps CSM framing separate from typed control messages.  Sending waits for a completed iAP2
  * negotiation so every complete CSM frame can be split to the peer's advertised session-10 limit.
  * One receiver owns the stateful framer; concurrent senders are serialized so their split frames
- * cannot interleave.  Closing this channel closes its link and the link's owned byte stream.
+ * cannot interleave. Internal session-12 datagram access lets the xcertplay play stack share that
+ * same link. Closing this channel closes its link and the link's owned byte stream. DiPlay MFi
+ * material is not opened here.
  */
 class Iap2CsmChannel private constructor(
     private val link: Iap2LinkChannel,
@@ -82,6 +84,31 @@ class Iap2CsmChannel private constructor(
                     failClosed(IOException("iAP2 could not queue the complete CSM frame before its timeout"))
                 }
             }
+        }
+    }
+
+    internal fun sendFileTransfer(bytes: ByteArray, timeoutMillis: Long = DEFAULT_SEND_TIMEOUT_MILLIS) {
+        requireTimeout(timeoutMillis)
+        synchronized(sendLock) {
+            checkOpen()
+            val queued = try {
+                link.sendFileTransferAwaitCapacity(bytes, timeoutMillis)
+            } catch (failure: Throwable) {
+                if (failure is Error) fatal(failure)
+                failClosed(failure)
+            }
+            if (!queued) failClosed(IOException("iAP2 could not queue a file-transfer response"))
+        }
+    }
+
+    internal fun recvFileTransfer(timeoutMillis: Long): ByteArray? {
+        requireTimeout(timeoutMillis)
+        checkOpen()
+        return try {
+            link.recvFileTransfer(timeoutMillis)
+        } catch (failure: Throwable) {
+            if (failure is Error) fatal(failure)
+            failClosed(failure)
         }
     }
 
@@ -222,25 +249,16 @@ class Iap2CsmChannel private constructor(
         private const val DEFAULT_SEND_TIMEOUT_MILLIS = 5_000L
 
         /** Opens the owned iAP2 link over an owned carkit stream. */
-        fun open(
-            underlying: BlockingDuplexByteStream,
-            onArtwork: (Iap2ArtworkTransfer) -> Unit = {},
-        ): Iap2CsmChannel =
-            Iap2CsmChannel(Iap2LinkChannel.open(underlying, onArtwork))
+        fun open(underlying: BlockingDuplexByteStream): Iap2CsmChannel =
+            Iap2CsmChannel(Iap2LinkChannel.open(underlying))
 
         /** Opens the owned iAP2 link over an owned wireless RFCOMM stream. */
-        fun openWireless(
-            underlying: BlockingDuplexByteStream,
-            onArtwork: (Iap2ArtworkTransfer) -> Unit = {},
-        ): Iap2CsmChannel =
-            Iap2CsmChannel(Iap2LinkChannel.openWireless(underlying, onArtwork))
+        fun openWireless(underlying: BlockingDuplexByteStream): Iap2CsmChannel =
+            Iap2CsmChannel(Iap2LinkChannel.openWireless(underlying))
 
         /** Opens the owned iAP2 link over an AirPlay type-130 tunnel. */
-        fun openTunnel(
-            underlying: BlockingDuplexByteStream,
-            onArtwork: (Iap2ArtworkTransfer) -> Unit = {},
-        ): Iap2CsmChannel =
-            Iap2CsmChannel(Iap2LinkChannel.openTunnel(underlying, onArtwork))
+        fun openTunnel(underlying: BlockingDuplexByteStream): Iap2CsmChannel =
+            Iap2CsmChannel(Iap2LinkChannel.openTunnel(underlying))
     }
 }
 

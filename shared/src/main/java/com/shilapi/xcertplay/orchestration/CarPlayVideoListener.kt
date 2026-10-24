@@ -48,7 +48,7 @@ internal class VideoInCarGate(
                     return@Thread
                 }
             }
-        }, "diplay-video-gate").apply { isDaemon = true }.start()
+        }, "xcertplay-video-gate").apply { isDaemon = true }.start()
     }
 
     @Synchronized internal fun update(parked: Boolean?) {

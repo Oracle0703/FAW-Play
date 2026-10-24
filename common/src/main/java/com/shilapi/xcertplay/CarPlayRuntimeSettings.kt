@@ -8,7 +8,13 @@ import com.shilapi.xcertplay.orchestration.*
 import com.shilapi.xcertplay.transport.Iap2IdentificationConfig
 import com.shilapi.xcertplay.transport.UsbDeviceId
 
-/** One settings-to-protocol boundary for foreground startup and cold background recovery. */
+/**
+ * Settings-to-protocol boundary for the xcertplay play stack.
+ *
+ * The iAP2 accessory name, Bonjour label, and host name are xcertplay. The serial stays
+ * `DIPLAY-` because it is derived from the DiPlay MFi identity installed by [DiPlayBootstrap];
+ * do not replace that prefix with an xcertplay-generated identity.
+ */
 internal object CarPlayRuntimeSettings {
     fun load(context: Context, identity: AirPlayIdentity): CarPlayRuntimeConfig {
         val id = DiPlayBootstrap.deviceId(identity)
@@ -24,7 +30,7 @@ internal object CarPlayRuntimeSettings {
             remoteMfiServer = AirPlayPersistence.loadRemoteMfiServer(context).trim().takeIf(String::isNotEmpty),
             remoteMfiToken = AirPlayPersistence.loadRemoteMfiToken(context).takeIf(String::isNotEmpty),
             hostMac = id.split(":").map { it.toInt(16).toByte() }.toByteArray(),
-            identification = Iap2IdentificationConfig("Autunn Play", model, manufacturer,
+            identification = Iap2IdentificationConfig("xcertplay", model, manufacturer,
                 "DIPLAY-" + id.replace(":", ""), "0.1.0", "1.0",
                 CarPlaySessionFactory.CARPLAY_USB_INTERFACE_NUMBER,
                 locationInformationEnabled = location,
@@ -33,7 +39,7 @@ internal object CarPlayRuntimeSettings {
                 vehicleSpeedEnabled = location && AutunnOutputSettings.wheelSpeedToIphoneActive(context),
                 laneGuidanceEnabled = HongqiNavigation.supported() &&
                     com.shilapi.xcertplay.shared.BuildConfig.AUTUNN_NAVIGATION_OUTPUTS_ENABLED),
-            label = "Autunn Play", hostName = "diplay-" + id.replace(":", "").lowercase(),
+            label = "xcertplay", hostName = "xcertplay-" + id.replace(":", "").lowercase(),
             transport = if (AirPlayPersistence.loadWirelessEnabled(context)) CarPlayTransport.WIRELESS else CarPlayTransport.WIRED,
             wirelessHotspotMode = AirPlayPersistence.loadWirelessHotspotMode(context),
             wirelessBluetoothDeviceAddress = DiPlayPreferences.phoneAddress(context),
