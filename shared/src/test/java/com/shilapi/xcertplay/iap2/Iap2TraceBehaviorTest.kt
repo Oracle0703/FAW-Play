@@ -40,7 +40,7 @@ class Iap2TraceBehaviorTest {
                 enabled = false
             } finally { release.countDown() }
             barrier()
-            assertEquals(listOf("diplay-iap2-trace"), threads.toList())
+            assertEquals(listOf("xcertplay-iap2-trace"), threads.toList())
         }
     }
 

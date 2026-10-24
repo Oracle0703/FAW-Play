@@ -10,14 +10,14 @@ import com.shilapi.xcertplay.iap2.trace.Iap2TraceDispatch
 import com.shilapi.xcertplay.iap2.wire.Iap2Frame
 import com.shilapi.xcertplay.transport.BlockingDuplexByteStream
 import com.shilapi.xcertplay.transport.Iap2CsmChannel
-import com.shilapi.xcertplay.transport.Iap2ArtworkTransfer
 
 /**
- * One immediately readable and writable iAP2 CSM session.
+ * xcertplay CarPlay/wireless play-stack facade over one iAP2 link.
  *
- * [Iap2CsmChannel] remains the lower-level frame transport. This class is the protocol-facing
- * facade used by services: it accepts endpoint builders, sends complete frames, receives complete
- * frames, and exposes the typed body reader.
+ * [Iap2CsmChannel] remains the lower-level frame transport. This class accepts endpoint builders,
+ * sends and receives complete control frames, exposes the typed body reader, and carries session-12
+ * file transfers on the same owned link. Accessory MFi credentials stay on the DiPlay
+ * `offline-mfi` path and are not loaded here.
  */
 class Iap2Session private constructor(
     private val channel: Iap2CsmChannel,
@@ -84,6 +84,13 @@ class Iap2Session private constructor(
 
     fun reader(frame: Iap2Frame): Iap2BodyReader = Iap2Messages.reader(frame)
 
+    internal fun sendFileTransfer(bytes: ByteArray, timeoutMillis: Long = DEFAULT_SEND_TIMEOUT_MILLIS) {
+        channel.sendFileTransfer(bytes, timeoutMillis)
+    }
+
+    internal fun recvFileTransfer(timeoutMillis: Long): ByteArray? =
+        channel.recvFileTransfer(timeoutMillis)
+
     override fun close() {
         try {
             channel.close()
@@ -118,28 +125,25 @@ class Iap2Session private constructor(
             underlying: BlockingDuplexByteStream,
             traceContext: String = "wired",
             onTrace: (String) -> Unit = {},
-            onArtwork: (Iap2ArtworkTransfer) -> Unit = {},
             traceEnabled: () -> Boolean = { false },
         ): Iap2Session =
-            Iap2Session(Iap2CsmChannel.open(underlying, onArtwork), traceContext, onTrace, traceEnabled)
+            Iap2Session(Iap2CsmChannel.open(underlying), traceContext, onTrace, traceEnabled)
 
         fun openWireless(
             underlying: BlockingDuplexByteStream,
             traceContext: String = "wireless",
             onTrace: (String) -> Unit = {},
-            onArtwork: (Iap2ArtworkTransfer) -> Unit = {},
             traceEnabled: () -> Boolean = { false },
         ): Iap2Session =
-            Iap2Session(Iap2CsmChannel.openWireless(underlying, onArtwork), traceContext, onTrace, traceEnabled)
+            Iap2Session(Iap2CsmChannel.openWireless(underlying), traceContext, onTrace, traceEnabled)
 
         fun openTunnel(
             underlying: BlockingDuplexByteStream,
             traceContext: String = "wireless-tunnel",
             onTrace: (String) -> Unit = {},
-            onArtwork: (Iap2ArtworkTransfer) -> Unit = {},
             traceEnabled: () -> Boolean = { false },
         ): Iap2Session =
-            Iap2Session(Iap2CsmChannel.openTunnel(underlying, onArtwork), traceContext, onTrace, traceEnabled)
+            Iap2Session(Iap2CsmChannel.openTunnel(underlying), traceContext, onTrace, traceEnabled)
 
         fun wrap(
             channel: Iap2CsmChannel,

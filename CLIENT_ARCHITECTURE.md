@@ -13,7 +13,8 @@
 | 资源构建 | CarPlaySessionFactory | Controller、媒体和定位资源统一构建；失败按已取得的所有权释放 |
 | 蓝牙目标与准入 | PairedIphoneSelector、BluetoothBootstrapEligibility、SelectedPhoneMonitor | 系统链路观察与发起 iAP2 引导分开；已选且配对、缓存证明支持 iAP2 的手机可获得每使用周期一次主动引导机会 |
 | 无线组与发现 | WifiP2pGroupManager、P2pChannelRestriction、CarPlayBonjour | API28 服务未就绪为可恢复状态；未确认操作保留清理责任；丢组立即撤销端点有效性；只管理自有资源 |
-| 协议会话 | CarPlayController、airplay/、iap2/、transport/、mfi/ | 保留已验证协议编码；事件推进，阶段超时发现停滞；健康 GO 可复用；关闭完成以实际资源释放为准 |
+| 协议会话 | xcertplay 播放栈：CarPlayController、airplay/、iap2/session、transport/ | 有线与无线 iAP2 由 xcertplay 会话承接，session 12 在会话侧完成；事件推进，阶段超时发现停滞；健康 GO 可复用；关闭完成以实际资源释放为准 |
+| MFi | DiPlay：`DiPlayBootstrap`、`LocalMfiAuthenticationClient`、`DIPLAY_AUTH_ASSETS_DIR/offline-mfi` | 只使用既有 `identity.pk8` 与 `certificate.p7b`；不改写算法，也不换成 xcertplay `local-auth` |
 | 成功策略 | P2pConfigurationMemory、WirelessAddressRecovery | 信道策略仅在认证并出现首帧后确认；实际频率未知不伪造频率；地址族成功提示与本轮切换次数分开 |
 | 主屏界面 | CarPlayHostActivity、ConnectionStatusText、ProjectionDecoderCapabilities、AirPlayIconRepository | 窗口、触控与 Surface 归界面；解码能力、图标和状态文案独立；首帧驱动显示 |
 | 仪表与 HUD | HongqiNavigation、HongqiNavigationTransport、ClusterMapPresentation | Binder 编码与输出协调分离；HUD 错误不清空健康仪表；原厂导航模式与短暂视频中断分开 |

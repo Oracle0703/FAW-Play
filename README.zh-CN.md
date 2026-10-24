@@ -1,6 +1,6 @@
 # Autunn Play
 
-独立开发与维护的安卓车机连接软件，基于 DiPlay / xcertplay 开源项目。支持兼容车机上的有线与无线 CarPlay，并提供与具体车机、固件相关的仪表地图、HUD 和方向盘操作适配。
+独立开发与维护的安卓车机连接软件。有线与无线 CarPlay 播放栈使用 xcertplay；配件 MFi 仍使用既有 DiPlay 配置（`DIPLAY_AUTH_ASSETS_DIR` 下的 `offline-mfi/identity.pk8` 与 `certificate.p7b`），不改用 xcertplay 的 `local-auth`。并提供与具体车机、固件相关的仪表地图、HUD 和方向盘操作适配。
 
 本产品与中国一汽、红旗品牌及 Apple 无隶属或官方授权关系。车型名称仅用于说明兼容性，CarPlay 为 Apple Inc. 的商标。
 

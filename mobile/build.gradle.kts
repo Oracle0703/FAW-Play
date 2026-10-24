@@ -3,6 +3,8 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+// DiPlay MFi input. The xcertplay play stack still requires these two documents.
+// Do not switch this to xcertplay `.private/local-auth` or invent a key that is not supplied.
 // Optional local-only input. CI and ordinary source builds contain no accessory identity.
 val localAuthenticationAssets = providers.environmentVariable("DIPLAY_AUTH_ASSETS_DIR")
     .orNull?.let { file(it).canonicalFile }
