@@ -2,9 +2,12 @@ package com.shilapi.xcertplay
 
 import android.os.Handler
 import android.os.Looper
+import android.content.Context
+import android.view.Surface
 import com.shilapi.xcertplay.airplay.rcs.uisync.CarPlayUiSyncTarget
 import com.shilapi.xcertplay.airplay.rcs.uisync.HongqiHs5UiState
 import com.shilapi.xcertplay.airplay.rcs.uisync.HongqiHs5UiSyncTarget
+import com.shilapi.xcertplay.media.AndroidMediaSink
 import java.lang.ref.WeakReference
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -24,12 +27,41 @@ internal object Hs5UltraPresentationHost {
     private var owner: Long? = null // main thread only
     private var ownerProfile: Long? = null
     private var state: HongqiHs5UiState? = null
+    private var backgroundPresentation: ClusterMapPresentation? = null
+
+    /** A background connection must not depend on the foreground Activity winning a race. */
+    fun prepareBackground(profile: Long, context: Context, sink: AndroidMediaSink): Boolean = onMain {
+        if (profiles.get() != profile) false
+        else if (renderer.get() != null) true
+        else {
+            val app = context.applicationContext
+            val display = ClusterMapPresentation.findDisplay(app)
+            if (display == null) false else {
+                var previous: Surface? = null
+                val presentation = ClusterMapPresentation(app, display, onSurface = { surface ->
+                    previous?.let { if (it !== surface) sink.clearSurface(111, it) }
+                    previous = surface
+                    if (surface != null) sink.setSurface(111, surface)
+                })
+                try {
+                    presentation.show()
+                    backgroundPresentation = presentation
+                    renderer = WeakReference(presentation)
+                    true
+                } catch (_: RuntimeException) {
+                    runCatching { presentation.dismiss() }
+                    false
+                }
+            }
+        }
+    }
 
     fun beginProfile(): Long {
         val profile = profiles.incrementAndGet()
         dispatch {
             if (profiles.get() == profile && ownerProfile != profile) {
                 renderer.get()?.clearUltraState()
+                releaseBackground()
                 owner = null
                 ownerProfile = null
                 state = null
@@ -43,6 +75,7 @@ internal object Hs5UltraPresentationHost {
         if (renderer.get() !== value) renderer.get()?.clearUltraState()
         renderer = WeakReference(value)
         state?.let { if (!value.applyUltraState(it)) state = null }
+        if (backgroundPresentation !== value) releaseBackground()
     }
 
     fun detach(value: Hs5UltraRenderer) {
@@ -80,6 +113,7 @@ internal object Hs5UltraPresentationHost {
             dispatch {
                 if (profiles.get() == profile && owner == channel) {
                     renderer.get()?.clearUltraState()
+                    releaseBackground()
                     owner = null
                     ownerProfile = null
                     state = null
@@ -116,5 +150,13 @@ internal object Hs5UltraPresentationHost {
 
     private fun dispatch(action: () -> Unit) {
         if (Looper.myLooper() == Looper.getMainLooper()) action() else main.post { action() }
+    }
+
+    private fun releaseBackground() {
+        val previous = backgroundPresentation ?: return
+        backgroundPresentation = null
+        if (renderer.get() === previous) renderer.clear()
+        previous.clearUltraState()
+        runCatching { previous.dismiss() }
     }
 }
