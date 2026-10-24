@@ -1,0 +1,21 @@
+{
+  "component": "DiPlay",
+  "independentCopy": true,
+  "productionCredentialsUsed": false,
+  "accessoryIdentityBundled": false,
+  "commands": [
+    {
+      "command": [
+        "gradlew",
+        ":mobile:assembleDebug",
+        "-PfawLicenseDebug=false",
+        "--offline",
+        "--no-configuration-cache",
+        "--console=plain"
+      ],
+      "exitCode": 0,
+      "elapsedSeconds": 43.3
+    }
+  ],
+  "success": true
+}

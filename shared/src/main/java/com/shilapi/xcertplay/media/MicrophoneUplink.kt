@@ -38,7 +38,8 @@ internal class MicrophoneUplink(
     @Volatile private var socket: DatagramSocket? = null
     @Volatile private var opusEncoder: OpusEncoder? = null
     @Volatile private var effects: List<AudioEffect> = emptyList()
-    private var thread: Thread? = null
+    @Volatile private var thread: Thread? = null
+    val hasExited: Boolean get() = thread?.isAlive != true
 
     fun start(): Boolean {
         if (!running.compareAndSet(false, true)) return true
@@ -66,7 +67,7 @@ internal class MicrophoneUplink(
             else -> MediaRecorder.AudioSource.MIC
         }
         val nextEncoder = if (config.codec == AudioCodecKind.OPUS) {
-            OpusEncoder(config.bitrate ?: 48_000).takeIf { it.available }
+            OpusEncoder(config.bitrate ?: 48_000, onDiagnostic).takeIf { it.available }
         } else {
             null
         }
@@ -191,6 +192,7 @@ internal class MicrophoneUplink(
         val counters = MicrophoneCounters()
         val routeInfo = { routeType(recorder) }
         var filled = 0
+        var captureTimestamp = 0
         try {
             while (running.get()) {
                 stats.reading()
@@ -219,8 +221,9 @@ internal class MicrophoneUplink(
                 }
                 pacer.poll(System.nanoTime())?.let { ready ->
                     // Overflow drops old PCM, so reflect the missing samples in RTP time.
-                    counters.timestamp += ready.skippedFrames * config.rtpSamplesPerPacket
-                    sendFrame(socket, counters, ready.pcm)
+                    captureTimestamp += ready.skippedFrames * config.rtpSamplesPerPacket
+                    sendFrame(socket, counters, ready.pcm, captureTimestamp)
+                    captureTimestamp += config.rtpSamplesPerPacket
                 }
                 stats.flush(routeType = routeInfo)
                 LockSupport.parkNanos(pacer.pollDelayNs(System.nanoTime()))
@@ -240,18 +243,19 @@ internal class MicrophoneUplink(
         }
     }
 
-    private fun sendFrame(socket: DatagramSocket, counters: MicrophoneCounters, frame: ByteArray) {
+    private fun sendFrame(socket: DatagramSocket, counters: MicrophoneCounters, frame: ByteArray, timestamp: Int) {
         val bodies = if (config.codec == AudioCodecKind.OPUS) {
-            opusEncoder?.encode(frame).orEmpty()
+            opusEncoder?.encode(frame, timestamp).orEmpty()
         } else {
-            listOf(MicrophonePacketizer.toWirePcm(frame))
+            listOf(OpusAccessUnit(MicrophonePacketizer.toWirePcm(frame), timestamp))
         }
-        stats.encoded(bodies.size, if (bodies.isEmpty()) 1 else bodies.count { it.isEmpty() })
-        bodies.forEach { body ->
+        stats.encoded(bodies.size, bodies.count { it.bytes.isEmpty() })
+        bodies.forEach { packet ->
+            counters.timestamp = packet.rtpTimestamp
             sendPacket(
                 socket = socket,
                 counters = counters,
-                body = body,
+                body = packet.bytes,
                 samples = config.rtpSamplesPerPacket,
             )
         }
@@ -305,6 +309,14 @@ internal class MicrophoneUplink(
             if (worker.isAlive) worker.interrupt()
         }
         release()
+    }
+
+    /** Confirms that a capture worker has exited after [close] requested it to stop. */
+    fun awaitClosed(timeoutMillis: Long): Boolean {
+        val worker = thread ?: return true
+        if (Thread.currentThread() === worker) return false
+        worker.join(timeoutMillis)
+        return !worker.isAlive
     }
 
     @Synchronized

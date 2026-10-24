@@ -47,7 +47,7 @@ internal class PlaybackResourceSampler(
     init { handler.postDelayed(sample, 30_000) }
     fun close() { closed = true; handler.removeCallbacks(sample) }
     companion object {
-        val handler: Handler by lazy { Handler(HandlerThread("faw-playback-diagnostics").apply { start() }.looper) }
+        val handler: Handler by lazy { Handler(HandlerThread("autunn-playback-diagnostics").apply { start() }.looper) }
         val liveDecoderThreads = AtomicInteger()
     }
 }

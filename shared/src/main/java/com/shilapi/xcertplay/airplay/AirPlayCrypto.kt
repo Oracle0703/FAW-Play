@@ -13,6 +13,12 @@ import org.bouncycastle.crypto.params.X25519PrivateKeyParameters
 import org.bouncycastle.crypto.params.X25519PublicKeyParameters
 import org.bouncycastle.crypto.signers.Ed25519Signer
 import java.security.SecureRandom
+import java.security.GeneralSecurityException
+import javax.crypto.Cipher
+import javax.crypto.AEADBadTagException
+import javax.crypto.spec.IvParameterSpec
+import javax.crypto.spec.SecretKeySpec
+import org.bouncycastle.crypto.InvalidCipherTextException
 
 /** BouncyCastle-backed primitives for the CarPlay pairing and control channel. */
 object AirPlayCrypto {
@@ -20,6 +26,10 @@ object AirPlayCrypto {
     private const val NONCE_SIZE = 12
     private const val LABEL_SIZE = 8
     private val random = SecureRandom()
+    private val platformDecryptor = object : ThreadLocal<Cipher?>() {
+        override fun initialValue(): Cipher? = listOf("ChaCha20/Poly1305/NoPadding", "ChaCha20-Poly1305")
+            .firstNotNullOfOrNull { runCatching { Cipher.getInstance(it) }.getOrNull() }
+    }
 
     data class X25519KeyPair(val privateKey: ByteArray, val publicKey: ByteArray)
     data class Ed25519KeyPair(val privateKey: ByteArray, val publicKey: ByteArray)
@@ -93,6 +103,22 @@ object AirPlayCrypto {
         ciphertextAndTag: ByteArray,
         aad: ByteArray = ByteArray(0),
     ): ByteArray {
+        platformDecryptor.get()?.let { cipher ->
+            try {
+                cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(key, "ChaCha20"), IvParameterSpec(nonce))
+                if (aad.isNotEmpty()) cipher.updateAAD(aad)
+                return cipher.doFinal(ciphertextAndTag)
+            } catch (error: AEADBadTagException) {
+                throw InvalidCipherTextException("Invalid authentication tag", error)
+            } catch (_: GeneralSecurityException) {
+                // Unsupported provider/key format falls back; authentication failures never do.
+            }
+        }
+        return chachaOpenBouncyCastle(key, nonce, ciphertextAndTag, aad)
+    }
+
+    internal fun chachaOpenBouncyCastle(key: ByteArray, nonce: ByteArray,
+        ciphertextAndTag: ByteArray, aad: ByteArray): ByteArray {
         val cipher = ChaCha20Poly1305()
         cipher.init(false, AEADParameters(KeyParameter(key), MAC_BITS, nonce, aad))
         val output = ByteArray(cipher.getOutputSize(ciphertextAndTag.size))

@@ -1,0 +1,34 @@
+server:
+  port: ${PORT:8080}
+  forward-headers-strategy: none
+  error:
+    include-message: never
+    include-stacktrace: never
+spring:
+  servlet:
+    multipart:
+      max-file-size: 512MB
+      max-request-size: 513MB
+      file-size-threshold: 0
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/faw_license}
+    username: ${DATABASE_USER:faw_license}
+    password: ${DATABASE_PASSWORD}
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${OIDC_ISSUER:http://localhost:8081/realms/faw-play}
+          jwk-set-uri: ${OIDC_JWKS:http://localhost:8081/realms/faw-play/protocol/openid-connect/certs}
+license:
+  issuer: faw-play-license
+  allowed-app-ids: ${LICENSE_ALLOWED_APP_IDS:com.shihab.diplay,com.shihab.diplay.hudtest,com.shilapi.xcertplay}
+  oidc-audience: ${OIDC_AUDIENCE:faw-license-api}
+  private-key-file: ${LICENSE_PRIVATE_KEY_FILE:secrets/license-private.pem}
+  public-key-file: ${LICENSE_PUBLIC_KEY_FILE:secrets/license-public.pem}
+  offline-days: 30
+  challenge-seconds: 120
+  unbind-cooldown-days: 30
+updates:
+  directory: ${UPDATE_DIRECTORY:./updates}
+  signing-certificates: ${UPDATE_SIGNING_CERTIFICATES:}

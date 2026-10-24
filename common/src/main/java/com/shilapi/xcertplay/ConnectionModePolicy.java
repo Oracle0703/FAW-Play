@@ -17,7 +17,7 @@ public final class ConnectionModePolicy {
     private ConnectionModePolicy() {}
 
     public static void enforce(Context context) {
-        FawSystemParameters.enforce(context);
+        AutunnSystemParameters.enforce(context);
         final SharedPreferences prefs =
                 context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE);
         // Legacy values may have different types; typed getters would throw before migration.

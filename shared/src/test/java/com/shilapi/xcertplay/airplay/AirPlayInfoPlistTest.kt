@@ -54,6 +54,12 @@ class AirPlayInfoPlistTest {
         val view = (display["viewAreas"] as List<*>).single() as Map<*, *>
         val safe = view["safeArea"] as Map<*, *>
         assertEquals(0, display["initialViewArea"])
+        assertEquals(0, view["viewAreaIndex"])
+        assertEquals(0, view["viewAreaTransitionControl"])
+        assertEquals(false, view["viewAreaSupportsFocusTransfer"])
+        assertEquals(emptyList<Int>(), display["adjacentViewAreas"])
+        assertEquals(1280, display["widthPixelsMax"])
+        assertEquals(720, display["heightPixelsMax"])
         assertEquals(1280, view["widthPixels"])
         assertEquals(720, view["heightPixels"])
         assertEquals(0, view["originXPixels"])

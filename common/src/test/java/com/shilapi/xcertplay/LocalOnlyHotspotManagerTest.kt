@@ -16,6 +16,8 @@ import org.robolectric.annotation.Implementation
 import org.robolectric.annotation.Implements
 import org.robolectric.shadow.api.Shadow
 import org.robolectric.shadows.ShadowWifiManager
+import org.robolectric.util.ReflectionHelpers
+import java.io.IOException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -27,6 +29,23 @@ import java.util.concurrent.Executor
 class LocalOnlyHotspotManagerTest {
     @Test fun cancelledStartupStillClosesALateSystemReservation() = lateReservation(cancel = true)
     @Test fun timedOutStartupStillClosesALateSystemReservation() = lateReservation(cancel = false)
+
+    @Test fun failedReservationCloseKeepsItsHandleForRetry() {
+        val manager = LocalOnlyHotspotManager(RuntimeEnvironment.getApplication())
+        val reservation = Shadow.newInstanceOf(WifiManager.LocalOnlyHotspotReservation::class.java)
+        val state = Shadow.extract<Reservation>(reservation)
+        state.failuresRemaining = 1
+        ReflectionHelpers.setField(manager, "reservation", reservation)
+        try {
+            assertThrows(IOException::class.java) { manager.close() }
+            assertSame(reservation, ReflectionHelpers.getField(manager, "reservation"))
+            manager.close()
+            assertNull(ReflectionHelpers.getField(manager, "reservation"))
+            assertEquals(2, state.closes)
+            manager.close()
+            assertEquals(2, state.closes)
+        } finally { state.failuresRemaining = 0; manager.close() }
+    }
 
     @Test @Config(sdk = [33])
     fun android13RequestsFiveGhzAndClosesLateCustomReservation() {
@@ -95,6 +114,13 @@ class LocalOnlyHotspotManagerTest {
     @Implements(WifiManager.LocalOnlyHotspotReservation::class)
     class Reservation {
         var closes = 0
-        @Implementation fun close() { closes++ }
+        var failuresRemaining = 0
+        @Implementation fun close() {
+            closes++
+            if (failuresRemaining > 0) {
+                failuresRemaining--
+                throw IllegalStateException("temporary reservation cleanup failure")
+            }
+        }
     }
 }

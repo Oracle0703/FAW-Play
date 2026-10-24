@@ -10,22 +10,32 @@ package com.shilapi.xcertplay.airplay
 object BplistCodec {
     private val magic = "bplist00".toByteArray(Charsets.US_ASCII)
 
-    fun decode(bytes: ByteArray): Any? {
-        require(bytes.size >= 40) { "bplist: too short" }
-        require(bytes.copyOfRange(0, magic.size).contentEquals(magic)) { "bplist: bad magic" }
+    internal const val MAX_INPUT_BYTES = 8 * 1024 * 1024
+    internal const val MAX_OBJECTS = 100_000
+    internal const val MAX_DEPTH = 64
+    private const val MAX_REFERENCES = 262_144
 
+    fun decode(bytes: ByteArray): Any? {
+        require(bytes.size in 40..MAX_INPUT_BYTES) { "bplist: invalid input size" }
+        require(bytes.copyOfRange(0, magic.size).contentEquals(magic)) { "bplist: bad magic" }
         val trailer = bytes.size - 32
         val offsetSize = bytes[trailer + 6].toInt() and 0xff
         val refSize = bytes[trailer + 7].toInt() and 0xff
-        val numObjects = readBigEndianLong(bytes, (trailer + 8).toLong(), 8).toInt()
-        val topObject = readBigEndianLong(bytes, (trailer + 16).toLong(), 8).toInt()
-        val offsetTable = readBigEndianLong(bytes, (trailer + 24).toLong(), 8)
-
-        val offsets = LongArray(numObjects)
-        for (index in offsets.indices) {
-            offsets[index] = readBigEndianLong(bytes, offsetTable + index.toLong() * offsetSize, offsetSize)
+        require(offsetSize in 1..8 && refSize in 1..8) { "bplist: invalid integer width" }
+        val count = readBigEndianLong(bytes, (trailer + 8).toLong(), 8)
+        val top = readBigEndianLong(bytes, (trailer + 16).toLong(), 8)
+        val table = readBigEndianLong(bytes, (trailer + 24).toLong(), 8)
+        require(count in 1..MAX_OBJECTS.toLong()) { "bplist: object budget exceeded" }
+        require(top in 0 until count) { "bplist: invalid root reference" }
+        require(table >= magic.size && table <= trailer.toLong() - count * offsetSize) {
+            "bplist: invalid offset table"
         }
-        return readObject(bytes, offsets, refSize, topObject)
+        val offsets = LongArray(count.toInt()) { index ->
+            readBigEndianLong(bytes, table + index.toLong() * offsetSize, offsetSize).also {
+                require(it >= magic.size && it < table) { "bplist: invalid object offset" }
+            }
+        }
+        return Decoder(bytes, offsets, refSize, table.toInt()).read(top.toInt(), 0)
     }
 
     fun encode(root: Any?): ByteArray {
@@ -109,82 +119,108 @@ object BplistCodec {
         return concatBytes(*parts.toTypedArray())
     }
 
-    private fun readObject(bytes: ByteArray, offsets: LongArray, refSize: Int, index: Int): Any? {
-        var position = offsets[index].toInt()
-        val markerByte = bytes[position].toInt() and 0xff
-        val type = markerByte ushr 4
-        val nibble = markerByte and 0x0f
-        position++
+    /** Acyclic object graph with memoized shared references and explicit allocation budgets. */
+    private class Decoder(
+        private val bytes: ByteArray,
+        private val offsets: LongArray,
+        private val refSize: Int,
+        private val dataEnd: Int,
+    ) {
+        private val state = ByteArray(offsets.size)
+        private val values = arrayOfNulls<Any>(offsets.size)
+        private var referencesLeft = MAX_REFERENCES
+        // Distinct IDs may point at overlapping payloads; memoization alone cannot bound copies.
+        private var leafBytesLeft = MAX_INPUT_BYTES.toLong() * 4
 
-        fun readCount(): Int {
-            if (nibble != 0x0f) return nibble
-            val sizeMarker = bytes[position].toInt() and 0xff
-            position++
-            val intBytes = 1 shl (sizeMarker and 0x0f)
-            val count = readBigEndianLong(bytes, position.toLong(), intBytes).toInt()
-            position += intBytes
-            return count
-        }
+        fun read(index: Int, depth: Int): Any? {
+            require(index in offsets.indices) { "bplist: invalid object reference" }
+            require(depth <= MAX_DEPTH) { "bplist: nesting depth exceeded" }
+            require(state[index] != 1.toByte()) { "bplist: cyclic reference" }
+            if (state[index] == 2.toByte()) return values[index]
+            state[index] = 1
+            var position = offsets[index].toInt()
+            val marker = bytes[position++].toInt() and 0xff
+            val type = marker ushr 4
+            val nibble = marker and 0x0f
 
-        return when (type) {
-            0x0 -> when (nibble) {
-                0x00 -> null
-                0x08 -> false
-                0x09 -> true
-                else -> throw IllegalArgumentException("bplist: unsupported primitive 0x0$nibble")
+            fun range(length: Long) {
+                require(length >= 0 && length <= dataEnd.toLong() - position) { "bplist: truncated object" }
             }
-            0x1 -> {
-                val size = 1 shl nibble
-                readBigEndianLong(bytes, position.toLong(), size)
+            fun integer(width: Int): Long {
+                require(width in 1..8) { "bplist: invalid integer width" }
+                range(width.toLong())
+                return readBigEndianLong(bytes, position.toLong(), width)
             }
-            0x2 -> {
-                val size = 1 shl nibble
-                when (size) {
-                    4 -> Float.fromBits(readBigEndianLong(bytes, position.toLong(), size).toInt())
-                    8 -> Double.fromBits(readBigEndianLong(bytes, position.toLong(), size))
-                    else -> throw IllegalArgumentException("bplist: unsupported real size $size")
+            fun count(): Int {
+                if (nibble != 0x0f) return nibble
+                range(1)
+                val sizeMarker = bytes[position++].toInt() and 0xff
+                require((sizeMarker ushr 4) == 1 && (sizeMarker and 0x0f) <= 3) { "bplist: invalid length" }
+                val width = 1 shl (sizeMarker and 0x0f)
+                val value = integer(width)
+                require(value in 0..MAX_INPUT_BYTES.toLong()) { "bplist: length exceeds limit" }
+                position += width
+                return value.toInt()
+            }
+            fun reference(offset: Long): Int {
+                val value = readBigEndianLong(bytes, offset, refSize)
+                require(value >= 0 && value < offsets.size) { "bplist: invalid object reference" }
+                return value.toInt()
+            }
+            fun leaf(length: Long, allocationFactor: Int = 1) {
+                range(length)
+                val cost = length * allocationFactor
+                require(cost <= leafBytesLeft) { "bplist: decoded byte budget exceeded" }
+                leafBytesLeft -= cost
+            }
+            val value: Any? = when (type) {
+                0x0 -> when (nibble) {
+                    0 -> null
+                    8 -> false
+                    9 -> true
+                    else -> throw IllegalArgumentException("bplist: unsupported primitive")
                 }
-            }
-            // Date: 8-byte real, seconds since 2001-01-01 UTC.
-            0x3 -> java.util.Date(
-                Math.round((Double.fromBits(readBigEndianLong(bytes, position.toLong(), 8)) + APPLE_EPOCH_SECONDS) * 1000),
-            )
-            0x4 -> {
-                val count = readCount()
-                bytes.copyOfRange(position, position + count)
-            }
-            // UID (keyed archives): its integer value.
-            0x8 -> readBigEndianLong(bytes, position.toLong(), nibble + 1)
-            0x5 -> {
-                val count = readCount()
-                String(bytes, position, count, Charsets.US_ASCII)
-            }
-            0x6 -> {
-                val count = readCount()
-                String(bytes, position, count * 2, Charsets.UTF_16BE)
-            }
-            0xa, 0xc -> {
-                val count = readCount()
-                val array = ArrayList<Any?>(count)
-                for (i in 0 until count) {
-                    val reference = readBigEndianLong(bytes, position + i.toLong() * refSize, refSize).toInt()
-                    array.add(readObject(bytes, offsets, refSize, reference))
+                0x1 -> { require(nibble <= 3) { "bplist: integer exceeds 64 bits" }; integer(1 shl nibble) }
+                0x2 -> when (nibble) {
+                    2 -> Float.fromBits(integer(4).toInt())
+                    3 -> Double.fromBits(integer(8))
+                    else -> throw IllegalArgumentException("bplist: unsupported real width")
                 }
-                array
-            }
-            0xd -> {
-                val count = readCount()
-                val dict = LinkedHashMap<String, Any?>(count)
-                for (i in 0 until count) {
-                    val keyReference = readBigEndianLong(bytes, position + i.toLong() * refSize, refSize).toInt()
-                    val valueReference =
-                        readBigEndianLong(bytes, position + (count + i).toLong() * refSize, refSize).toInt()
-                    dict[readObject(bytes, offsets, refSize, keyReference).toString()] =
-                        readObject(bytes, offsets, refSize, valueReference)
+                0x3 -> {
+                    require(nibble == 3) { "bplist: invalid date width" }
+                    java.util.Date(Math.round((Double.fromBits(integer(8)) + APPLE_EPOCH_SECONDS) * 1000))
                 }
-                dict
+                0x4 -> { val length = count(); leaf(length.toLong()); bytes.copyOfRange(position, position + length) }
+                0x5 -> { val length = count(); leaf(length.toLong(), 2); String(bytes, position, length, Charsets.US_ASCII) }
+                0x6 -> { val length = count().toLong() * 2; leaf(length, 2); String(bytes, position, length.toInt(), Charsets.UTF_16BE) }
+                0x8 -> integer(nibble + 1)
+                0xa, 0xc, 0xd -> {
+                    val count = count()
+                    val refs = count.toLong() * if (type == 0xd) 2 else 1
+                    require(refs <= referencesLeft) { "bplist: reference budget exceeded" }
+                    referencesLeft -= refs.toInt()
+                    range(refs * refSize)
+                    if (type == 0xd) {
+                        val dict = LinkedHashMap<String, Any?>(count)
+                        for (i in 0 until count) {
+                            val key = reference(position + i.toLong() * refSize)
+                            val item = reference(position + (count + i).toLong() * refSize)
+                            val name = read(key, depth + 1)
+                            require(name is String) { "bplist: dictionary key must be a string" }
+                            dict[name] = read(item, depth + 1)
+                        }
+                        dict
+                    } else {
+                        ArrayList<Any?>(count).also { array ->
+                            for (i in 0 until count) array.add(read(reference(position + i.toLong() * refSize), depth + 1))
+                        }
+                    }
+                }
+                else -> throw IllegalArgumentException("bplist: unsupported object type")
             }
-            else -> throw IllegalArgumentException("bplist: unsupported object type 0x${type.toString(16)}")
+            values[index] = value
+            state[index] = 2
+            return value
         }
     }
 
@@ -267,8 +303,11 @@ object BplistCodec {
     }
 
     private fun readBigEndianLong(bytes: ByteArray, offset: Long, size: Int): Long {
+        require(size in 1..8 && offset >= 0 && offset <= bytes.size.toLong() - size) {
+            "bplist: invalid integer range"
+        }
         var value = 0L
-        var base = offset.toInt()
+        val base = offset.toInt()
         for (index in 0 until size) {
             value = (value shl 8) or (bytes[base + index].toLong() and 0xffL)
         }

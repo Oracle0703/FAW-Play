@@ -3,8 +3,8 @@ package com.shilapi.xcertplay.network
 import android.content.Context
 import android.os.Build
 import android.util.Log
-import com.shilapi.xcertplay.hud.FawAdbShell
-import com.shilapi.xcertplay.hud.FawParcel
+import com.shilapi.xcertplay.hud.AutunnAdbShell
+import com.shilapi.xcertplay.hud.AutunnParcel
 import java.lang.reflect.Field
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
@@ -14,11 +14,10 @@ import java.util.concurrent.TimeUnit
 /**
  * Pauses the head unit's automatic Wi-Fi network search while wireless CarPlay runs.
  *
- * BYD DiLink 3 (Android 10) scans every Wi-Fi band every 10 s whenever the car's own Wi-Fi client is
- * not connected to a network. Each scan takes the single radio off the CarPlay channel for 3-6 s, so
- * the stream stutters unless the car happens to be joined to a hotspot. Through the approved local
- * adb shell, `IWifiManager.enableWifiConnectivityManager(false)` stops those scans (shell holds
- * CONNECTIVITY_INTERNAL). One process-wide worker owns controller leases and restores scans only
+ * Android 9/10 head units search for other networks even while hosting wireless CarPlay. On a
+ * shared radio this can delay association or streaming. Through the approved local adb shell,
+ * `IWifiManager.enableWifiConnectivityManager(false)` pauses that search when the firmware permits
+ * it (CONNECTIVITY_INTERNAL is required). One process-wide worker owns leases and restores scans only
  * after the last lease ends. A durable marker precedes every disable; failed restores retry and
  * recover when the app next opens. Nothing happens without adb approval. Same LAN is excluded.
  *
@@ -53,7 +52,7 @@ internal class WifiScanPause(
         internal const val TAG = "DiPlayWifiScan"
 
         fun eligible(backend: WirelessHotspotBackend, sdk: Int = Build.VERSION.SDK_INT): Boolean =
-            sdk == Build.VERSION_CODES.Q && backend != WirelessHotspotBackend.EXISTING_WIFI
+            sdk in Build.VERSION_CODES.P..Build.VERSION_CODES.Q && backend != WirelessHotspotBackend.EXISTING_WIFI
 
         fun restoreIfNeeded(context: Context) = ProcessWifiScanPause.recover(context.applicationContext)
 
@@ -63,15 +62,16 @@ internal class WifiScanPause(
         }
 
         /** `void` replies carry only a zero exception word. */
-        fun accepted(output: String?): Boolean = FawParcel.words(output).firstOrNull() == 0L
+        fun accepted(output: String?): Boolean = AutunnParcel.words(output).firstOrNull() == 0L
 
         /**
-         * Android 10 blocks direct reflection on this hidden constant but still allows the lookup when
-         * it goes through Class.getDeclaredField itself; later releases close that path, so only Q is
-         * attempted, which is what DiLink 3 runs.
+         * Both Android 9 and 10 expose this method. Use the running framework's constant, including
+         * vendor changes, rather than an AOSP transaction number. The indirect lookup also works on
+         * Android 10's reflection restrictions. Unavailable/blocked lookups leave scans unchanged;
+         * later releases are not attempted.
          */
         fun enableConnectivityManagerTransaction(): Int? {
-            if (Build.VERSION.SDK_INT != Build.VERSION_CODES.Q) return null
+            if (Build.VERSION.SDK_INT !in Build.VERSION_CODES.P..Build.VERSION_CODES.Q) return null
             return runCatching {
                 val stub = Class.forName("android.net.wifi.IWifiManager\$Stub")
                 val lookup = Class::class.java.getDeclaredMethod("getDeclaredField", String::class.java)
@@ -95,7 +95,7 @@ private object ProcessWifiScanPause : WifiScanPauseControl {
     private val worker: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor {
         Thread(it, WifiScanPause.TAG).apply { isDaemon = true }
     }
-    private val adb = FawAdbShell(WifiScanPause.TAG)
+    private val adb = AutunnAdbShell(WifiScanPause.TAG)
     private var session: WifiScanPauseSession? = null
     private var retry: ScheduledFuture<*>? = null
 

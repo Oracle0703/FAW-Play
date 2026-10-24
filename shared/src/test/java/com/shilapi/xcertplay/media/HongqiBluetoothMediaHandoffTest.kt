@@ -57,6 +57,22 @@ class HongqiBluetoothMediaHandoffTest {
         assertEquals(1, shadowOf(RuntimeEnvironment.getApplication()).unboundServiceConnections.size)
     }
 
+    @Test fun vehicleStopSupersedesAnAlreadyQueuedFactoryMediaRestore() {
+        val sink = Sink(mutableMapOf(target to BluetoothProfile.STATE_CONNECTED))
+        bindSink(sink)
+        val handoff = HongqiBluetoothMediaHandoff(RuntimeEnvironment.getApplication())
+        handoff.start(target) { true }
+        shadowOf(Looper.getMainLooper()).idle()
+        handoff.stop()
+        handoff.stop(restoreFactoryMedia = false)
+        shadowOf(Looper.getMainLooper()).idle()
+        assertEquals(listOf("disconnect" to target), sink.commands)
+        val journal = RuntimeEnvironment.getApplication()
+            .getSharedPreferences("faw_bluetooth_media_handoff", Context.MODE_PRIVATE)
+        assertFalse(journal.getBoolean(target.address, false))
+        assertEquals(1, shadowOf(RuntimeEnvironment.getApplication()).unboundServiceConnections.size)
+    }
+
     @Test fun aStaleSessionCannotBeginTheBluetoothHandoff() {
         val sink = Sink(mutableMapOf(target to BluetoothProfile.STATE_CONNECTED))
         bindSink(sink)

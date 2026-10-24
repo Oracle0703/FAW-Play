@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.INSTALL_PACKAGES" tools:ignore="ProtectedPermissions" />
     <!-- Read-only vehicle HAL data: speed is user-authorized, powertrain supplies gear. -->
     <uses-permission android:name="android.car.permission.CAR_SPEED" />
     <uses-permission android:name="android.car.permission.CAR_POWERTRAIN" />
@@ -19,6 +21,7 @@
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" tools:ignore="ProtectedPermissions" />
     <!-- The centre card also follows whichever launcher is the default home. -->
     <queries>
+        <package android:name="ltd.qisi.sotasupportapp" />
         <package android:name="com.byd.carsettings" />
         <intent>
             <action android:name="android.intent.action.MAIN" />
@@ -26,9 +29,24 @@
         </intent>
     </queries>
     <application>
+        <activity android:name="com.shilapi.xcertplay.AppUpdateActivity"
+            android:exported="false" android:theme="@style/Theme.Xcertplay"
+            android:screenOrientation="sensorLandscape"
+            android:configChanges="orientation|screenSize|uiMode" />
+        <receiver android:name="com.shilapi.xcertplay.UpdateInstallResultReceiver" android:exported="false" />
+        <receiver android:name="com.shilapi.xcertplay.UpdatePackageReplacedReceiver" android:exported="false">
+            <intent-filter><action android:name="android.intent.action.MY_PACKAGE_REPLACED" /></intent-filter>
+        </receiver>
+        <receiver android:name="com.shilapi.xcertplay.UpdateDeviceAdminReceiver"
+            android:exported="true" android:permission="android.permission.BIND_DEVICE_ADMIN">
+            <meta-data android:name="android.app.device_admin" android:resource="@xml/update_device_admin" />
+            <intent-filter><action android:name="android.app.action.DEVICE_ADMIN_ENABLED" /></intent-filter>
+        </receiver>
+        <activity android:name="com.shilapi.xcertplay.LicenseActivity"
+            android:exported="false" android:theme="@style/Theme.Xcertplay" />
         <receiver
             android:name="com.shilapi.xcertplay.ClusterLayoutReceiver"
-            android:enabled="${fawClusterTuningEnabled}"
+            android:enabled="${autunnClusterTuningEnabled}"
             android:exported="true"
             android:permission="android.permission.DUMP" />
         <provider
@@ -40,16 +58,29 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/diagnostic_report_paths" />
         </provider>
+        <!-- Keep the installed icon as an invisible router. A launcher click must be resolved
+             before Android brings either the retained CarPlay task or the software task forward;
+             targeting Host directly exposes its previous software frame during that handoff. -->
+        <!-- The icon runs in its own short-lived task. Sharing the Host affinity let a launcher
+             click be resolved straight into the retained CarPlay task, so this router never ran
+             and the entry decision fell through to the software page. -->
         <activity android:name="com.shilapi.xcertplay.DiPlayActivity"
-            android:exported="true" android:launchMode="singleTop"
-            android:resizeableActivity="true"
-            android:configChanges="density|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
-            android:theme="@style/Theme.Xcertplay">
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:launchMode="singleTop"
+            android:taskAffinity="${applicationId}.entry"
+            android:theme="@style/Theme.AutunnEntry">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name="com.shilapi.xcertplay.DiPlaySettingsActivity"
+            android:exported="false" android:launchMode="singleTop"
+            android:resizeableActivity="true"
+            android:configChanges="density|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
+            android:theme="@style/Theme.AutunnSettings" />
         <service android:name="com.shilapi.xcertplay.DiPlaySessionService"
             android:exported="false" android:foregroundServiceType="connectedDevice|microphone|location" />
 
@@ -61,7 +92,7 @@
             android:launchMode="singleTask"
             android:resizeableActivity="true"
             android:screenOrientation="fullSensor"
-            android:theme="@style/Theme.Xcertplay"
+            android:theme="@style/Theme.AutunnCarPlay"
             android:windowSoftInputMode="adjustResize">
         </activity>
 

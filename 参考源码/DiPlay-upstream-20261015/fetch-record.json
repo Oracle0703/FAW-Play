@@ -1,0 +1,12 @@
+{
+  "repository": "https://github.com/shihabal3amri/DiPlay",
+  "source": "https://codeload.github.com/shihabal3amri/DiPlay/zip/refs/heads/main",
+  "branch": "main",
+  "commit_from_zip_comment": "1b1ac5f27986ce83b6d17fdd8c4d1be852fbbb70",
+  "fetched_at_utc": "2026-10-15T12:36:45.480161+00:00",
+  "sha256": "b8ba61f80176f331117124a467c8fcf1d66803079bb78ca6d2010eb1bace7432",
+  "zip_entries": 1576,
+  "zip_test": "passed",
+  "extracted_directory": "DiPlay-main",
+  "local_changes_applied": false
+}

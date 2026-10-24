@@ -1,0 +1,40 @@
+{
+  "serverH2": [
+    {
+      "name": "TEST-com.shilapi.license.AdminLoginTest.xml",
+      "sha256": "3e18b3c1db114caca1ee727393a1b02b74143592c5c1da1eaefce63ceda66449"
+    },
+    {
+      "name": "TEST-com.shilapi.license.AuthorizationIntegrationTest.xml",
+      "sha256": "1666d1bfbeef51d7504f2335da8d3eef4b23d7847cd0d2a07d79f7240aab4e5e"
+    },
+    {
+      "name": "TEST-com.shilapi.license.DiagnosticBodyLimitTest.xml",
+      "sha256": "ea2f69a09b20630dcaaf3f9aecac89b727dfb5208d787e4fdc7b08274d84d21f"
+    },
+    {
+      "name": "TEST-com.shilapi.license.DiagnosticIntegrationTest.xml",
+      "sha256": "eb220e9bf0d35f9ed3cd02763e98e43b8e807f5d1b979f4f275a25afe9b5c18b"
+    },
+    {
+      "name": "TEST-com.shilapi.license.KeycloakRealmConfigurationTest.xml",
+      "sha256": "7e77622700df67b68f9567517290598cac42901b9862711757dad42f9f4ab4b2"
+    },
+    {
+      "name": "TEST-com.shilapi.license.OfflineLicensePeriodTest.xml",
+      "sha256": "d7cbca5d8fa4c3caab110ef8fec621ca90647fd6471e278c7d7e1bc27e1a4b64"
+    },
+    {
+      "name": "TEST-com.shilapi.license.SchemaUpgradeTest.xml",
+      "sha256": "a08fa2587ad0adc16ddbf3aa9be1c0c261ac043a2fb51ec559b24249147b4310"
+    },
+    {
+      "name": "TEST-com.shilapi.license.UpdatePublisherTest.xml",
+      "sha256": "7dd516f1a2e300aff64ee2ec163c5334c89b618782b7a9af343d9f3609cc2293"
+    },
+    {
+      "name": "TEST-com.shilapi.license.UpdateServiceTest.xml",
+      "sha256": "25aca6d9580c2a2c684e051c4436f2c1c94a3d23f023d0a5763905dc563e77b7"
+    }
+  ]
+}

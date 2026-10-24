@@ -57,6 +57,10 @@ data class Iap2IdentificationConfig(
     val chargingConnectors: EvChargingConnectors = EvChargingConnectors.CCS2_TYPE2,
     /** Also offer wheel speed ($PASCD) in the location component; needs [locationInformationEnabled]. */
     val vehicleSpeedEnabled: Boolean = false,
+    /** Only receivers with a lane decoder/output advertise 0x5204 and storage capacity. */
+    val laneGuidanceEnabled: Boolean = false,
+    /** Declare/subscribe navigation only on the link that actually consumes it. */
+    val routeGuidanceEnabled: Boolean = true,
 ) {
     constructor(
         name: String,
@@ -82,6 +86,7 @@ data class Iap2IdentificationConfig(
     )
 
     init {
+        require(!laneGuidanceEnabled || routeGuidanceEnabled) { "Lane guidance requires route guidance" }
         listOf(name, modelIdentifier, manufacturer, serialNumber, firmwareVersion, hardwareVersion).forEach {
             require(it.isNotBlank()) { "Identification identity strings must not be blank" }
         }
@@ -129,6 +134,8 @@ internal fun Iap2IdentificationConfig.forWirelessLink(
             locationInformationEnabled = false,
             vehicleStatusEnabled = false,
             vehicleSpeedEnabled = false,
+            laneGuidanceEnabled = false,
+            routeGuidanceEnabled = false,
         )
         Iap2WirelessLinkRole.RUNTIME_TUNNEL -> wirelessConfig
     }
@@ -204,6 +211,11 @@ class Iap2IdentificationClient(private val session: Iap2Session) {
             } else {
                 MESSAGES_RECEIVED_FROM_PHONE
             }
+            if (!config.routeGuidanceEnabled) {
+                sentMessages = sentMessages.filterNot { it == 0x5200 || it == 0x5203 }.toIntArray()
+                receivedMessages = receivedMessages.filterNot { it == 0x5201 || it == 0x5202 }.toIntArray()
+            }
+            if (config.laneGuidanceEnabled) receivedMessages += 0x5204
             if (config.vehicleStatusEnabled) {
                 sentMessages += Iap2VehicleStatus.VEHICLE_STATUS_UPDATE
                 receivedMessages += intArrayOf(
@@ -280,13 +292,16 @@ class Iap2IdentificationClient(private val session: Iap2Session) {
                         if (config.vehicleSpeedEnabled) void(20)
                     }
                 }
-                group(30) {
+                if (config.routeGuidanceEnabled) group(30) {
                     u16(0, 42)
                     string(1, "RouteGuidance")
                     // Without these limits the iPhone may omit road names from 0x5201/0x5202.
                     u16(2, 64) // MaxCurrentRoadNameLength
                     u16(4, 64) // MaxAfterManeuverRoadNameLength
-                    u16(6, 8)
+                    u16(6, com.shilapi.xcertplay.hud.RouteGuidanceStorageBudget.MANEUVER_CAPACITY)
+                    if (config.laneGuidanceEnabled) {
+                        u16(8, 8) // MaxLaneGuidanceStorageCapacity: required to receive 0x5204.
+                    }
                 }
             }
         }

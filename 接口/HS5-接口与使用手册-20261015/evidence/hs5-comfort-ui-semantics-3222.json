@@ -1,0 +1,476 @@
+{
+  "firmware": "3222",
+  "verification": "Static OEM HVAC UI, recovered CompactDex and existing Binder service audit only. No vehicle runtime verification; no Apple CarPlay Ultra vehicle protocol implementation is established by this evidence.",
+  "scope": "Human meaning of already-audited OEM comfort command and feedback enums. Command numbers are deliberately separated from readback numbers.",
+  "supersedesSemanticUnknownsIn": "docs/evidence/hs5-comfort-3222.json (seat meaning and climate on/off meaning only; transaction and range evidence remains there)",
+  "sources": [
+    {
+      "path": "work/vehicle-controls-audit-20261015/QisiHVAC-3222/bytecode.dis.txt",
+      "sha256": "9caf1f497a312a218111d6447b9898fa0931390defecb8a557c97da254708227",
+      "lineNumbering": "Original bytes.split(b\\n), LF-only. Unicode splitlines would shift coordinates."
+    },
+    {
+      "path": "work/vehicle-controls-audit-20261015/QisiHVAC-3222/QisiHVAC_classes3.cdex",
+      "sha256": "e19b8474d509145a8c48c62287d3be8b94743b4e904a766bd44e98f12a589623",
+      "compactDexDataOff": "0x15f858"
+    }
+  ],
+  "climateSettings": {
+    "POWER": {
+      "command": {
+        "off": 1,
+        "on": 2
+      },
+      "feedback": {
+        "on": [
+          1
+        ],
+        "off": [
+          0,
+          2
+        ]
+      },
+      "toggleEvidence": {
+        "owner": "Lltd/qisi/hvac/viewmodel/HvacViewModel;",
+        "source": "work/vehicle-controls-audit-20261015/QisiHVAC-3222/bytecode.dis.txt",
+        "lfStart": 2930546,
+        "method": "virtual_method #36581: setACFrontState ()V",
+        "codeOff": "d95202"
+      },
+      "predicateEvidence": {
+        "owner": "Lltd/qisi/hvac/viewmodel/HvacViewModel;",
+        "source": "work/vehicle-controls-audit-20261015/QisiHVAC-3222/bytecode.dis.txt",
+        "lfStart": 2929013,
+        "method": "direct_method #36548: isPowerOn ()Z",
+        "codeOff": "d94850"
+      },
+      "repositoryEvidence": {
+        "owner": "Lltd/qisi/hvac/repository/HvacRepository;",
+        "source": "work/vehicle-controls-audit-20261015/QisiHVAC-3222/bytecode.dis.txt",
+        "lfStart": 2412846,
+        "method": "virtual_method #33952: setACFrontState (I)V",
+        "codeOff": "d6a47e"
+      },
+      "reasoning": "The toggle sends command1 when current state predicate is true and command2 otherwise. Repository updates displayed feedback using command-1, then passes the original command unchanged to CarACManager.",
+      "notes": [
+        "Only firmware-normalized nonnegative codes in the listed domain receive a label; negative/unknown values remain unavailable.",
+        "The no-argument OEM toggle permits the off-to-on action only in its C095 branch; the explicit integer setter itself passes through. This model UI condition is not adopted as an HS5 protocol requirement."
+      ]
+    },
+    "AUTO": {
+      "command": {
+        "off": 1,
+        "on": 2
+      },
+      "feedback": {
+        "on": [
+          1
+        ],
+        "off": [
+          0,
+          2
+        ]
+      },
+      "toggleEvidence": {
+        "owner": "Lltd/qisi/hvac/viewmodel/HvacViewModel;",
+        "source": "work/vehicle-controls-audit-20261015/QisiHVAC-3222/bytecode.dis.txt",
+        "lfStart": 2930392,
+        "method": "virtual_method #36575: setACAutoMode ()V",
+        "codeOff": "d95060"
+      },
+      "predicateEvidence": {
+        "owner": "Lltd/qisi/hvac/viewmodel/HvacViewModel;",
+        "source": "work/vehicle-controls-audit-20261015/QisiHVAC-3222/bytecode.dis.txt",
+        "lfStart": 2930074,
+        "method": "virtual_method #36543: isFrontAutoOn ()Z",
+        "codeOff": "d94740"
+      },
+      "repositoryEvidence": {
+        "owner": "Lltd/qisi/hvac/repository/HvacRepository;",
+        "source": "work/vehicle-controls-audit-20261015/QisiHVAC-3222/bytecode.dis.txt",
+        "lfStart": 2412735,
+        "method": "virtual_method #33948: setACAutoMode (I)V",
+        "codeOff": "d6a31a"
+      },
+      "reasoning": "The toggle sends command1 when current state predicate is true and command2 otherwise. Repository updates displayed feedback using command-1, then passes the original command unchanged to CarACManager.",
+      "notes": [
+        "Only firmware-normalized nonnegative codes in the listed domain receive a label; negative/unknown values remain unavailable."
+      ]
+    },
+    "SYNC": {
+      "command": {
+        "off": 1,
+        "on": 2
+      },
+      "feedback": {
+        "on": [
+          1
+        ],
+        "off": [
+          0,
+          2
+        ]
+      },
+      "toggleEvidence": {
+        "owner": "Lltd/qisi/hvac/viewmodel/HvacViewModel;",
+        "source": "work/vehicle-controls-audit-20261015/QisiHVAC-3222/bytecode.dis.txt",
+        "lfStart": 2930959,
+        "method": "virtual_method #36593: setACSyncState ()V",
+        "codeOff": "d956a6"
+      },
+      "predicateEvidence": {
+        "owner": "Lltd/qisi/hvac/viewmodel/HvacViewModel;",
+        "source": "work/vehicle-controls-audit-20261015/QisiHVAC-3222/bytecode.dis.txt",
+        "lfStart": 2929150,
+        "method": "direct_method #36569: isSyncON ()Z",
+        "codeOff": "d94a18"
+      },
+      "repositoryEvidence": {
+        "owner": "Lltd/qisi/hvac/repository/HvacRepository;",
+        "source": "work/vehicle-controls-audit-20261015/QisiHVAC-3222/bytecode.dis.txt",
+        "lfStart": 2413090,
+        "method": "virtual_method #33961: setACSyncState (I)V",
+        "codeOff": "d6a758"
+      },
+      "reasoning": "The toggle sends command1 when current state predicate is true and command2 otherwise. Repository updates displayed feedback using command-1, then passes the original command unchanged to CarACManager.",
+      "notes": [
+        "Only firmware-normalized nonnegative codes in the listed domain receive a label; negative/unknown values remain unavailable."
+      ]
+    },
+    "COMPRESSOR": {
+      "command": {
+        "off": 1,
+        "on": 2
+      },
+      "feedback": {
+        "on": [
+          1,
+          2
+        ],
+        "off": [
+          0
+        ]
+      },
+      "toggleEvidence": {
+        "owner": "Lltd/qisi/hvac/viewmodel/HvacViewModel;",
+        "source": "work/vehicle-controls-audit-20261015/QisiHVAC-3222/bytecode.dis.txt",
+        "lfStart": 2930470,
+        "method": "virtual_method #36578: setACCompressorState ()V",
+        "codeOff": "d95134"
+      },
+      "predicateEvidence": {
+        "owner": "Lltd/qisi/hvac/viewmodel/HvacViewModel;",
+        "source": "work/vehicle-controls-audit-20261015/QisiHVAC-3222/bytecode.dis.txt",
+        "lfStart": 2928655,
+        "method": "direct_method #36534: isACStateOn ()Z",
+        "codeOff": "d94454"
+      },
+      "repositoryEvidence": {
+        "owner": "Lltd/qisi/hvac/repository/HvacRepository;",
+        "source": "work/vehicle-controls-audit-20261015/QisiHVAC-3222/bytecode.dis.txt",
+        "lfStart": 2412790,
+        "method": "virtual_method #33950: setACCompressorState (I)V",
+        "codeOff": "d6a3ca"
+      },
+      "reasoning": "The toggle sends command1 when current state predicate is true and command2 otherwise. Repository updates displayed feedback using command-1, then passes the original command unchanged to CarACManager.",
+      "notes": [
+        "Only firmware-normalized nonnegative codes in the listed domain receive a label; negative/unknown values remain unavailable.",
+        "The C235 ibAc button is explicitly activated for feedback==1 OR feedback==2. This closes the ambiguity in the predicate without assigning a physical compressor substate name to2."
+      ],
+      "displayEvidence": {
+        "owner": "Lltd/qisi/hvac/ui/fragment/C235/HvacC235Fragment;",
+        "source": "work/vehicle-controls-audit-20261015/QisiHVAC-3222/bytecode.dis.txt",
+        "lfStart": 3042898,
+        "method": "direct_method #35097: initACCompressorState (I)V",
+        "codeOff": "d7f3a8"
+      }
+    },
+    "FRONT_DEFROST": {
+      "command": {
+        "off": 1,
+        "on": 2
+      },
+      "feedback": {
+        "on": [
+          1
+        ],
+        "off": [
+          0,
+          2
+        ]
+      },
+      "toggleEvidence": {
+        "owner": "Lltd/qisi/hvac/viewmodel/HvacViewModel;",
+        "source": "work/vehicle-controls-audit-20261015/QisiHVAC-3222/bytecode.dis.txt",
+        "lfStart": 2930526,
+        "method": "virtual_method #36580: setACFrontDefFunctionState ()V",
+        "codeOff": "d951ce"
+      },
+      "predicateEvidence": {
+        "owner": "Lltd/qisi/hvac/viewmodel/HvacViewModel;",
+        "source": "work/vehicle-controls-audit-20261015/QisiHVAC-3222/bytecode.dis.txt",
+        "lfStart": 2928949,
+        "method": "direct_method #36544: isFrontDefFunctionOn ()Z",
+        "codeOff": "d947b0"
+      },
+      "repositoryEvidence": {
+        "owner": "Lltd/qisi/hvac/repository/HvacRepository;",
+        "source": "work/vehicle-controls-audit-20261015/QisiHVAC-3222/bytecode.dis.txt",
+        "lfStart": 2412818,
+        "method": "virtual_method #33951: setACFrontDefFunctionState (I)V",
+        "codeOff": "d6a424"
+      },
+      "reasoning": "The toggle sends command1 when current state predicate is true and command2 otherwise. Repository updates displayed feedback using command-1, then passes the original command unchanged to CarACManager.",
+      "notes": [
+        "Only firmware-normalized nonnegative codes in the listed domain receive a label; negative/unknown values remain unavailable."
+      ]
+    }
+  },
+  "feedbackBooleanHelper": {
+    "owner": "Lltd/qisi/hvac/utils/HVACUtil;",
+    "source": "work/vehicle-controls-audit-20261015/QisiHVAC-3222/bytecode.dis.txt",
+    "lfStart": 2424572,
+    "method": "direct_method #36224: isHvacState (I)Z",
+    "codeOff": "d8fa5a",
+    "meaning": "isHvacState returns true exactly when input==1."
+  },
+  "recirculation": {
+    "confirmedOptions": {
+      "1": "外循环",
+      "2": "内循环"
+    },
+    "commandAndFeedbackUseSameEnum": true,
+    "command0": {
+      "meaning": null,
+      "expose": false,
+      "reason": "Service permits0, but no OEM user-facing meaning or click path for0 has been established."
+    },
+    "genericFeedbackEnums": {
+      "1": "外循环",
+      "2": "内循环",
+      "3": "双循环",
+      "4": "自动循环"
+    },
+    "genericEnumCaution": "TTS helper describes shared vehicle enums. HS5 service accepts command0..2 only; do not expose3/4 or reinterpret0 as automatic. Support for feedback3/4 on HS5 remains unverified.",
+    "evidence": {
+      "toggle": {
+        "owner": "Lltd/qisi/hvac/viewmodel/HvacViewModel;",
+        "source": "work/vehicle-controls-audit-20261015/QisiHVAC-3222/bytecode.dis.txt",
+        "lfStart": 2930413,
+        "method": "virtual_method #36576: setACCirculationState ()V",
+        "codeOff": "d95094"
+      },
+      "predicate": {
+        "owner": "Lltd/qisi/hvac/viewmodel/HvacViewModel;",
+        "source": "work/vehicle-controls-audit-20261015/QisiHVAC-3222/bytecode.dis.txt",
+        "lfStart": 2928570,
+        "method": "direct_method #36532: isACCirculationFunctionOn ()Z",
+        "codeOff": "d94376"
+      },
+      "repositoryPassThrough": {
+        "owner": "Lltd/qisi/hvac/repository/HvacRepository;",
+        "source": "work/vehicle-controls-audit-20261015/QisiHVAC-3222/bytecode.dis.txt",
+        "lfStart": 2412763,
+        "method": "virtual_method #33949: setACCirculationState (I)V",
+        "codeOff": "d6a374"
+      },
+      "display": {
+        "owner": "Lltd/qisi/hvac/ui/fragment/C235/HvacC235Fragment;",
+        "source": "work/vehicle-controls-audit-20261015/QisiHVAC-3222/bytecode.dis.txt",
+        "lfStart": 3043270,
+        "method": "direct_method #35104: initLoopState (I)V",
+        "codeOff": "d7f7a8"
+      },
+      "userVisibleVoiceLabels": {
+        "owner": "Lltd/qisi/hvac/voice/manager/TTS2Helper;",
+        "source": "work/vehicle-controls-audit-20261015/QisiHVAC-3222/bytecode.dis.txt",
+        "lfStart": 2431555,
+        "method": "direct_method #36807: getCirculationModeStr (I)Ljava/lang/String;",
+        "codeOff": "d99dea"
+      }
+    },
+    "notes": [
+      "The C235 ibLoop button is activated exactly for feedback2. Its onClick calls the two-state setACCirculationState method at original LF3046227.",
+      "The different setACCirculationStateHs3 three-state method uses1/2/3 and is not an HS5 write-domain precedent."
+    ]
+  },
+  "seats": {
+    "sides": {
+      "0": "主驾",
+      "1": "副驾"
+    },
+    "appliesTo": [
+      "frontSeatHeatLevel",
+      "frontSeatVentLevel"
+    ],
+    "command": {
+      "off": 1,
+      "low": 2,
+      "medium": 3,
+      "high": 4
+    },
+    "feedback": {
+      "off": 0,
+      "low": 1,
+      "medium": 2,
+      "high": 3
+    },
+    "feedback4": {
+      "meaning": null,
+      "exposeAsLevel": false,
+      "reason": "Existing protocol preserves raw4 but OEM level display only labels0..3."
+    },
+    "repositoryDerivation": "Both level setters compute feedback=command-1 and call initFrontSeat{Heat,Vent}Level for local UI, then call CarSCCUManager.setFrontSeat{Heat,Vent}Level with the ORIGINAL command unchanged. This directly supports off1/low2/mid3/high4 commands versus0/1/2/3 feedback.",
+    "repositoryEvidence": {
+      "heat": {
+        "owner": "Lltd/qisi/hvac/repository/HvacRepository;",
+        "source": "work/vehicle-controls-audit-20261015/QisiHVAC-3222/bytecode.dis.txt",
+        "lfStart": 2413526,
+        "method": "virtual_method #33975: setFrontSeatHeatLevel (II)V",
+        "codeOff": "d6ac96"
+      },
+      "vent": {
+        "owner": "Lltd/qisi/hvac/repository/HvacRepository;",
+        "source": "work/vehicle-controls-audit-20261015/QisiHVAC-3222/bytecode.dis.txt",
+        "lfStart": 2413701,
+        "method": "virtual_method #33980: setFrontSeatVentLevel (II)V",
+        "codeOff": "d6aeb8"
+      }
+    },
+    "displayEvidence": {
+      "leftHeat": {
+        "owner": "Lltd/qisi/hvac/ui/fragment/C235/HvacC235Fragment;",
+        "source": "work/vehicle-controls-audit-20261015/QisiHVAC-3222/bytecode.dis.txt",
+        "lfStart": 3045235,
+        "method": "direct_method #35159: updateLeftSeatHeatLevel (I)V",
+        "codeOff": "d81290"
+      },
+      "leftVent": {
+        "owner": "Lltd/qisi/hvac/ui/fragment/C235/HvacC235Fragment;",
+        "source": "work/vehicle-controls-audit-20261015/QisiHVAC-3222/bytecode.dis.txt",
+        "lfStart": 3045345,
+        "method": "direct_method #35160: updateLeftSeatVentLevel (I)V",
+        "codeOff": "d813c6"
+      },
+      "rightHeat": {
+        "owner": "Lltd/qisi/hvac/ui/fragment/C235/HvacC235Fragment;",
+        "source": "work/vehicle-controls-audit-20261015/QisiHVAC-3222/bytecode.dis.txt",
+        "lfStart": 3045455,
+        "method": "direct_method #35161: updateRightSeatHeatLevel (I)V",
+        "codeOff": "d814fc"
+      },
+      "rightVent": {
+        "owner": "Lltd/qisi/hvac/ui/fragment/C235/HvacC235Fragment;",
+        "source": "work/vehicle-controls-audit-20261015/QisiHVAC-3222/bytecode.dis.txt",
+        "lfStart": 3045565,
+        "method": "direct_method #35162: updateRightSeatVentLevel (I)V",
+        "codeOff": "d81632"
+      }
+    },
+    "drawableResources": {
+      "0x7f080268": "ic_hvac_front_seat_heating_left_1",
+      "0x7f080269": "ic_hvac_front_seat_heating_left_2",
+      "0x7f08026a": "ic_hvac_front_seat_heating_left_3",
+      "0x7f08026b": "ic_hvac_front_seat_heating_left_close",
+      "0x7f08026c": "ic_hvac_front_seat_heating_right_1",
+      "0x7f08026d": "ic_hvac_front_seat_heating_right_2",
+      "0x7f08026e": "ic_hvac_front_seat_heating_right_3",
+      "0x7f08026f": "ic_hvac_front_seat_heating_right_close",
+      "0x7f080270": "ic_hvac_front_seat_memory_1",
+      "0x7f080271": "ic_hvac_front_seat_memory_2",
+      "0x7f080272": "ic_hvac_front_seat_memory_3",
+      "0x7f080273": "ic_hvac_front_seat_ventilation_left_1",
+      "0x7f080274": "ic_hvac_front_seat_ventilation_left_2",
+      "0x7f080275": "ic_hvac_front_seat_ventilation_left_3",
+      "0x7f080276": "ic_hvac_front_seat_ventilation_left_close",
+      "0x7f080277": "ic_hvac_front_seat_ventilation_right_1",
+      "0x7f080278": "ic_hvac_front_seat_ventilation_right_2",
+      "0x7f080279": "ic_hvac_front_seat_ventilation_right_3",
+      "0x7f08027a": "ic_hvac_front_seat_ventilation_right_close"
+    },
+    "displayDerivation": "The four C235 update methods select *_close for0 and *_1/*_2/*_3 for1/2/3, respectively. Their label alpha is dim for0 and full for positive feedback.",
+    "cycleEvidence": {
+      "owner": "Lltd/qisi/hvac/viewmodel/HvacViewModel;",
+      "source": "work/vehicle-controls-audit-20261015/QisiHVAC-3222/bytecode.dis.txt",
+      "lfStart": 2928246,
+      "method": "direct_method #36440: frontSeatVentAndHeatLevel (II)I",
+      "codeOff": "d94b08"
+    },
+    "oemClickCycle": "For the current labeled feedback,0->command4 (high),3->command3 (medium),2->command2 (low),1->command1 (off). Unknown/sentinel values must not be used to trigger that OEM fallback in the new implementation.",
+    "mutualExclusion": {
+      "appAddedOppositeWriteObserved": false,
+      "physicalRule": "unverified",
+      "reason": "Audited ViewModel, Repository setters and their UI init methods only write the selected single heat/vent setting. No additional opposite-mode shutdown transaction is present. Preserve actual ECU readback; do not invent a second write or guarantee coexistence.",
+      "heatUiInit": {
+        "owner": "Lltd/qisi/hvac/repository/HvacRepository;",
+        "source": "work/vehicle-controls-audit-20261015/QisiHVAC-3222/bytecode.dis.txt",
+        "lfStart": 2408891,
+        "method": "direct_method #33849: initFrontSeatHeatLevel (II)V",
+        "codeOff": "d690e0"
+      },
+      "ventUiInit": {
+        "owner": "Lltd/qisi/hvac/repository/HvacRepository;",
+        "source": "work/vehicle-controls-audit-20261015/QisiHVAC-3222/bytecode.dis.txt",
+        "lfStart": 2409159,
+        "method": "direct_method #33855: initFrontSeatVentLevel (II)V",
+        "codeOff": "d693d8"
+      }
+    }
+  },
+  "blowMode": {
+    "confirmedHs5CommandOptions": {
+      "1": "吹脸",
+      "3": "吹脸吹脚",
+      "5": "吹脚",
+      "6": "吹脚吹窗",
+      "7": "吹窗"
+    },
+    "genericEnum": {
+      "1": "吹脸",
+      "2": "吹脸吹窗",
+      "3": "吹脸吹脚",
+      "4": "吹脸吹脚吹窗",
+      "5": "吹脚",
+      "6": "吹脚吹窗",
+      "7": "吹窗"
+    },
+    "excludedCommands": {
+      "2": "Service rejects for this HS5 branch",
+      "4": "Service rejects for this HS5 branch"
+    },
+    "voiceLabelEvidence": {
+      "owner": "Lltd/qisi/hvac/voice/manager/TTS2Helper;",
+      "source": "work/vehicle-controls-audit-20261015/QisiHVAC-3222/bytecode.dis.txt",
+      "lfStart": 2431442,
+      "method": "direct_method #36805: getBlowModeStr (I)Ljava/lang/String;",
+      "codeOff": "d99c30"
+    },
+    "packedSwitch": {
+      "instructionAddress": "0xd99c34",
+      "payloadAddress": "0xd99c6c",
+      "fileOffset": "0xef94c4",
+      "identifier": "0x100",
+      "firstKey": 1,
+      "count": 7,
+      "targetCodeUnits": [
+        24,
+        21,
+        18,
+        15,
+        12,
+        9,
+        6
+      ],
+      "rawHex": "00010700010000001800000015000000120000000f0000000c0000000900000006000000",
+      "addressResolution": "Recovered disassembly addresses are relative to CompactDex data_off, not the physical file start."
+    },
+    "notes": [
+      "Blowing toward the windshield is an air-outlet mode; FRONT_DEFROST is a separate forced-defrost command. Do not merge the two controls."
+    ]
+  },
+  "implementationGuidance": [
+    "Use confirmed labels only, keep raw OEM readback distinct from commands, and wait for actual callback/read result before reporting physical success.",
+    "No arbitrary integer UI, no exposure of recirculation0 or seat feedback4 as a named physical mode, no guessed heat/vent co-write.",
+    "This evidence may back the local vehicle adapter. Bridging these functions to Apple CarPlay Ultra requires the real supported Apple vehicle integration protocol and is a separate unfulfilled boundary."
+  ]
+}

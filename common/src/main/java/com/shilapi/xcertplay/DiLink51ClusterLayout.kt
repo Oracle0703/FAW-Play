@@ -19,20 +19,25 @@ internal object DiLink51ClusterLayout {
     enum class Contrast(val label: String) {
         DEFAULT("Theme default"), LIGHT("Light background · dark instruments"), DARK("Dark background · light instruments")
     }
-    data class Plan(val left: Int, val top: Int, val width: Int, val height: Int, val fullMap: Boolean) {
-        // Crop at native pixel scale around the centered car marker, retaining the bottom
-        // of the map. The iPhone's stream size never changes when the driver changes themes.
-        val sourceLeft: Int get() = (STREAM_WIDTH - width) / 2
-        val sourceTop: Int get() = STREAM_HEIGHT - height
-    }
+    data class Plan(val left: Int, val top: Int, val width: Int, val height: Int, val fullMap: Boolean)
     const val STREAM_WIDTH = 1920
     const val STREAM_HEIGHT = 720
-    // DiLink 5.1 retains its measured native-size stream and bottom-centered crop.
-    // DiLink 5's marker safe area and scale controls must not alter this profile.
-    fun streamConfig(): AirPlayDisplayConfig = CarPlayClusterDisplay.config(
-        STREAM_WIDTH, STREAM_HEIGHT, scalePercent = 100,
-    ).copy(safeArea = null)
 
+    /** Ask the iPhone for the visible viewport; every stream pixel is displayed. */
+    fun streamConfig(
+        theme: Theme = Theme.SCENARIO,
+        content: CarPlayClusterDisplay.Content = CarPlayClusterDisplay.Content.MAP,
+    ): AirPlayDisplayConfig {
+        val viewport = checkNotNull(plan(STREAM_WIDTH, STREAM_HEIGHT, theme))
+        val panel = CarPlayClusterDisplay.config(STREAM_WIDTH, STREAM_HEIGHT, scalePercent = 100)
+        return CarPlayClusterDisplay.config(
+            viewport.width, viewport.height, scalePercent = 100, content = content,
+        ).copy(
+            safeArea = null,
+            widthPhysicalMm = checkNotNull(panel.widthPhysicalMm) * viewport.width / STREAM_WIDTH,
+            heightPhysicalMm = checkNotNull(panel.heightPhysicalMm) * viewport.height / STREAM_HEIGHT,
+        )
+    }
     fun supported(fingerprint: String = Build.FINGERPRINT): Boolean = fingerprint == FINGERPRINT
     fun theme(context: Context): Theme = Theme.entries.firstOrNull {
         it.name == context.getSharedPreferences(PREFS, 0).getString("theme", null)
@@ -71,8 +76,7 @@ internal object DiLink51ClusterLayout {
         // The measured side-map bounds are x=1320..1920 on the 1920x720 cluster.
         if (width != 1920 || height != 720) return null
         return if (theme == Theme.MAP) {
-            // Protect speed/status and gear/range. Bottom-aligned cropping keeps the car marker
-            // inside this viewport even when the phone app ignores safe-area insets.
+            // Protect speed/status and gear/range; CarPlay renders for this viewport.
             Plan(0, 144, width, 480, true)
         } else Plan(1320, 0, 600, height, false)
     }

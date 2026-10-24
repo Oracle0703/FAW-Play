@@ -20,7 +20,7 @@ import java.lang.ref.WeakReference
 class AdbClusterActivity : Activity() {
     private var waiting: TextView? = null
     private var surface: Surface? = null
-    private var videoTexture: ClusterVideoTexture? = null
+    private var videoSurface: VideoSurfaceView? = null
     private var turnCard: ClusterTurnCardView? = null
     private var safeAreaPreview: SafeAreaEditorView? = null
     internal var routeStatus = ""
@@ -39,12 +39,12 @@ class AdbClusterActivity : Activity() {
         window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN or
             View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
         val root = FrameLayout(this).apply { setBackgroundColor(Color.TRANSPARENT) }
-        val video = ClusterVideoTexture(this) { next ->
+        val video = VideoSurfaceView(this, onSurface = { next ->
             surface?.let { ClusterActivityOutput.detach(this, it) }
             surface = next
             if (next != null && ClusterActivityOutput.activity.get() === this)
                 ClusterActivityOutput.attach(this, next)
-        }.also { videoTexture = it }
+        }).also { videoSurface = it }
         root.addView(video, FrameLayout.LayoutParams(-1, -1))
         waiting = TextView(this).apply {
             setBackgroundColor(Color.BLACK)
@@ -99,7 +99,7 @@ class AdbClusterActivity : Activity() {
     private fun confirmDisplay(token: String?, display: Int) {
         if (isFinishing || isDestroyed || !ClusterActivityOutput.confirm(this, token, display)) {
             if (token != null && !ClusterActivityOutput.hasConfirmedRoute())
-                com.shilapi.xcertplay.hud.FawOemClusterNavi.release(this, token)
+                com.shilapi.xcertplay.hud.AutunnOemClusterNavi.release(this, token)
             finish(); return
         }
         routeStatus = getString(R.string.adb_cluster_routed)
@@ -109,13 +109,13 @@ class AdbClusterActivity : Activity() {
 
     internal fun route() { ClusterActivityOutput.retry() }
 
-    // Losing focus must not detach stream 111. The texture owns the rendering lifetime.
+    // Losing focus must not detach stream 111. Surface callbacks own the rendering lifetime.
     override fun onDestroy() {
-        videoTexture?.close()
-        videoTexture = null
+        videoSurface?.close()
+        videoSurface = null
         if (ClusterActivityOutput.activity.get() === this) {
             intent.getStringExtra("cluster_launch_token")?.let {
-                com.shilapi.xcertplay.hud.FawOemClusterNavi.release(this, it)
+                com.shilapi.xcertplay.hud.AutunnOemClusterNavi.release(this, it)
             }
             ClusterActivityOutput.activity.clear()
             ClusterActivityOutput.launchPending = false
@@ -238,7 +238,7 @@ internal object ClusterActivityOutput {
             }
             main.post {
                 completeLaunch(token, generation == epoch, result.success) {
-                    com.shilapi.xcertplay.hud.FawOemClusterNavi.release(app, token)
+                    com.shilapi.xcertplay.hud.AutunnOemClusterNavi.release(app, token)
                 }
             }
         }, "adb-cluster-launch").start()
@@ -288,7 +288,7 @@ internal object ClusterActivityOutput {
         expectedDisplay = -1
         launchHost.clear()
         if (releaseContext != null)
-            com.shilapi.xcertplay.hud.FawOemClusterNavi.release(releaseContext, releaseLease)
+            com.shilapi.xcertplay.hud.AutunnOemClusterNavi.release(releaseContext, releaseLease)
         main.removeCallbacks(retryTick)
         onSurface?.invoke(null)
         onSurface = null

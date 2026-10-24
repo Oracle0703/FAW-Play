@@ -1,0 +1,133 @@
+# Source: work/update-package-20261009/format-audit/QisiAdapterService/bytecode.dis.txt
+# Original LF start: 1415540
+  class #2111: QisiFullMapInfo ('Lltd/qisi/adapterproxy/data/QisiFullMapInfo;')
+   access=0001 (PUBLIC)
+   source_file=QisiFullMapInfo.java, class_data_off=a08f72 (10522482)
+   static_fields=1, instance_fields=2, direct_methods=4, virtual_methods=8
+   direct_method #56513: <clinit> ()V
+    access=10009 (PUBLIC STATIC CONSTRUCTOR)
+    codeOff=857602 (8746498)
+    quickening_size=1 (1)
+      857606: 2200 5319                              |0000: new-instance v0, Lltd/qisi/adapterproxy/data/QisiFullMapInfo$1; // type@1953
+      85760a: 7010 bbdc 0000                         |0002: invoke-direct {v0}, Lltd/qisi/adapterproxy/data/QisiFullMapInfo$1;.<init>:()V // method@dcbb
+      857610: 6900 4658                              |0005: sput-object v0, Lltd/qisi/adapterproxy/data/QisiFullMapInfo;.CREATOR:Landroid/os/Parcelable$Creator; // field@5846
+      857614: 7300                                   |0007: return-void-no-barrier
+[new] 857614: 0e00                                   |0007: return-void
+   direct_method #56514: <init> ()V
+    access=10001 (PUBLIC CONSTRUCTOR)
+    codeOff=5d53c0 (6116288)
+      5d53c4: 7010 b699 0000                         |0000: invoke-direct {v0}, Ljava/lang/Object;.<init>:()V // method@99b6
+      5d53ca: 0e00                                   |0003: return-void
+   direct_method #56515: <init> (II)V
+    access=10001 (PUBLIC CONSTRUCTOR)
+    codeOff=85763a (8746554)
+    quickening_size=5 (5)
+      85763e: 7010 b699 0000                         |0000: invoke-direct {v0}, Ljava/lang/Object;.<init>:()V // method@99b6
+      857644: e601 0c00                              |0003: iput-quick v1, v0, [obj+000c]
+[new] 857644: 5901 4858                              |0003: iput v1, v0, Lltd/qisi/adapterproxy/data/QisiFullMapInfo;.Navi_FullMapStatus:I // field@5848
+      857648: e602 0800                              |0005: iput-quick v2, v0, [obj+0008]
+[new] 857648: 5902 4758                              |0005: iput v2, v0, Lltd/qisi/adapterproxy/data/QisiFullMapInfo;.Navi_FullMapLoadStatus:I // field@5847
+      85764c: 7300                                   |0007: return-void-no-barrier
+[new] 85764c: 0e00                                   |0007: return-void
+   direct_method #56516: <init> (Landroid/os/Parcel;)V
+    access=10001 (PUBLIC CONSTRUCTOR)
+    codeOff=857616 (8746518)
+    quickening_size=9 (9)
+      85761a: 7010 b699 0100                         |0000: invoke-direct {v1}, Ljava/lang/Object;.<init>:()V // method@99b6
+      857620: e910 4600 0200                         |0003: invoke-virtual-quick {v2}, [0046] // vtable #0046
+[new] 857620: 6e10 9601 0200                         |0003: invoke-virtual {v2}, Landroid/os/Parcel;.readInt:()I // method@0196
+      857626: 0a00                                   |0006: move-result v0
+      857628: e610 0c00                              |0007: iput-quick v0, v1, [obj+000c]
+[new] 857628: 5910 4858                              |0007: iput v0, v1, Lltd/qisi/adapterproxy/data/QisiFullMapInfo;.Navi_FullMapStatus:I // field@5848
+      85762c: e910 4600 0200                         |0009: invoke-virtual-quick {v2}, [0046] // vtable #0046
+[new] 85762c: 6e10 9601 0200                         |0009: invoke-virtual {v2}, Landroid/os/Parcel;.readInt:()I // method@0196
+      857632: 0a02                                   |000c: move-result v2
+      857634: e612 0800                              |000d: iput-quick v2, v1, [obj+0008]
+[new] 857634: 5912 4758                              |000d: iput v2, v1, Lltd/qisi/adapterproxy/data/QisiFullMapInfo;.Navi_FullMapLoadStatus:I // field@5847
+      857638: 7300                                   |000f: return-void-no-barrier
+[new] 857638: 0e00                                   |000f: return-void
+   virtual_method #56517: describeContents ()I
+    access=0001 (PUBLIC)
+    codeOff=5d9bd6 (6134742)
+      5d9bda: 1200                                   |0000: const/4 v0, #int 0 // #0
+      5d9bdc: 0f00                                   |0001: return v0
+   virtual_method #56518: getNavi_FullMapLoadStatus ()I
+    access=0001 (PUBLIC)
+    codeOff=857590 (8746384)
+    quickening_size=3 (3)
+      857594: e310 0800                              |0000: iget-quick v0, v1, [obj+0008]
+[new] 857594: 5210 4758                              |0000: iget v0, v1, Lltd/qisi/adapterproxy/data/QisiFullMapInfo;.Navi_FullMapLoadStatus:I // field@5847
+      857598: 0f00                                   |0002: return v0
+   virtual_method #56519: getNavi_FullMapStatus ()I
+    access=0001 (PUBLIC)
+    codeOff=85759a (8746394)
+    quickening_size=3 (3)
+      85759e: e310 0c00                              |0000: iget-quick v0, v1, [obj+000c]
+[new] 85759e: 5210 4858                              |0000: iget v0, v1, Lltd/qisi/adapterproxy/data/QisiFullMapInfo;.Navi_FullMapStatus:I // field@5848
+      8575a2: 0f00                                   |0002: return v0
+   virtual_method #56520: setNavi_FullMapLoadStatus (I)V
+    access=0001 (PUBLIC)
+    codeOff=85764e (8746574)
+    quickening_size=3 (3)
+      857652: e601 0800                              |0000: iput-quick v1, v0, [obj+0008]
+[new] 857652: 5901 4758                              |0000: iput v1, v0, Lltd/qisi/adapterproxy/data/QisiFullMapInfo;.Navi_FullMapLoadStatus:I // field@5847
+      857656: 7300                                   |0002: return-void-no-barrier
+[new] 857656: 0e00                                   |0002: return-void
+   virtual_method #56521: setNavi_FullMapStatus (I)V
+    access=0001 (PUBLIC)
+    codeOff=857658 (8746584)
+    quickening_size=3 (3)
+      85765c: e601 0c00                              |0000: iput-quick v1, v0, [obj+000c]
+[new] 85765c: 5901 4858                              |0000: iput v1, v0, Lltd/qisi/adapterproxy/data/QisiFullMapInfo;.Navi_FullMapStatus:I // field@5848
+      857660: 7300                                   |0002: return-void-no-barrier
+[new] 857660: 0e00                                   |0002: return-void
+   virtual_method #56522: toJson ()Ljava/lang/String;
+    access=0001 (PUBLIC)
+    codeOff=8575a4 (8746404)
+    quickening_size=b (11)
+      8575a8: 2200 cf07                              |0000: new-instance v0, Lcom/google/gson/Gson; // type@07cf
+      8575ac: 7010 1127 0000                         |0002: invoke-direct {v0}, Lcom/google/gson/Gson;.<init>:()V // method@2711
+      8575b2: 2208 5419                              |0005: new-instance v8, Lltd/qisi/adapterproxy/data/QisiFullMapInfo$MQisiFullMapInfo; // type@1954
+      8575b6: 7100 35dd 0000                         |0007: invoke-static {}, Lltd/qisi/adapterproxy/data/QisiNaviConnectInfo;.getInstance:()Lltd/qisi/adapterproxy/data/QisiNaviConnectInfo; // method@dd35
+      8575bc: 0c01                                   |000a: move-result-object v1
+      8575be: e910 0b00 0100                         |000b: invoke-virtual-quick {v1}, [000b] // vtable #000b
+[new] 8575be: 6e10 36dd 0100                         |000b: invoke-virtual {v1}, Lltd/qisi/adapterproxy/data/QisiNaviConnectInfo;.getNaviInfoStatus:()I // method@dd36
+      8575c4: 0a04                                   |000e: move-result v4
+      8575c6: 7100 8bdd 0000                         |000f: invoke-static {}, Lltd/qisi/adapterproxy/data/QisiSourceInfo;.getInstance:()Lltd/qisi/adapterproxy/data/QisiSourceInfo; // method@dd8b
+      8575cc: 0c01                                   |0012: move-result-object v1
+      8575ce: e910 0b00 0100                         |0013: invoke-virtual-quick {v1}, [000b] // vtable #000b
+[new] 8575ce: 6e10 8cdd 0100                         |0013: invoke-virtual {v1}, Lltd/qisi/adapterproxy/data/QisiSourceInfo;.getSourceStatusConnect:()I // method@dd8c
+      8575d4: 0a05                                   |0016: move-result v5
+      8575d6: e396 0c00                              |0017: iget-quick v6, v9, [obj+000c]
+[new] 8575d6: 5296 4858                              |0017: iget v6, v9, Lltd/qisi/adapterproxy/data/QisiFullMapInfo;.Navi_FullMapStatus:I // field@5848
+      8575da: e397 0800                              |0019: iget-quick v7, v9, [obj+0008]
+[new] 8575da: 5297 4758                              |0019: iget v7, v9, Lltd/qisi/adapterproxy/data/QisiFullMapInfo;.Navi_FullMapLoadStatus:I // field@5847
+      8575de: 1263                                   |001b: const/4 v3, #int 6 // #6
+      8575e0: 0781                                   |001c: move-object v1, v8
+      8575e2: 0792                                   |001d: move-object v2, v9
+      8575e4: 7607 c0dc 0100                         |001e: invoke-direct/range {v1, v2, v3, v4, v5, v6, v7}, Lltd/qisi/adapterproxy/data/QisiFullMapInfo$MQisiFullMapInfo;.<init>:(Lltd/qisi/adapterproxy/data/QisiFullMapInfo;IIIII)V // method@dcc0
+      8575ea: e920 1d00 8000                         |0021: invoke-virtual-quick {v0, v8}, [001d] // vtable #001d
+[new] 8575ea: 6e20 2c27 8000                         |0021: invoke-virtual {v0, v8}, Lcom/google/gson/Gson;.toJson:(Ljava/lang/Object;)Ljava/lang/String; // method@272c
+      8575f0: 0c00                                   |0024: move-result-object v0
+      8575f2: 1100                                   |0025: return-object v0
+   virtual_method #56523: toString ()Ljava/lang/String;
+    access=0001 (PUBLIC)
+    codeOff=8575f4 (8746484)
+    quickening_size=1 (1)
+      8575f8: 6f10 bd99 0100                         |0000: invoke-super {v1}, Ljava/lang/Object;.toString:()Ljava/lang/String; // method@99bd
+      8575fe: 0c00                                   |0003: move-result-object v0
+      857600: 1100                                   |0004: return-object v0
+   virtual_method #56524: writeToParcel (Landroid/os/Parcel;I)V
+    access=0001 (PUBLIC)
+    codeOff=857662 (8746594)
+    quickening_size=9 (9)
+      857666: e302 0c00                              |0000: iget-quick v2, v0, [obj+000c]
+[new] 857666: 5202 4858                              |0000: iget v2, v0, Lltd/qisi/adapterproxy/data/QisiFullMapInfo;.Navi_FullMapStatus:I // field@5848
+      85766a: e920 8700 2100                         |0002: invoke-virtual-quick {v1, v2}, [0087] // vtable #0087
+[new] 85766a: 6e20 a201 2100                         |0002: invoke-virtual {v1, v2}, Landroid/os/Parcel;.writeInt:(I)V // method@01a2
+      857670: e302 0800                              |0005: iget-quick v2, v0, [obj+0008]
+[new] 857670: 5202 4758                              |0005: iget v2, v0, Lltd/qisi/adapterproxy/data/QisiFullMapInfo;.Navi_FullMapLoadStatus:I // field@5847
+      857674: e920 8700 2100                         |0007: invoke-virtual-quick {v1, v2}, [0087] // vtable #0087
+[new] 857674: 6e20 a201 2100                         |0007: invoke-virtual {v1, v2}, Landroid/os/Parcel;.writeInt:(I)V // method@01a2
+      85767a: 7300                                   |000a: return-void-no-barrier
+[new] 85767a: 0e00                                   |000a: return-void

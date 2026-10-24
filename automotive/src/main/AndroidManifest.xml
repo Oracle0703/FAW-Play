@@ -22,7 +22,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Xcertplay">
 
-        <!-- It declares support for Android Automotive OS. -->
         <meta-data
             android:name="com.android.automotive"
             android:resource="@xml/automotive_app_desc" />

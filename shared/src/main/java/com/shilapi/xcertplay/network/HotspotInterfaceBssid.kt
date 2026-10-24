@@ -10,6 +10,27 @@ import java.util.Locale
  * Opaque/privacy IPv6 identifiers cannot be decoded and must not become a BSSID.
  */
 internal object HotspotInterfaceBssid {
+    /** Actual address of the current local GO/AP interface, never a P2P device/peer address. */
+    fun readAccessPoint(interfaceName: String): ByteArray? = try {
+        val network = NetworkInterface.getByName(interfaceName)
+        if (network == null || !network.isUp || network.isLoopback) null
+        else accessPointAddress(
+            runCatching { network.hardwareAddress }.getOrNull(),
+            network.inetAddresses.toList().filterIsInstance<Inet6Address>().map { it.address },
+        )
+    } catch (_: Exception) {
+        null
+    }
+
+    /** A masked MAC may be recovered only from this same interface's unambiguous EUI-64. */
+    fun accessPointAddress(hardware: ByteArray?, addresses: List<ByteArray>): ByteArray? {
+        if (hardware != null && hardware.size == 6 && hardware.any { it != 0.toByte() } &&
+            hardware[0].toInt() and 1 == 0 && !hardware.contentEquals(byteArrayOf(2, 0, 0, 0, 0, 0))) {
+            return hardware.copyOf()
+        }
+        return fromAddresses(addresses)?.split(':')?.map { it.toInt(16).toByte() }?.toByteArray()
+    }
+
     fun read(interfaceName: String?): String? {
         // The caller must pass the active local GO/AP interface, never a station or peer.
         if (interfaceName.isNullOrBlank()) return null

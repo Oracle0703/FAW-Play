@@ -10,6 +10,7 @@ package com.shilapi.xcertplay.airplay
  */
 object CarPlayClusterDisplay {
     const val MAP_URL = "maps:/car/instrumentcluster/map"
+    const val INSTRUMENTS_URL = "maps:/car/instrumentcluster"
 
     /**
      * What the dashboard shows: one of the cluster contents the iPhone lists in `altScreenURLs`.
@@ -17,9 +18,11 @@ object CarPlayClusterDisplay {
      * MAP_WITH_CUSTOM_CARD asks for the map stream so DiPlay can draw a movable card on top.
      */
     enum class Content(val url: String) {
-        MAP(MAP_URL),
+        // The official receiver's ETA switch controls all three route summary values via this query.
+        // Share the request URL between initialURL, live selection and stream restoration.
+        MAP("$MAP_URL?showETA=yes"),
         TURN_CARD("maps:/car/instrumentcluster/instructioncard"),
-        INSTRUMENTS("maps:/car/instrumentcluster"),
+        INSTRUMENTS("$INSTRUMENTS_URL?showETA=yes"),
         MAP_WITH_CUSTOM_CARD(MAP_URL),
     }
 
@@ -36,6 +39,9 @@ object CarPlayClusterDisplay {
      * y 16–89 %. This centre area is clear in both modes, so no per-mode setting is needed.
      */
     val SAFE_AREA_PERCENT = AirPlayInsets(top = 16, bottom = 25, left = 35, right = 36)
+
+    /** HS5 layout reference; leaves room for the cluster's speed and status readouts. */
+    val HONGQI_SAFE_AREA_PERCENT = AirPlayInsets(top = 2, bottom = 8, left = 29, right = 3)
 
     /** Balanced margins for virtual full-screen/16:9 streams (e.g. desktop cards/widgets). */
     val VIRTUAL_SAFE_AREA_PERCENT = AirPlayInsets(top = 8, bottom = 8, left = 8, right = 8)
@@ -92,7 +98,7 @@ object CarPlayClusterDisplay {
             features = 0,
             initialUrl = content.url,
             safeArea = safeArea(width, height, horizontalStep, verticalStep, baseSafeArea),
-            safeAreaDrawOutside = true,
+            safeAreaDrawOutside = false,
         )
     }
 

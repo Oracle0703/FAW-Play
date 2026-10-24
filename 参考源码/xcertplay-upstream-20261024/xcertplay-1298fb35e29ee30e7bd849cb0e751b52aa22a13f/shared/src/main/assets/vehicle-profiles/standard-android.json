@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 2,
+  "id": "standard-android",
+  "name": "Standard Android Automotive",
+  "signals": {
+    "speed": { "property": "PERF_VEHICLE_SPEED" },
+    "gear": { "property": "GEAR_SELECTION" },
+    "outside-temperature": { "property": "ENV_OUTSIDE_TEMPERATURE" }
+  },
+  "carplay": {
+    "wheelSpeed": "speed",
+    "gear": "gear",
+    "outsideTemperature": "outside-temperature"
+  }
+}

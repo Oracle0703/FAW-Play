@@ -62,16 +62,20 @@ class MapEmbedServiceTest {
                 .get(service) as Map<*, *>
             assertEquals("Control: a launcher map was attached", 1, embeds.size)
             val root = MapEmbedSurfaceControlHostShadow.lastView as android.widget.FrameLayout
-            val video = root.getChildAt(0) as android.view.TextureView
-            video.surfaceTextureListener!!.onSurfaceTextureAvailable(android.graphics.SurfaceTexture(0), 1200, 450)
+            val video = root.getChildAt(0) as VideoSurfaceView
+            val holder = org.robolectric.Shadows.shadowOf(video).fakeSurfaceHolder
+            val callback = holder.callbacks.single()
+            val outputHolder = org.mockito.Mockito.mock(android.view.SurfaceHolder::class.java)
+            org.mockito.Mockito.`when`(outputHolder.surface).thenReturn(org.mockito.Mockito.mock(android.view.Surface::class.java))
+            callback.surfaceCreated(outputHolder)
             assertTrue(MapMirrors.launcherShowsMap)
             video.layout(0, 0, 1200, 450)
             MapMirrors.streamAspect = MapMirrors.VIRTUAL_STREAM_ASPECT
             shadowOf(Looper.getMainLooper()).idle()
-            val matrix = FloatArray(9)
-            video.getTransform(android.graphics.Matrix()).getValues(matrix)
-            assertEquals("An existing launcher surface must follow negotiated geometry", 1.5f,
-                matrix[android.graphics.Matrix.MSCALE_Y], 0.001f)
+            assertEquals("The complete stream remains in the launcher viewport", 1f, video.scaleX)
+            assertEquals(1f, video.scaleY)
+            assertEquals(0f, video.translationX)
+            assertEquals(0f, video.translationY)
             AirPlayPersistence.saveLauncherMapSharing(service, false)
             shadowOf(Looper.getMainLooper()).idle()
             assertTrue("Turning sharing off must release existing launcher maps", embeds.isEmpty())
@@ -80,7 +84,7 @@ class MapEmbedServiceTest {
             assertEquals(MapEmbedService.ERROR_DISABLED,
                 replies.last { it.what == MapEmbedService.MSG_ERROR }.data.getString(MapEmbedService.KEY_ERROR))
             // A delayed surface callback from the revoked view cannot re-register a mirror.
-            video.surfaceTextureListener!!.onSurfaceTextureAvailable(android.graphics.SurfaceTexture(0), 1200, 450)
+            callback.surfaceCreated(outputHolder)
             assertFalse(MapMirrors.launcherShowsMap)
             // Fresh requests stay refused while consent is off.
             endpoint.send(Message.obtain(null, MapEmbedService.MSG_ATTACH).apply { replyTo = client })

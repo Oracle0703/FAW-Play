@@ -143,6 +143,7 @@ object Iap2Endpoints {
                     field(2, "MaxCurrentRoadNameLength", Iap2WireType.U16),
                     field(4, "MaxAfterManeuverRoadNameLength", Iap2WireType.U16),
                     field(6, "MaxGuidanceManeuverStorageCapacity", Iap2WireType.U16),
+                    field(8, "MaxLaneGuidanceStorageCapacity", Iap2WireType.U16),
                 ),
             ),
         ),
@@ -433,6 +434,11 @@ object Iap2Endpoints {
         "StartRouteGuidanceUpdates",
         "Navigation",
         Iap2Direction.ACCESSORY_TO_IPHONE,
+        fields = listOf(
+            field(0, "RouteGuidanceDisplayComponentIdentifier", Iap2WireType.U16),
+            field(1, "Parameter1", Iap2WireType.VOID),
+            field(2, "Parameter2", Iap2WireType.VOID),
+        ),
     )
     val STOP_ROUTE_GUIDANCE_UPDATES = endpoint(
         0x5203,
@@ -636,9 +642,26 @@ object Iap2Endpoints {
         registryEndpoint(0x4C07, "PlayMediaLibraryItems", "Media Library", Iap2Direction.ACCESSORY_TO_IPHONE),
         registryEndpoint(0x4C08, "PlayMediaLibraryCollection", "Media Library", Iap2Direction.ACCESSORY_TO_IPHONE),
         registryEndpoint(0x4C09, "PlayMediaLibrarySpecial", "Media Library", Iap2Direction.ACCESSORY_TO_IPHONE),
-        registryEndpoint(0x5201, "RouteGuidanceUpdate", "Navigation", Iap2Direction.IPHONE_TO_ACCESSORY),
+        endpoint(0x5201, "RouteGuidanceUpdate", "Navigation", Iap2Direction.IPHONE_TO_ACCESSORY,
+            fields = listOf(
+                field(0, "RouteGuidanceDisplayComponentIdentifier", Iap2WireType.U16, repeatable = true),
+                field(1, "RouteGuidanceState", Iap2WireType.U8),
+                field(16, "CurrentLaneGuidanceIndex", Iap2WireType.U16),
+                field(17, "TotalLaneGuidanceCount", Iap2WireType.U16),
+                field(18, "PresentLaneGuidance", Iap2WireType.U8),
+            )),
         registryEndpoint(0x5202, "RouteGuidanceManeuverUpdate", "Navigation", Iap2Direction.IPHONE_TO_ACCESSORY),
-        registryEndpoint(0x5204, "LaneGuidanceInfoUpdate", "Navigation", Iap2Direction.IPHONE_TO_ACCESSORY),
+        endpoint(0x5204, "LaneGuidanceInfoUpdate", "Navigation", Iap2Direction.IPHONE_TO_ACCESSORY,
+            fields = listOf(
+                field(0, "RouteGuidanceDisplayComponentIdentifier", Iap2WireType.U16),
+                field(1, "LaneGuidanceIndex", Iap2WireType.U16),
+                field(2, "Lane", Iap2WireType.GROUP, repeatable = true, children = listOf(
+                    field(0, "LaneIndex", Iap2WireType.U16),
+                    field(1, "LaneStatus", Iap2WireType.U8),
+                    field(2, "LaneAngle", Iap2WireType.I16, repeatable = true),
+                    field(3, "HighlightedLaneAngle", Iap2WireType.I16),
+                )),
+            )),
         registryEndpoint(0x4155, "CallStateUpdate", "Communications", Iap2Direction.IPHONE_TO_ACCESSORY),
         registryEndpoint(0x4158, "CommunicationsUpdate", "Communications", Iap2Direction.IPHONE_TO_ACCESSORY),
         registryEndpoint(0x415A, "initiateCallHandler", "Communications", Iap2Direction.ACCESSORY_TO_IPHONE),

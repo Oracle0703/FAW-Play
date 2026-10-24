@@ -43,8 +43,8 @@ public final class PermissionAccess {
         if (activity.isFinishing() || activity.isDestroyed()) return;
         int result = WifiRadioStartup.requestEnable(activity);
         if (result == WifiRadioStartup.USER_ACTION) {
-            Toast.makeText(activity, text(activity, "请在系统页面开启 Wi-Fi 后返回 FAW Play。",
-                    "Turn on Wi-Fi in the system panel, then return to FAW Play."), Toast.LENGTH_LONG).show();
+            Toast.makeText(activity, text(activity, "请在系统页面开启 Wi-Fi 后返回 Autunn Play。",
+                    "Turn on Wi-Fi in the system panel, then return to Autunn Play."), Toast.LENGTH_LONG).show();
             openWifiSettings(activity);
         } else if (result == WifiRadioStartup.UNAVAILABLE) {
             Toast.makeText(activity, text(activity, "Wi-Fi 暂不可用，请检查车机 Wi-Fi 设置。",

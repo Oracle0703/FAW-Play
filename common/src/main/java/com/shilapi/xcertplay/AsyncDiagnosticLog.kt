@@ -15,6 +15,8 @@ internal object AsyncDiagnosticLog {
     private val closing = mutableSetOf<SessionLogFile>()
     private val activeFiles = mutableMapOf<String, SessionLogFile>() // writer-thread only
     private var barriers = 0
+    // Only accessed by the single writer; preserve event time without formatting on producers.
+    private val timestampFormat = SimpleDateFormat("HH:mm:ss.SSS", Locale.US)
     private val writer = BoundedDiagnosticWriter<() -> Unit> { it() }
 
     fun open(file: File, header: String): SessionLogFile? = synchronized(admission) {
@@ -34,10 +36,9 @@ internal object AsyncDiagnosticLog {
     fun append(target: SessionLogFile?, message: String, nowMillis: Long = System.currentTimeMillis()) {
         if (target == null) return
         val safe = DiagnosticRedactor.redact(message) ?: return
-        val timestamp = SimpleDateFormat("HH:mm:ss.SSS", Locale.US).format(Date(nowMillis))
         synchronized(admission) {
             if (target in closing) return
-            writer.enqueue { target.append("$timestamp  $safe") }
+            writer.enqueue { target.append("${timestampFormat.format(Date(nowMillis))}  $safe") }
         }
     }
 

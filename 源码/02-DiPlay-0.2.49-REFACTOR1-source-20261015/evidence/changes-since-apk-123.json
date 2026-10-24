@@ -1,0 +1,25 @@
+{
+  "referenceVersion": "0.2.49-FAW-REFACTOR1",
+  "referenceVersionCode": 123,
+  "changedFiles": [
+    "authorization-server/src/main/java/com/shilapi/license/Administration.java",
+    "authorization-server/src/main/java/com/shilapi/license/LicenseService.java",
+    "authorization-server/src/main/resources/static/admin/admin.css",
+    "authorization-server/src/main/resources/static/admin/admin.js",
+    "authorization-server/src/main/resources/static/admin/index.html",
+    "authorization-server/src/test/java/com/shilapi/license/AuthorizationIntegrationTest.java",
+    "authorization-server/src/test/java/com/shilapi/license/SchemaUpgradeTest.java",
+    "shared/src/main/java/com/shilapi/xcertplay/media/AndroidMediaSink.kt",
+    "shared/src/main/java/com/shilapi/xcertplay/media/AudioBufferProgress.kt",
+    "shared/src/main/java/com/shilapi/xcertplay/media/MediaAudioBuffer.kt",
+    "shared/src/test/java/com/shilapi/xcertplay/media/AudioBufferProgressTest.kt",
+    "shared/src/test/java/com/shilapi/xcertplay/media/MediaAudioBufferTest.kt",
+    "site/assets/api.js"
+  ],
+  "addedFiles": [
+    "authorization-server/src/main/resources/db/migration/V7__activation_reset.sql",
+    "shared/src/test/java/com/shilapi/xcertplay/media/AudioRebufferCapacityTest.kt"
+  ],
+  "removedFiles": [],
+  "note": "Current working-tree snapshot; same version declaration, with later audio and administration changes."
+}

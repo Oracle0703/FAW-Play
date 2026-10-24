@@ -18,6 +18,7 @@ internal class StreamReceiveStats(
     private var lastReceivedNs = 0L
     private var maxInterArrivalNs = 0L
     private var maxProcessNs = 0L
+    private var maxDecryptNs = 0L
     private var lastTimestamp: Int? = null
     private var lastForwardTimestamp: Int? = null
     private var timestampStepMin: Long? = null
@@ -79,6 +80,8 @@ internal class StreamReceiveStats(
         }
     }
 
+    fun decrypted(nanos: Long) { maxDecryptNs = maxOf(maxDecryptNs, nanos) }
+
     fun processed() {
         maxProcessNs = maxOf(maxProcessNs, nowNs() - processingStart)
         flush()
@@ -95,7 +98,7 @@ internal class StreamReceiveStats(
             "windowMs=${(now - windowStart).coerceAtLeast(0) / 1_000_000} " +
             "readsOver250Ms=$readsOver250Ms seqGapAfterReadOver250Ms=$seqGapAfterReadOver250Ms " +
             "seqMissingAfterReadOver250Ms=$seqMissingAfterReadOver250Ms " +
-            "rtpStepMin=${timestampStepMin ?: 0} rtpStepMax=$timestampStepMax") }
+            "rtpStepMin=${timestampStepMin ?: 0} rtpStepMax=$timestampStepMax decryptMaxUs=${maxDecryptNs / 1000}") }
         windowStart = now
         packets = 0
         bytes = 0
@@ -105,6 +108,7 @@ internal class StreamReceiveStats(
         seqMissingAfterReadOver250Ms = 0
         maxInterArrivalNs = 0
         maxProcessNs = 0
+        maxDecryptNs = 0
         forwardGapPackets = 0
         sequenceGapEvents = 0
         maxSequenceGap = 0

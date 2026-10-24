@@ -1,11 +1,11 @@
-# FAW Play — Hongqi HS5 connection setup
+# Autunn Play — Hongqi HS5 connection setup
 
 This Android 9 HS5 edition uses Wi-Fi Direct for every connection. Existing
 installs migrate saved car-hotspot, same-LAN and USB choices to Wi-Fi Direct.
 Channel selection is automatic. The connection page no longer offers other
 transports, hotspot credentials or manual channel controls.
 
-On the Android 9 head unit, opening FAW Play requests Wi-Fi on when it is off,
+On the Android 9 head unit, opening Autunn Play requests Wi-Fi on when it is off,
 including before an iPhone has been paired. An already enabled or enabling radio
 is left alone. The connection worker waits for the radio to report enabled before
 initialising Wi-Fi Direct, within the existing startup deadline and at most ten
@@ -15,8 +15,8 @@ Wi-Fi panel because ordinary apps cannot change that switch directly. The app
 does not toggle tethering, fall back to a hotspot, or disable Wi-Fi on disconnect.
 
 Keep Wi-Fi and Bluetooth enabled on the iPhone. Pair the
-iPhone with the factory Bluetooth settings, choose it in FAW Play, and allow
-connection permissions. Once paired, opening FAW Play reconnects automatically.
+iPhone with the factory Bluetooth settings, choose it in Autunn Play, and allow
+connection permissions. Once paired, opening Autunn Play reconnects automatically.
 Automatic connection is a fixed behavior, with no separate switch.
 Android 17 and later also require Local network access for AirPlay TCP and mDNS.
 The app requests that runtime permission before starting the wireless transport;
@@ -82,19 +82,19 @@ do not share phone numbers or network passwords.
 
 Pending HS5 validation: when the owner next connects the car through ADB,
 first turn off the head unit Wi-Fi and verify both a cold launch and reopening
-FAW Play enable Wi-Fi and reconnect the saved iPhone through Wi-Fi Direct. Also
+Autunn Play enable Wi-Fi and reconnect the saved iPhone through Wi-Fi Direct. Also
 check an already enabled radio, first-run pairing, and cancellation while enabling.
 The API 31 emulator cannot verify Android 9 or this OEM radio implementation.
 Then
-verify FAW Play media, guidance and calls on BUS00_MEDIA, BUS01_NAVIGATION
+verify Autunn Play media, guidance and calls on BUS00_MEDIA, BUS01_NAVIGATION
 and BUS03_CALL, including microphone clarity, independent volume context,
 and media/navigation recovery after a call. Keep this vehicle check deferred
-during the UI-only emulator preview; CarLink logs do not verify FAW Play calls.
+during the UI-only emulator preview; CarLink logs do not verify Autunn Play calls.
 
 HS5 gesture change in NAVI20: use three-finger left during active navigation to
 open the instrument map, and three-finger right to close it. Despite its threeFingerGlide log name, Qisi's independent
 input monitor accepts two to four fingers moving down and can inject Home;
-consuming touches in FAW Play does not veto it.
+consuming touches in Autunn Play does not veto it.
 The NAVI18/19 task-restoration workaround was removed. The app requires exactly
 three fingers moving horizontally in the same direction. The steering-wheel Back key still closes
 the instrument map without ending centre-screen CarPlay or HUD guidance.

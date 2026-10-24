@@ -6,6 +6,23 @@ import org.junit.Test
 import java.io.IOException
 
 class P2pStartupRecoveryTest {
+    @Test fun legacyAutoUsesStationAlignmentAndReservesAnUnpinnedFallbackWithinSixRequests() {
+        assertEquals(listOf(5180, 5745, 2437, 2412, 2462, null),
+            P2pStartupRecovery.legacyPlan(5180, WifiP2pChannels.AUTO, true).map { it.frequencyMHz })
+        assertEquals(listOf(2422, 2437, 2412, 2462, 5180, null),
+            P2pStartupRecovery.legacyPlan(2422, WifiP2pChannels.AUTO, true).map { it.frequencyMHz })
+        assertEquals(listOf(2437, 2412, 2462, null),
+            P2pStartupRecovery.legacyPlan(null, WifiP2pChannels.AUTO, true, false).map { it.frequencyMHz })
+    }
+
+    @Test fun legacyUnavailableSetterUsesSystemAutoAndManualRemainsFixed() {
+        assertEquals(listOf(P2pCreationRequest(P2pCreationMode.SYSTEM_DEFAULT)),
+            P2pStartupRecovery.legacyPlan(5180, WifiP2pChannels.AUTO, false))
+        assertEquals(listOf(P2pCreationRequest(P2pCreationMode.PREFERRED_CHANNEL, 5745)),
+            P2pStartupRecovery.legacyPlan(5180, 149, true))
+        assertEquals(6, P2pStartupRecovery.legacyPlan(5200, WifiP2pChannels.PREFER_5_GHZ, true).size)
+    }
+
     @Test fun manualChannelOverridesStationAndRememberedConfiguration() {
         val remembered = P2pCreationRequest(P2pCreationMode.SYSTEM_DEFAULT)
         for ((channel, frequency) in listOf(1 to 2412, 6 to 2437, 11 to 2462,

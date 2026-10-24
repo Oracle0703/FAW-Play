@@ -39,6 +39,12 @@ object MediaAudioBuffer {
      */
     fun startBytesFor(plannedStartBytes: Int, actualCapacityBytes: Int, writeChunkBytes: Int): Int {
         if (actualCapacityBytes <= 0) return plannedStartBytes
-        return minOf(plannedStartBytes, actualCapacityBytes - writeChunkBytes).coerceAtLeast(writeChunkBytes)
+        // A ROM can grant less than one normal write chunk. Keep the threshold inside
+        // the granted capacity; otherwise a paused track can fill before it ever reaches
+        // the threshold and WRITE_BLOCKING waits forever for play() to be called.
+        val minimumStart = minOf(writeChunkBytes.coerceAtLeast(1), actualCapacityBytes)
+        val belowCapacity = (actualCapacityBytes - writeChunkBytes).coerceAtLeast(0)
+        return minOf(actualCapacityBytes, minOf(plannedStartBytes, belowCapacity)
+            .coerceAtLeast(minimumStart))
     }
 }

@@ -15,6 +15,7 @@ import com.shilapi.xcertplay.airplay.AirPlayIdentity
 import com.shilapi.xcertplay.airplay.AirPlayMediaHandler
 import com.shilapi.xcertplay.airplay.AirPlaySession
 import com.shilapi.xcertplay.airplay.AirPlaySessionListener
+import com.shilapi.xcertplay.airplay.ClusterContentProgress
 import com.shilapi.xcertplay.airplay.PairingStore
 import com.shilapi.xcertplay.mfi.MfiAuthenticator
 import com.shilapi.xcertplay.transport.NcmUsbBridge
@@ -57,8 +58,15 @@ class CarPlayVpnService : VpnService() {
     private val binder = LocalBinder()
     private val active = AtomicBoolean(false)
     private val sessionsLock = Any()
+    private val releaseLock = Any()
+    private val releaseScheduled = AtomicBoolean(false)
+    private var releaseRequestedGeneration = 0
+    @Volatile private var destroyed = false
+    private var releaseInProgress = false
     private val sessions = mutableSetOf<AirPlaySession>()
+    private val closingSessions = mutableSetOf<AirPlaySession>()
     @Volatile private var attachment: AirPlayAttachment? = null
+    private var releasingOwner: AirPlayListenerIdentity? = null
     private var serverSocket: ServerSocket? = null
     private var additionalServers: List<ServerSocket> = emptyList()
     private var bridge: Ipv6NcmBridge? = null
@@ -79,9 +87,10 @@ class CarPlayVpnService : VpnService() {
         listener: AirPlaySessionListener,
         media: AirPlayMediaHandler,
     ): AttachResult {
-        if (active.get()) {
-            Log.i(TAG, "replacing stale NCM/VPN attachment")
-            releaseLocked()
+        if (destroyed) return AttachResult.Failed("AirPlay service has been destroyed")
+        if (hasRetainedResources()) {
+            scheduleRelease()
+            return AttachResult.Failed("Previous AirPlay resources are still being released")
         }
         active.set(true)
         val generation = ++attachGeneration
@@ -117,7 +126,8 @@ class CarPlayVpnService : VpnService() {
             )
             AttachResult.Started
         } catch (error: Exception) {
-            releaseLocked()
+            revokeAdmission()
+            scheduleRelease()
             AttachResult.Failed(error.message ?: error.javaClass.simpleName)
         }
     }
@@ -138,9 +148,10 @@ class CarPlayVpnService : VpnService() {
         additionalBindAddresses: List<InetAddress> = emptyList(),
         listenerIdentity: AirPlayListenerIdentity? = null,
     ): AttachResult {
-        if (active.get()) {
-            Log.i(TAG, "replacing stale local-only Wi-Fi attachment")
-            releaseLocked()
+        if (destroyed) return AttachResult.Failed("AirPlay service has been destroyed")
+        if (hasRetainedResources()) {
+            scheduleRelease()
+            return AttachResult.Failed("Previous AirPlay resources are still being released")
         }
         active.set(true)
         val generation = ++attachGeneration
@@ -152,20 +163,24 @@ class CarPlayVpnService : VpnService() {
             )
             AttachResult.Started
         } catch (error: Exception) {
-            releaseLocked()
+            revokeAdmission()
+            scheduleRelease()
             AttachResult.Failed(error.message ?: error.javaClass.simpleName)
         }
     }
 
     /** Releases the active AirPlay listener and whichever VPN/NCM transport resources are active. */
-    @Synchronized
     fun detach() {
-        releaseLocked()
+        releaseResources()
     }
 
-    @Synchronized
     fun detachWireless(owner: AirPlayListenerIdentity) {
-        if (attachment?.listenerIdentity === owner) releaseLocked()
+        val owns = synchronized(this) {
+            (attachment?.listenerIdentity === owner || releasingOwner === owner).also {
+                if (it) revokeAdmission()
+            }
+        }
+        if (owns) releaseResources()
     }
 
     fun isAttached(): Boolean = active.get() && attachment != null
@@ -173,8 +188,17 @@ class CarPlayVpnService : VpnService() {
     /** Port the AirPlay listener actually bound, which may differ from the configured port. */
     fun boundPort(): Int? = attachment?.config?.port
 
+    /** Discovery must advertise only address families whose listener actually bound. */
+    fun boundAddresses(): List<InetAddress> = attachment?.let {
+        listOf(it.address) + it.additionalAddresses
+    }.orEmpty()
+
     override fun onDestroy() {
-        detach()
+        destroyed = true
+        // Revoke admission now. Session/native close waits belong to the release worker,
+        // never the Android main thread or this service's monitor.
+        revokeAdmission()
+        scheduleRelease()
         super.onDestroy()
     }
 
@@ -182,18 +206,23 @@ class CarPlayVpnService : VpnService() {
         generation: Int,
         replacement: AirPlayAttachment,
     ) {
-        val servers = if (replacement.additionalAddresses.isEmpty()) {
-            listOf(AirPlayPortSelector.bind(replacement.address, replacement.config.port) { busy, bound ->
+        val servers = AirPlayPortSelector.bindWithOptionalAddresses(
+            primaryAddress = replacement.address,
+            additionalAddresses = replacement.additionalAddresses,
+            preferredPort = replacement.config.port,
+            onFallback = { busy, bound ->
                 Log.w(TAG, "AirPlay port $busy is in use; listening on $bound instead")
-            })
-        } else {
-            AirPlayPortSelector.bindAll(listOf(replacement.address) + replacement.additionalAddresses,
-                replacement.config.port) { busy, bound ->
-                Log.w(TAG, "AirPlay port $busy is in use; listening on $bound instead")
-            }
-        }
+            },
+            onOptionalFailure = { address, error ->
+                runCatching { replacement.listener.onDebugLog(
+                    "airplay optional listener unavailable family=${if (address is Inet6Address) "IPv6" else "IPv4"} " +
+                        "failureClass=${error.javaClass.simpleName}",
+                ) }
+            },
+        )
         val server = servers.first()
-        attachment = replacement.copy(config = replacement.config.copy(port = server.localPort))
+        attachment = replacement.copy(config = replacement.config.copy(port = server.localPort),
+            additionalAddresses = servers.drop(1).map { it.inetAddress })
         serverSocket = server
         additionalServers = servers.drop(1)
         servers.forEach { bound ->
@@ -249,8 +278,38 @@ class CarPlayVpnService : VpnService() {
                         pairings = current.pairings,
                         mfi = current.mfi,
                         listener = object : AirPlaySessionListener by current.listener {
+                            // These events drive background startup without a foreground Surface.
+                            // Keep their forwarding explicit across listener-interface changes.
+                            override fun onMainScreenReady(session: AirPlaySession) {
+                                current.listener.onMainScreenReady(session)
+                            }
+
+                            override fun onMainScreenVideoReceived(session: AirPlaySession) {
+                                current.listener.onMainScreenVideoReceived(session)
+                            }
+
+                            override fun onWirelessRuntimeReady(session: AirPlaySession) {
+                                current.listener.onWirelessRuntimeReady(session)
+                            }
+
+                            override fun onWirelessRuntimeUnavailable(session: AirPlaySession) {
+                                current.listener.onWirelessRuntimeUnavailable(session)
+                            }
+
+                            override fun onNavigationDataReceived(session: AirPlaySession) {
+                                current.listener.onNavigationDataReceived(session)
+                            }
+
+                            override fun onClusterContentProgress(session: AirPlaySession, progress: ClusterContentProgress) {
+                                current.listener.onClusterContentProgress(session, progress)
+                            }
+
                             override fun onSessionActive(session: AirPlaySession) {
                                 if (current.listenerIdentity == null || !internalPeer) current.listener.onSessionActive(session)
+                            }
+
+                            override fun onSessionDisconnected(session: AirPlaySession) {
+                                if (current.listenerIdentity == null || !internalPeer) current.listener.onSessionDisconnected(session)
                             }
 
                             override fun onRemoteControlMessage(
@@ -292,17 +351,28 @@ class CarPlayVpnService : VpnService() {
     }
 
     private fun closeSessionsLocked() {
-        synchronized(sessionsLock) {
-            sessions.toList().forEach { session ->
-                try {
-                    session.close()
-                } catch (error: Exception) {
-                    Log.w(TAG, "AirPlay session replacement failed", error)
-                }
+        // Do not wait while holding sessionsLock: another closing session removes itself there.
+        // Retain a second reference until awaitClosed confirms media teardown, including when
+        // onSessionEnded removes the session just before its completion latch is signalled.
+        val pending = synchronized(sessionsLock) {
+            closingSessions.addAll(sessions)
+            closingSessions.toList()
+        }
+        pending.forEach { it.close() }
+        val deadline = System.nanoTime() + java.util.concurrent.TimeUnit.MILLISECONDS.toNanos(SESSION_CLOSE_TIMEOUT_MILLIS)
+        pending.forEach { session ->
+            val remaining = java.util.concurrent.TimeUnit.NANOSECONDS.toMillis(deadline - System.nanoTime()).coerceAtLeast(0)
+            if (!session.awaitClosed(remaining)) throw IOException("AirPlay media cleanup cancellation pending")
+            synchronized(sessionsLock) {
+                closingSessions.remove(session)
+                sessions.remove(session)
             }
-            sessions.clear()
         }
     }
+
+    private fun hasRetainedResources(): Boolean = releaseInProgress || active.get() || attachment != null ||
+        serverSocket != null || additionalServers.isNotEmpty() || bridge != null || tun != null ||
+        synchronized(sessionsLock) { sessions.isNotEmpty() || closingSessions.isNotEmpty() }
 
     private fun onTransportError(
         generation: Int,
@@ -315,8 +385,11 @@ class CarPlayVpnService : VpnService() {
             {
                 val releasedGeneration = synchronized(this) {
                     if (generation != attachGeneration) return@Thread
-                    releaseLocked()
+                    revokeAdmission()
                     attachGeneration
+                }
+                runCatching { releaseResources(releasedGeneration) }.onFailure {
+                    Log.w(TAG, "AirPlay cleanup pending; attachment remains blocked", it)
                 }
                 listener.onTransportError(message)
                 synchronized(this) {
@@ -330,23 +403,74 @@ class CarPlayVpnService : VpnService() {
         }
     }
 
-    /** Caller must hold this service's monitor. Closes only resources active for this attachment. */
-    private fun releaseLocked() {
-        attachGeneration += 1
-        active.set(false)
+    private fun scheduleRelease() {
+        val startWorker = synchronized(this) {
+            revokeAdmission()
+            releaseRequestedGeneration = attachGeneration
+            releaseScheduled.compareAndSet(false, true)
+        }
+        if (!startWorker) return
+        Thread({
+            while (true) {
+                val expected = synchronized(this) { releaseRequestedGeneration }
+                try { releaseResources(expected) }
+                catch (error: Exception) { Log.w(TAG, "AirPlay cleanup pending; resource barrier retained", error) }
+                val complete = synchronized(this) {
+                    if (releaseRequestedGeneration == expected) {
+                        releaseScheduled.set(false)
+                        true
+                    } else false
+                }
+                if (complete) break
+            }
+        }, "airplay-service-release").apply { isDaemon = true; start() }
+    }
+
+    @Synchronized private fun revokeAdmission() {
+        if (active.getAndSet(false) || attachment != null) attachGeneration += 1
+        attachment?.let { releasingOwner = it.listenerIdentity }
         attachment = null
-        serverSocket?.close()
-        serverSocket = null
-        additionalServers.forEach { it.close() }
-        additionalServers = emptyList()
-        closeSessionsLocked()
-        bridge?.close()
-        bridge = null
-        tun?.close()
-        tun = null
+        releaseInProgress = true
+    }
+
+    /** Holds only the cleanup owner lock during waits, so lifecycle/accept callbacks stay responsive. */
+    private fun releaseResources(expectedGeneration: Int? = null) = synchronized(releaseLock) release@{
+        synchronized(this) {
+            // An already-completed old release must never revoke a fresh attachment.
+            if (expectedGeneration != null && expectedGeneration != attachGeneration) return@release
+            revokeAdmission()
+        }
+        val failures = mutableListOf<Exception>()
+        fun release(block: () -> Unit): Boolean = try {
+            block()
+            true
+        } catch (error: Exception) {
+            failures.add(error)
+            false
+        }
+        val primary = synchronized(this) { serverSocket }
+        if (release { primary?.close() }) synchronized(this) { if (serverSocket === primary) serverSocket = null }
+        val additional = synchronized(this) { additionalServers }
+        val retained = additional.filterNot { server -> release { server.close() } }
+        synchronized(this) { additionalServers = retained }
+        release { closeSessionsLocked() }
+        val oldBridge = synchronized(this) { bridge }
+        if (release { oldBridge?.close() }) synchronized(this) { if (bridge === oldBridge) bridge = null }
+        val oldTun = synchronized(this) { tun }
+        if (release { oldTun?.close() }) synchronized(this) { if (tun === oldTun) tun = null }
+        if (failures.isNotEmpty()) {
+            throw IOException("AirPlay resources are not fully released", failures.first()).also { error ->
+                failures.drop(1).forEach(error::addSuppressed)
+            }
+        }
+        synchronized(this) {
+            releasingOwner = null
+            releaseInProgress = false
+        }
     }
 
     companion object {
+        private const val SESSION_CLOSE_TIMEOUT_MILLIS = 4_000L
         private const val TAG = "xcertplay-usb"
         private const val LINK_PREFIX = 64
         private const val LINK_LOCAL_ROUTE = "fe80::"

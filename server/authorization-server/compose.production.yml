@@ -1,0 +1,28 @@
+# Apply with: docker compose -f compose.yml -f compose.production.yml up -d --build
+services:
+  keycloak:
+    command: ["start", "--import-realm"]
+    environment:
+      KC_HOSTNAME: https://${AUTH_DOMAIN:?Set AUTH_DOMAIN to your public authentication hostname}
+      KC_PROXY_HEADERS: xforwarded
+      KC_HTTP_ENABLED: "true"
+  license-api:
+    environment:
+      OIDC_ISSUER: https://${AUTH_DOMAIN:?Set AUTH_DOMAIN}/realms/faw-play
+      LICENSE_ALLOWED_APP_IDS: ${LICENSE_ALLOWED_APP_IDS:-com.shihab.diplay,com.shilapi.xcertplay}
+  caddy:
+    image: caddy:2.10.2
+    environment:
+      API_DOMAIN: ${API_DOMAIN:?Set API_DOMAIN to your authorization hostname}
+      AUTH_DOMAIN: ${AUTH_DOMAIN:?Set AUTH_DOMAIN to your authentication hostname}
+      TLS_EMAIL: ${TLS_EMAIL:?Set a certificate renewal email}
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on: [keycloak, license-api]
+    restart: unless-stopped
+volumes:
+  caddy-data:
+  caddy-config:

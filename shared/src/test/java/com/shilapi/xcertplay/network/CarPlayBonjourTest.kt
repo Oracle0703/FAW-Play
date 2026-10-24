@@ -5,9 +5,18 @@ import com.shilapi.xcertplay.airplay.AirPlayDisplayConfig
 import com.shilapi.xcertplay.airplay.AirPlayIdentity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class CarPlayBonjourTest {
+    @Test fun recoveryControlTargetRequiresTheSelectedBluetoothIdentity() {
+        assertTrue(matchesCarPlayBluetoothIdentity("AA:BB:CC:DD:EE:FF", "aabbccddeeff"))
+        assertTrue(matchesCarPlayBluetoothIdentity("AA-BB-CC-DD-EE-FF", "aa:bb:cc:dd:ee:ff"))
+        assertFalse(matchesCarPlayBluetoothIdentity("AA:BB:CC:DD:EE:FF", "11:22:33:44:55:66"))
+        assertFalse(matchesCarPlayBluetoothIdentity("AA:BB:CC:DD:EE:FF", null))
+        assertFalse(matchesCarPlayBluetoothIdentity("invalid", "invalid"))
+        assertTrue(matchesCarPlayBluetoothIdentity(null, null))
+    }
     @Test fun discoveryDiagnosticsKeepOutcomeWithoutPhoneIdentifiers() {
         val endpoint = CarPlayBonjourEndpoint("Private phone", "192.168.43.25", 7000, "AA:BB:CC:DD:EE:FF")
         assertEquals("control resolved family=IPv4 port=7000", CarPlayBonjourEvent.Resolved(endpoint).diagnosticSummary())

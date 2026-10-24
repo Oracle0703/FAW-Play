@@ -6,14 +6,14 @@ import android.provider.Settings
 import android.util.Log
 import com.shilapi.xcertplay.adb.AdbKeys
 import com.shilapi.xcertplay.adb.LocalAdb
-import com.shilapi.xcertplay.hud.FawOutputSettings
+import com.shilapi.xcertplay.hud.AutunnOutputSettings
 import com.shilapi.xcertplay.network.CarHotspotSettings
 import com.shilapi.xcertplay.orchestration.ManualHotspotValidation
 
 /** Each grant is requested explicitly from settings; startup never calls this authorization path. */
 internal object CarHotspotSetup {
     // Older BYD units report QUALCOMM/qti and have no supported navigation-output service.
-    fun isFawHeadUnit(context: Context): Boolean = FawOutputSettings.navigationAvailable(context) || runCatching {
+    fun isAutunnHeadUnit(context: Context): Boolean = AutunnOutputSettings.navigationAvailable(context) || runCatching {
         context.packageManager.getApplicationInfo("com.byd.carsettings", 0).flags and ApplicationInfo.FLAG_SYSTEM != 0
     }.getOrDefault(false)
 

@@ -6,6 +6,7 @@ import java.io.File
 /** Bounded, private diagnostics. Each write is redacted before touching storage. */
 internal class SessionLogFile(val file: File) : Closeable {
     private val lock = Any()
+    private val archiveNames = if (file.name == "power.log") POWER_ARCHIVE_NAMES else ARCHIVE_NAMES
     private var closed = false
     fun reset(header: String) = synchronized(lock) {
         if (!closed) {
@@ -29,18 +30,19 @@ internal class SessionLogFile(val file: File) : Closeable {
     }
     private fun rotate() {
         if (!file.exists() || file.length() == 0L) return
-        for (index in ARCHIVE_NAMES.lastIndex downTo 1) {
-            val source = File(file.parentFile, ARCHIVE_NAMES[index - 1])
-            val destination = File(file.parentFile, ARCHIVE_NAMES[index])
+        for (index in archiveNames.lastIndex downTo 1) {
+            val source = File(file.parentFile, archiveNames[index - 1])
+            val destination = File(file.parentFile, archiveNames[index])
             if (source.exists()) source.copyTo(destination, overwrite = true)
         }
-        file.copyTo(File(file.parentFile, ARCHIVE_NAMES.first()), overwrite = true)
+        file.copyTo(File(file.parentFile, archiveNames.first()), overwrite = true)
     }
     override fun close() = synchronized(lock) { closed = true }
     companion object {
         val writeFailures = java.util.concurrent.atomic.AtomicLong()
         const val MAX_BYTES = 512 * 1024L
         private val ARCHIVE_NAMES = listOf("previous.log") + (2..7).map { "previous-$it.log" }
-        val REPORT_NAMES = ARCHIVE_NAMES.reversed() + "diplay.log"
+        private val POWER_ARCHIVE_NAMES = listOf("power-previous.log") + (2..7).map { "power-previous-$it.log" }
+        val REPORT_NAMES = ARCHIVE_NAMES.reversed() + "diplay.log" + POWER_ARCHIVE_NAMES.reversed() + "power.log"
     }
 }

@@ -12,7 +12,7 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [29], manifest = Config.NONE)
+@Config(sdk = [28, 29], manifest = Config.NONE)
 class WifiScanPauseTest {
     private val context get() = RuntimeEnvironment.getApplication()
     private val ok = "Result: Parcel(00000000    '....')"
@@ -45,10 +45,11 @@ class WifiScanPauseTest {
     }
 
     @Test
-    fun onlyAndroid10HotspotBackendsAreEligibleSoSameLanKeepsStationScanning() {
+    fun android9And10HotspotBackendsAreEligibleSoSameLanKeepsStationScanning() {
         for (backend in WirelessHotspotBackend.entries) {
             assertEquals(backend != WirelessHotspotBackend.EXISTING_WIFI, WifiScanPause.eligible(backend, 29))
-            assertFalse(WifiScanPause.eligible(backend, 28))
+            assertEquals(backend != WirelessHotspotBackend.EXISTING_WIFI, WifiScanPause.eligible(backend, 28))
+            assertFalse(WifiScanPause.eligible(backend, 27))
             assertFalse(WifiScanPause.eligible(backend, 30))
         }
     }

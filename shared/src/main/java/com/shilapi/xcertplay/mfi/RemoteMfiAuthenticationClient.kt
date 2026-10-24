@@ -1,10 +1,9 @@
 package com.shilapi.xcertplay.mfi
 
-import java.io.ByteArrayOutputStream
+import com.shilapi.xcertplay.api.HttpTransport
+
 import java.io.IOException
 import java.net.HttpURLConnection
-import java.net.URL
-import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import java.util.Base64
 import java.util.UUID
@@ -24,11 +23,6 @@ class RemoteMfiAuthenticationClient(
         val wireCertificate: ByteArray,
         val iap2Certificate: ByteArray,
         val baaCertificates: BaaCertificatePair?,
-    )
-
-    private data class HttpResponse(
-        val statusCode: Int,
-        val body: String,
     )
 
     private val baseAddress = serverAddress.trim().trimEnd('/')
@@ -195,12 +189,12 @@ class RemoteMfiAuthenticationClient(
         repeat(attempts) { attempt ->
             try {
                 val response = execute(method, path, requestBody)
-                if (response.statusCode in 200..299) return response.body
+                if (response.status in 200..299) return response.body
                 val detail = RemoteMfiJson.optionalString(response.body, "detail")
                     ?.takeIf { it.isNotBlank() }
-                    ?: "HTTP ${response.statusCode}"
-                val failure = RemoteMfiHttpException(response.statusCode, detail)
-                if (attempt + 1 >= attempts || !isRetryable(response.statusCode)) throw failure
+                    ?: "HTTP ${response.status}"
+                val failure = RemoteMfiHttpException(response.status, detail)
+                if (attempt + 1 >= attempts || !isRetryable(response.status)) throw failure
                 lastFailure = failure
             } catch (failure: IOException) {
                 lastFailure = failure
@@ -212,47 +206,17 @@ class RemoteMfiAuthenticationClient(
         throw RemoteMfiException("Remote MFI request failed", lastFailure)
     }
 
-    private fun execute(method: String, path: String, requestBody: String?): HttpResponse {
-        val connection = URL(baseAddress + path).openConnection() as HttpURLConnection
-        try {
-            connection.requestMethod = method
-            connection.connectTimeout = connectTimeoutMillis
-            connection.readTimeout = readTimeoutMillis
-            connection.instanceFollowRedirects = false
-            connection.useCaches = false
-            connection.setRequestProperty("Accept", JSON_CONTENT_TYPE)
-            bearerToken?.let { connection.setRequestProperty("Authorization", "Bearer $it") }
-            if (requestBody != null) {
-                val bodyBytes = requestBody.toByteArray(StandardCharsets.UTF_8)
-                connection.doOutput = true
-                connection.setRequestProperty("Content-Type", JSON_CONTENT_TYPE)
-                connection.setFixedLengthStreamingMode(bodyBytes.size)
-                connection.outputStream.use { it.write(bodyBytes) }
-            }
-            val statusCode = connection.responseCode
-            val stream = if (statusCode in 200..299) connection.inputStream else connection.errorStream
-            val responseBody = stream?.use(::readUtf8Limited).orEmpty()
-            return HttpResponse(statusCode, responseBody)
-        } finally {
-            connection.disconnect()
-        }
-    }
-
-    private fun readUtf8Limited(input: java.io.InputStream): String {
-        val output = ByteArrayOutputStream()
-        val buffer = ByteArray(8_192)
-        var total = 0
-        while (true) {
-            val count = input.read(buffer)
-            if (count < 0) break
-            total += count
-            if (total > MAXIMUM_HTTP_BODY_BYTES) {
-                throw IOException("Remote MFI response exceeds $MAXIMUM_HTTP_BODY_BYTES bytes")
-            }
-            output.write(buffer, 0, count)
-        }
-        return output.toString(StandardCharsets.UTF_8.name())
-    }
+    private fun execute(method: String, path: String, requestBody: String?): HttpTransport.Response =
+        HttpTransport.request(
+            method = method,
+            url = baseAddress + path,
+            body = requestBody,
+            contentType = JSON_CONTENT_TYPE,
+            bearer = bearerToken,
+            connectTimeoutMillis = connectTimeoutMillis,
+            readTimeoutMillis = readTimeoutMillis,
+            responseLimit = MAXIMUM_HTTP_BODY_BYTES,
+        )
 
     private fun decodeBase64(encoded: String, field: String): ByteArray = try {
         Base64.getDecoder().decode(encoded)

@@ -14,6 +14,8 @@ import android.view.Display
 import android.view.View
 import android.view.ViewGroup
 import com.shilapi.xcertplay.airplay.CarPlayClusterDisplay
+import com.shilapi.xcertplay.airplay.AirPlayDisplayConfig
+import com.shilapi.xcertplay.airplay.AirPlayInsets
 import com.shilapi.xcertplay.hud.ClusterTurnGuidance
 import com.shilapi.xcertplay.host.R
 import com.shilapi.xcertplay.hud.HongqiNavigation
@@ -94,13 +96,79 @@ class HongqiCarPlayLifecycleTest {
         assertEquals(listOf(38, 38), vehicle.requests)
     }
 
-    @Test fun startupCreatesTheAlreadyPresentInstrumentWindow() {
+    @Test fun aMissingPrimaryPictureCannotIndefinitelyDeferTheAlreadyPresentInstrumentWindow() {
         addClusterDisplay()
-        val activity = createHost()
+        val activity = createHost(waitForInstrument = false)
+        assertNull(field(activity, "clusterPresentation"))
+        main.idleFor(java.time.Duration.ofMillis(1999))
+        assertNull(field(activity, "clusterPresentation"))
+        main.idleFor(java.time.Duration.ofMillis(1))
         val presentation = field(activity, "clusterPresentation") as ClusterMapPresentation?
-        assertNotNull("The existing instrument display must be attached on resume", presentation)
+        assertNotNull("The instrument display must be attached at the bounded fallback", presentation)
         assertTrue(presentation!!.isShowing)
         assertEquals(displayId, presentation.display.displayId)
+    }
+
+    @Test fun vendorOverlayPreflightDoesNotHideThePhysicalInstrumentDisplay() {
+        addClusterDisplay()
+        ShadowSettings.setCanDrawOverlays(false)
+        assertEquals(displayId, ClusterMapPresentation.findDisplay(app)?.displayId)
+        val activity = createHost()
+        val presentation = field(activity, "clusterPresentation") as ClusterMapPresentation
+        assertTrue(presentation.isShowing)
+        assertEquals(android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            presentation.window!!.attributes.type)
+    }
+
+    @Test fun reconnectStreamRestoresADismissedInstrumentWindowWithoutResumingTheActivity() {
+        addClusterDisplay()
+        val activity = createHost()
+        val first = field(activity, "clusterPresentation") as ClusterMapPresentation
+        first.dismiss()
+        main.idle()
+        ReflectionHelpers.callInstanceMethod<Unit>(activity, "onScreenStreamStateChanged",
+            ReflectionHelpers.ClassParameter.from(Int::class.javaPrimitiveType, 0),
+            ReflectionHelpers.ClassParameter.from(Int::class.javaPrimitiveType, 111),
+            ReflectionHelpers.ClassParameter.from(Boolean::class.javaPrimitiveType, true))
+        val restored = field(activity, "clusterPresentation") as ClusterMapPresentation
+        assertNotSame(first, restored)
+        assertTrue(restored.isShowing)
+    }
+
+    @Test fun aStoppedWindowReferenceCannotBlockReconnectRecovery() {
+        addClusterDisplay()
+        val activity = createHost()
+        val first = field(activity, "clusterPresentation") as ClusterMapPresentation
+        first.setOnDismissListener(null)
+        first.dismiss()
+        assertSame(first, field(activity, "clusterPresentation"))
+        ReflectionHelpers.callInstanceMethod<Unit>(activity, "ensureClusterPresentation")
+        val restored = field(activity, "clusterPresentation") as ClusterMapPresentation
+        assertNotSame(first, restored)
+        assertTrue(restored.isShowing)
+    }
+
+    @Test fun systemDismissalRecoversWhileCarPlayRemainsInTheBackground() {
+        addClusterDisplay()
+        val activity = createHost()
+        val first = field(activity, "clusterPresentation") as ClusterMapPresentation
+        host!!.pause().stop()
+        first.dismiss()
+        main.idleFor(java.time.Duration.ofSeconds(3))
+        val restored = field(activity, "clusterPresentation") as ClusterMapPresentation
+        assertNotSame(first, restored)
+        assertTrue(restored.isShowing)
+    }
+
+    @Test fun displayBecomingEligibleThroughAChangeEventRestoresItsWindow() {
+        val activity = createHost()
+        assertNull(field(activity, "clusterPresentation"))
+        addClusterDisplay()
+        val listener = field(activity, "clusterDisplayListener") as DisplayManager.DisplayListener
+        listener.onDisplayChanged(displayId!!)
+        val restored = field(activity, "clusterPresentation") as ClusterMapPresentation
+        assertEquals(displayId, restored.display.displayId)
+        assertTrue(restored.isShowing)
     }
 
     @Test fun returningToCarPlayRecreatesAnInstrumentWindowRemovedByTheSystem() {
@@ -120,16 +188,38 @@ class HongqiCarPlayLifecycleTest {
         assertTrue(restored!!.isShowing)
     }
 
-    @Test fun defaultAndPersistedMapIncludeGuidanceWithoutChangingThePhoneMapStream() {
-        assertEquals(CarPlayClusterDisplay.Content.MAP_WITH_CUSTOM_CARD,
+    @Test fun nativeDefaultStillAllowsAnExplicitPureMapChoice() {
+        assertEquals(CarPlayClusterDisplay.Content.INSTRUMENTS,
             AirPlayPersistence.loadClusterContent(app))
         AirPlayPersistence.saveClusterContent(app, CarPlayClusterDisplay.Content.MAP)
         val content = AirPlayPersistence.loadClusterContent(app)
-        assertEquals(CarPlayClusterDisplay.Content.MAP_WITH_CUSTOM_CARD, content)
+        assertEquals(CarPlayClusterDisplay.Content.MAP, content)
         assertEquals(CarPlayClusterDisplay.config(1920, 720),
             CarPlayClusterDisplay.config(1920, 720, content = content))
         assertEquals("MAP", app.getSharedPreferences("xcertplay_airplay", 0)
             .getString("cluster_content", null))
+    }
+
+    @Test fun nativeClusterUsesTheHs5LayoutWithoutDrawingAnotherNavigationCard() {
+        addClusterDisplay()
+        val activity = createHost()
+        val config = CarPlayHostActivity::class.java.getDeclaredMethod("clusterDisplayConfig")
+            .apply { isAccessible = true }.invoke(activity) as AirPlayDisplayConfig
+        assertEquals(CarPlayClusterDisplay.Content.INSTRUMENTS.url, config.initialUrl)
+        assertEquals(1600, config.widthPixels)
+        assertEquals(600, config.heightPixels)
+        assertEquals(AirPlayInsets(top = 12, bottom = 48, left = 464, right = 48), config.safeArea)
+        assertEquals(30, config.fps)
+
+        val presentation = field(activity, "clusterPresentation") as ClusterMapPresentation
+        val card = findTurnCard(presentation.window!!.decorView)!!
+        @Suppress("UNCHECKED_CAST")
+        val listener = field(activity, "clusterTurnOverlayListener") as (ClusterTurnGuidance?) -> Unit
+        listener(ClusterTurnGuidance(2, 0, 320, "Test road",
+            arrivalEpochSeconds = 1900000000, remainingSeconds = 2820, remainingMeters = 25000))
+        assertEquals(View.GONE, card.visibility)
+        assertTrue(drawnText(card).isEmpty())
+        assertNull(ClusterActivityOutput.guidance)
     }
 
     @Test fun officialInstructionStreamsDoNotGetADuplicateGuidanceCard() {
@@ -165,6 +255,7 @@ class HongqiCarPlayLifecycleTest {
     }
 
     @Test fun activeRouteShowsTbtAndRemainingTimeAndRouteEndClearsTheCard() {
+        AirPlayPersistence.saveClusterContent(app, CarPlayClusterDisplay.Content.MAP_WITH_CUSTOM_CARD)
         addClusterDisplay()
         val activity = createHost()
         settleVehicleWorker()
@@ -255,11 +346,12 @@ class HongqiCarPlayLifecycleTest {
         assertEquals(2, vehicle.abandons)
     }
 
-    private fun createHost(): CarPlayHostActivity {
+    private fun createHost(waitForInstrument: Boolean = true): CarPlayHostActivity {
         val controller = Robolectric.buildActivity(CarPlayHostActivity::class.java)
         host = controller
         controller.create().start().resume()
         assertFalse("The host must pass its startup checks", controller.get().isFinishing)
+        if (waitForInstrument) main.idleFor(java.time.Duration.ofSeconds(2))
         return controller.get()
     }
 

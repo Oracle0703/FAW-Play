@@ -4,6 +4,7 @@ import com.shilapi.xcertplay.media.AndroidMediaSink
 import java.util.concurrent.atomic.AtomicInteger
 
 import android.media.MediaCodec
+import java.lang.reflect.Proxy
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import org.junit.Assert.*
@@ -39,6 +40,17 @@ class VideoDecoderThreadCountTest {
                 `when`(codec.dequeueOutputBuffer(any(MediaCodec.BufferInfo::class.java), anyLong()))
                     .thenThrow(IllegalStateException("recoverable codec failure"))
                 ReflectionHelpers.setField(worker, "decoder", codec)
+                // The new pipeline drains through its pump; keep injecting the same codec failure.
+                val pumpType = Class.forName("com.shilapi.xcertplay.media.VideoDecodePump")
+                val portType = pumpType.declaredClasses.single { it.simpleName == "Port" }
+                val port = Proxy.newProxyInstance(portType.classLoader, arrayOf(portType)) { _, method, _ ->
+                    when (method.name) {
+                        "drain" -> { codec.dequeueOutputBuffer(MediaCodec.BufferInfo(), 0); null }
+                        "queue" -> false
+                        else -> null
+                    }
+                }
+                ReflectionHelpers.setField(worker, "pump", pumpType.getConstructor(portType).newInstance(port))
                 sink.onVideoFrame(110, byteArrayOf())
                 assertTrue(failed.await(3, TimeUnit.SECONDS))
                 waitUntil { thread.state == Thread.State.TIMED_WAITING }

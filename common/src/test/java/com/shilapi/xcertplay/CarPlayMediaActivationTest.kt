@@ -16,6 +16,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Answers
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.`when`
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
@@ -33,6 +34,7 @@ class CarPlayMediaActivationTest {
     private lateinit var controller: CarPlayController
 
     @Before fun setUp() {
+        AirPlayPersistence.saveAudioFocusEnabled(app, false)
         controller = phone()
         CarPlayMediaKeys.attach(app, controller)
         shadowOf(app.getSystemService(AudioManager::class.java))
@@ -76,6 +78,43 @@ class CarPlayMediaActivationTest {
         assertNull(field("focusRequest"))
     }
 
+    @Test fun enteringConnectedCarPlaySelectsOnlyTheScreenWithoutTakingAudioFocus() {
+        `when`(controller.selectProjectionScreen(true)).thenReturn(true)
+        controller.nowPlayingListener!!.invoke(song().copy(playing = false))
+        main.idle()
+
+        assertTrue(CarPlayMediaKeys.onCarPlayEntered(controller))
+
+        assertNull(field("session"))
+        assertNull(field("focusRequest"))
+        org.mockito.Mockito.verify(controller).selectProjectionScreen(true)
+        assertTrue("The handoff must not send a playback command to the iPhone", commands.isEmpty())
+    }
+
+    @Test fun enteringAnUnconnectedOrStaleCarPlayScreenDoesNotSelectMedia() {
+        assertFalse(CarPlayMediaKeys.onCarPlayEntered(controller))
+        val stale = phone()
+        `when`(stale.selectProjectionScreen(true)).thenReturn(true)
+        assertFalse(CarPlayMediaKeys.onCarPlayEntered(stale))
+        assertNull(field("session"))
+        assertNull(field("focusRequest"))
+        assertTrue(commands.isEmpty())
+    }
+
+    @Test fun returningToCarPlayKeepsTheFactoryAudioSelection() {
+        `when`(controller.selectProjectionScreen(true)).thenReturn(true)
+        controller.nowPlayingListener!!.invoke(song()); main.idle()
+        val request = field("focusRequest") as AudioFocusRequest
+        ReflectionHelpers.callInstanceMethod<AudioManager.OnAudioFocusChangeListener>(
+            request, "getOnAudioFocusChangeListener").onAudioFocusChange(AudioManager.AUDIOFOCUS_LOSS)
+        assertEquals(false, field("focusHeld"))
+
+        assertTrue(CarPlayMediaKeys.onCarPlayEntered(controller))
+
+        assertEquals(false, field("focusHeld"))
+        assertTrue(commands.isEmpty())
+    }
+
     @Test fun stalePhoneCannotActivateKeysAfterAReconnect() {
         val staleUpdate = controller.nowPlayingListener!!
         val stalePlayback = controller.playbackListener!!
@@ -106,6 +145,30 @@ class CarPlayMediaActivationTest {
         assertEquals(true, field("focusHeld"))
     }
 
+    @Test fun sinkOwnedFocusKeepsMediaSessionAndKeysWithoutACompetingRequest() {
+        AirPlayPersistence.saveAudioFocusEnabled(app, true)
+        var selections = 0
+        CarPlayMediaKeys.attach(app, controller) { selections++ }
+        controller.nowPlayingListener!!.invoke(song())
+        main.idle()
+        val session = field("session") as MediaSession
+        assertTrue(session.isActive)
+        assertNull("Track focus belongs only to the sink", field("focusRequest"))
+        assertEquals(false, field("focusHeld"))
+        ReflectionHelpers.callInstanceMethod<Void>(session, "dispatchNext",
+            ReflectionHelpers.ClassParameter.from(MediaSessionManager.RemoteUserInfo::class.java,
+                MediaSessionManager.RemoteUserInfo(app.packageName, 1, app.applicationInfo.uid)))
+        main.idle()
+        assertEquals(listOf(CarPlayMediaButton.NEXT), commands)
+        `when`(controller.selectProjectionScreen(true)).thenReturn(true)
+        assertTrue(CarPlayMediaKeys.onCarPlayEntered(controller))
+        assertNull(field("focusRequest"))
+        assertEquals(1, selections) // Only playback selects the source.
+        controller.nowPlayingListener!!.invoke(song().copy(elapsedMillis = 2000))
+        main.idle()
+        assertEquals("Periodic metadata cannot steal the factory source", 1, selections)
+    }
+
     private fun song() = CarPlayNowPlaying(title = "Autoplay", elapsedMillis = 1000, playing = true)
 
     private fun field(name: String): Any? = CarPlayMediaKeys::class.java.getDeclaredField(name)
@@ -124,6 +187,7 @@ class CarPlayMediaActivationTest {
                     commands += invocation.arguments[0] as Int
                     true
                 }
+                "mainAudioAllowed" -> true
                 else -> Answers.RETURNS_DEFAULTS.answer(invocation)
             }
         }

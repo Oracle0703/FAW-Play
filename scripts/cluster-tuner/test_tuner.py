@@ -107,13 +107,13 @@ class ServerTest(unittest.TestCase):
         return Request(self.server.origin + "/api/layout", data=body, headers=headers)
 
     def test_local_panel_requires_its_session_token_and_rejects_foreign_hosts(self):
-        for headers in [{}, {"X-FAW-Session": self.server.token, "Origin": "https://other.example"},
-                        {"X-FAW-Session": self.server.token, "Host": "other.example"}]:
+        for headers in [{}, {"X-Autunn-Session": self.server.token, "Origin": "https://other.example"},
+                        {"X-Autunn-Session": self.server.token, "Host": "other.example"}]:
             with self.assertRaises(HTTPError) as error:
                 urlopen(self.request(headers), timeout=2)
             self.assertEqual(403, error.exception.code)
         self.assertEqual([], self.bridge.calls)
-        with urlopen(self.request({"X-FAW-Session": self.server.token}), timeout=2) as response:
+        with urlopen(self.request({"X-Autunn-Session": self.server.token}), timeout=2) as response:
             self.assertEqual(REPLY, json.load(response))
 
 

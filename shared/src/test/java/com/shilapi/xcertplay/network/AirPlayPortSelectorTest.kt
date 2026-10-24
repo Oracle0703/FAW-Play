@@ -75,6 +75,30 @@ class AirPlayPortSelectorTest {
         }
     }
 
+    @Test fun optionalFamilyFailurePreservesThePrimaryListenerOnItsOriginalPort() {
+        var failure: InetAddress? = null
+        val unavailable = InetAddress.getByName("192.0.2.254")
+        val servers = AirPlayPortSelector.bindWithOptionalAddresses(loopback, listOf(unavailable), 0,
+            onOptionalFailure = { address, _ -> failure = address })
+        try {
+            assertEquals(unavailable, failure)
+            assertEquals(1, servers.size)
+            assertFalse(servers.single().isClosed)
+            java.net.Socket(loopback, servers.single().localPort).use {
+                servers.single().accept().close()
+            }
+        } finally { servers.forEach { it.close() } }
+    }
+
+    @Test fun unavailablePrimaryStillFailsEvenWhenTheOptionalAddressWouldWork() {
+        var optionalFailures = 0
+        assertThrows(java.io.IOException::class.java) {
+            AirPlayPortSelector.bindWithOptionalAddresses(InetAddress.getByName("192.0.2.254"),
+                listOf(loopback), 0, emptyList(), onOptionalFailure = { _, _ -> optionalFailures++ })
+        }
+        assertEquals(0, optionalFailures)
+    }
+
     private fun freePort(): Int = ServerSocket(0, 50, loopback).use { it.localPort }
 
     private fun assertNotificationFailureClosesListener(useEphemeralPort: Boolean) {

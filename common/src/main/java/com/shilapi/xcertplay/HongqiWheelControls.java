@@ -44,7 +44,7 @@ public final class HongqiWheelControls {
     private static volatile WeakReference<Context> foreground = new WeakReference<>(null);
 
     private static final ExecutorService WORKER = Executors.newSingleThreadExecutor(task -> {
-        Thread thread = new Thread(task, "faw-vehicle-binder");
+        Thread thread = new Thread(task, "autunn-vehicle-binder");
         thread.setDaemon(true);
         return thread;
     });
@@ -56,11 +56,13 @@ public final class HongqiWheelControls {
     private boolean bound;
     private volatile boolean registered;
     private boolean phoneLongPressHandled;
+    private SteeringWheelControls.SiriPress siriPress;
     private volatile boolean closed;
     private long retryAt;
     private long boundAt;
     private volatile boolean failed;
     private volatile boolean viewRequested;
+    private volatile boolean viewBorrowed;
     private long viewRetryAt;
     private volatile long viewGeneration;
     private volatile long intentGeneration;
@@ -85,16 +87,16 @@ public final class HongqiWheelControls {
     }
 
     public static boolean supported(Context context) {
-        return Build.VERSION.SDK_INT == 28 && "HONG QI".equals(Build.MODEL)
-                && "t1c_acrn".equals(Build.DEVICE);
+        return com.shilapi.xcertplay.vehicle.Hs5Platform.current();
     }
 
     public static void attach(final Context context, final Object controller) {
-        if (!com.shilapi.xcertplay.shared.BuildConfig.FAW_WHEEL_CONTROL_ENABLED || !supported(context)) return;
+        if (!com.shilapi.xcertplay.shared.BuildConfig.AUTUNN_WHEEL_CONTROL_ENABLED || !supported(context)) return;
         MAIN.post(new Runnable() {
             @Override public void run() {
                 if (instance == null) instance = new HongqiWheelControls(context.getApplicationContext());
                 instance.closed = false;
+                instance.releaseSiriPress();
                 instance.controller = controller;
                 instance.controllerGeneration++;
                 instance.intentGeneration++;
@@ -118,7 +120,7 @@ public final class HongqiWheelControls {
     }
 
     public static void onResume(final Context activity) {
-        if (!com.shilapi.xcertplay.shared.BuildConfig.FAW_WHEEL_CONTROL_ENABLED || !supported(activity)) return;
+        if (!com.shilapi.xcertplay.shared.BuildConfig.AUTUNN_WHEEL_CONTROL_ENABLED || !supported(activity)) return;
         MAIN.post(new Runnable() {
             @Override public void run() {
                 foreground = new WeakReference<>(activity);
@@ -128,12 +130,15 @@ public final class HongqiWheelControls {
     }
 
     public static void onPause(final Context activity) {
-        if (!com.shilapi.xcertplay.shared.BuildConfig.FAW_WHEEL_CONTROL_ENABLED || !supported(activity)) return;
+        if (!com.shilapi.xcertplay.shared.BuildConfig.AUTUNN_WHEEL_CONTROL_ENABLED || !supported(activity)) return;
         MAIN.post(new Runnable() {
             @Override public void run() {
                 if (foreground.get() != activity) return;
                 foreground.clear();
-                if (instance != null) { instance.intentGeneration++; instance.refresh(); }
+                if (instance != null) {
+                    if (!instance.viewBorrowed) instance.intentGeneration++;
+                    instance.refresh();
+                }
             }
         });
     }
@@ -141,6 +146,8 @@ public final class HongqiWheelControls {
     static String status(Context context) {
         HongqiWheelControls current = instance;
         if (!SteeringWheelControls.enabled(context)) return "方向盘按键已关闭";
+        if (!com.shilapi.xcertplay.licensing.ProductLicense.featureAllowed(context,
+                com.shilapi.xcertplay.licensing.LicenseFeatures.STEERING_WHEEL)) return "方向盘键控需要激活，请在授权页扫码。";
         if (current == null || !SteeringWheelControls.ready(current.controller))
             return "CarPlay 未连接，连接后自动接入方向盘按键。";
         if (current.registered) return "红旗原厂按键已接入 · CarPlay 已连接";
@@ -167,8 +174,12 @@ public final class HongqiWheelControls {
             final int key = data.readInt();
             final int action = data.readInt();
             final Object owner = controller;
+            final Object token = SteeringWheelControls.sessionToken(owner);
             MAIN.post(new Runnable() {
-                @Override public void run() { if (controller == owner) receive(key, action); }
+                @Override public void run() {
+                    if (controller == owner && token != null && SteeringWheelControls.sessionToken(owner) == token)
+                        receive(key, action);
+                }
             });
             if (reply != null) reply.writeNoException();
             return true;
@@ -186,6 +197,24 @@ public final class HongqiWheelControls {
             final int view = data.readInt();
             final int change = data.readInt();
             final long generation = viewGeneration;
+            final Object owner = controller;
+            final Object token = SteeringWheelControls.sessionToken(owner);
+            // SystemServiceConst: GAIN=1, LOSS=-1, LOSS_TRANSIENT=-2.
+            if (view == CARLINK_VIEW && viewRequested) {
+                if (change == -2) viewBorrowed = true;
+                else if (change == 1 || change == -1) viewBorrowed = false;
+                if (!closed && generation == viewGeneration && controller == owner && token != null) {
+                    com.shilapi.xcertplay.hud.HongqiNavigation.onUltraOemViewFocus(change);
+                    try {
+                        // This only enqueues a session-bound command; no network IO on Binder.
+                        // Enqueue before processing permanent loss can advance viewGeneration.
+                        owner.getClass().getMethod("nativeScreenFocusChanged", int.class, Object.class)
+                                .invoke(owner, change, token);
+                    } catch (ReflectiveOperationException | RuntimeException failure) {
+                        Log.w(TAG, "screen resource notification unavailable: " + failure.getClass().getSimpleName());
+                    }
+                }
+            }
             if (change == -1 && view == CARLINK_VIEW) {
                 synchronized (callbacks) { abandonedViewGeneration = generation; }
                 scheduleRemote();
@@ -250,10 +279,12 @@ public final class HongqiWheelControls {
     }
 
     private void forgetRemote() {
+        com.shilapi.xcertplay.hud.HongqiNavigation.onUltraOemViewFocus(0);
         remote = null;
         registered = false;
         phoneLongPressHandled = false;
         viewRequested = false;
+        viewBorrowed = false;
         viewGeneration++;
         viewRetryAt = 0;
     }
@@ -292,8 +323,12 @@ public final class HongqiWheelControls {
         if ((viewRequested && viewIntentGeneration != generation)
                 || (registered && keysIntentGeneration != controllerGeneration)) return;
         boolean ready = SteeringWheelControls.ready(controller);
-        boolean wantedKeys = SteeringWheelControls.enabled(context) && ready;
-        boolean wantedView = foreground.get() != null && ready;
+        boolean wheelLicensed = com.shilapi.xcertplay.licensing.ProductLicense.featureAllowed(context,
+                com.shilapi.xcertplay.licensing.LicenseFeatures.STEERING_WHEEL);
+        boolean wantedKeys = SteeringWheelControls.enabled(context) && ready && wheelLicensed;
+        // View focus is part of the free projection; keep it independent of the key entitlement.
+        boolean wantedView = (foreground.get() != null || viewRequested && viewBorrowed) &&
+                SteeringWheelControls.connectionReady(controller);
         boolean wanted = wantedKeys || wantedView;
         if (bound && remote == null && android.os.SystemClock.uptimeMillis() - boundAt >= 5_000) {
             release();
@@ -348,6 +383,7 @@ public final class HongqiWheelControls {
                     viewGeneration++;
                     int result = viewOperation(REQUEST_VIEW);
                     viewRequested = result == 1 || result == 2;
+                    com.shilapi.xcertplay.hud.HongqiNavigation.onUltraOemViewFocus(result == 1 ? 1 : 0);
                     viewIntentGeneration = generation;
                     if (closed || generation != intentGeneration || controller != owner || foreground.get() == null) {
                         releaseView();
@@ -388,6 +424,7 @@ public final class HongqiWheelControls {
     }
 
     private void releaseView() {
+        com.shilapi.xcertplay.hud.HongqiNavigation.onUltraOemViewFocus(0);
         if (viewRequested && remote != null) {
             try {
                 viewOperation(ABANDON_VIEW);
@@ -441,8 +478,12 @@ public final class HongqiWheelControls {
         return -1;
     }
 
-    private void receive(int key, int action) {
+    private synchronized void receive(int key, int action) {
         if (closed || !registered) return;
+        if (key == 259 && action == LONG_PRESS_COMPLETE) {
+            releaseSiriPress();
+            return;
+        }
         if (!SteeringWheelControls.enabled(context) || !SteeringWheelControls.ready(controller)) {
             refresh();
             return;
@@ -451,6 +492,13 @@ public final class HongqiWheelControls {
             // The temporary listener prevents the OEM media service from switching sources.
             Log.i(TAG, "factory mode key action=" + action + " consumed=true");
             return;
+        }
+        if (key == 259) {
+            if (action == LONG_PRESS) {
+                if (siriPress == null) siriPress = SteeringWheelControls.beginSiriPress(controller);
+                return;
+            }
+            if (siriPress != null) return;
         }
         if (key == PHONE_KEY) {
             if (action == LONG_PRESS_COMPLETE) {
@@ -474,6 +522,7 @@ public final class HongqiWheelControls {
     }
 
     private void releaseKeys() {
+        releaseSiriPress();
         if (registered && remote != null) {
             try {
                 transact(false);
@@ -509,11 +558,16 @@ public final class HongqiWheelControls {
     }
 
     private void close() {
+        releaseSiriPress();
         closed = true;
         controllerGeneration++;
         intentGeneration++;
         MAIN.removeCallbacks(poll);
         controller = null;
         scheduleRemote();
+    }
+
+    private synchronized void releaseSiriPress() {
+        if (siriPress != null) { siriPress.release(); siriPress = null; }
     }
 }

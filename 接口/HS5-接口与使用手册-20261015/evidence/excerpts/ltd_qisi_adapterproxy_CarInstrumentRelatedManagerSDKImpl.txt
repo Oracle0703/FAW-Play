@@ -1,0 +1,228 @@
+# Source: work/update-package-20261009/format-audit/QisiAdapterService/bytecode.dis.txt
+# Original LF start: 1797093
+  class #4408: CarInstrumentRelatedManagerSDKImpl ('Lltd/qisi/adapterproxy/CarInstrumentRelatedManagerSDKImpl;')
+   access=0001 (PUBLIC)
+   source_file=CarInstrumentRelatedManagerSDKImpl.java, class_data_off=a34edd (10702557)
+   static_fields=1, instance_fields=1, direct_methods=2, virtual_methods=9
+   direct_method #43531: <init> ()V
+    access=10001 (PUBLIC CONSTRUCTOR)
+    codeOff=7accc0 (8047808)
+    quickening_size=5 (5)
+      7accc4: 7010 b699 0100                         |0000: invoke-direct {v1}, Ljava/lang/Object;.<init>:()V // method@99b6
+      7accca: 6200 f458                              |0003: sget-object v0, Lltd/qisi/adapterproxy/impl/BuildConfig;.TestMode:Ljava/lang/Boolean; // field@58f4
+      7accce: e910 0b00 0000                         |0005: invoke-virtual-quick {v0}, [000b] // vtable #000b
+[new] 7accce: 6e10 e498 0000                         |0005: invoke-virtual {v0}, Ljava/lang/Boolean;.booleanValue:()Z // method@98e4
+      7accd4: 0a00                                   |0008: move-result v0
+      7accd6: eb10 0800                              |0009: iput-boolean-quick v0, v1, [obj+0008]
+[new] 7accd6: 5c10 6a3a                              |0009: iput-boolean v0, v1, Lltd/qisi/adapterproxy/CarInstrumentRelatedManagerSDKImpl;.TEST_MODE:Z // field@3a6a
+      7accda: 7300                                   |000b: return-void-no-barrier
+[new] 7accda: 0e00                                   |000b: return-void
+   direct_method #43532: getInstance ()Lltd/qisi/adapterproxy/CarInstrumentRelatedManagerSDKImpl;
+    access=0009 (PUBLIC STATIC)
+    codeOff=7acc7a (8047738)
+    quickening_size=1 (1)
+      7acc7e: 6200 6b3a                              |0000: sget-object v0, Lltd/qisi/adapterproxy/CarInstrumentRelatedManagerSDKImpl;.sCarInstrumentRelatedManager:Lltd/qisi/adapterproxy/CarInstrumentRelatedManagerSDKImpl; // field@3a6b
+      7acc82: 3900 1500                              |0002: if-nez v0, 0017 // +0015
+      7acc86: 1c00 f015                              |0004: const-class v0, Lltd/qisi/adapterproxy/CarInstrumentRelatedManagerSDKImpl; // type@15f0
+      7acc8a: 1d00                                   |0006: monitor-enter v0
+      7acc8c: 6201 6b3a                              |0007: sget-object v1, Lltd/qisi/adapterproxy/CarInstrumentRelatedManagerSDKImpl;.sCarInstrumentRelatedManager:Lltd/qisi/adapterproxy/CarInstrumentRelatedManagerSDKImpl; // field@3a6b
+      7acc90: 3901 0900                              |0009: if-nez v1, 0012 // +0009
+      7acc94: 2201 f015                              |000b: new-instance v1, Lltd/qisi/adapterproxy/CarInstrumentRelatedManagerSDKImpl; // type@15f0
+      7acc98: 7010 0baa 0100                         |000d: invoke-direct {v1}, Lltd/qisi/adapterproxy/CarInstrumentRelatedManagerSDKImpl;.<init>:()V // method@aa0b
+      7acc9e: 6901 6b3a                              |0010: sput-object v1, Lltd/qisi/adapterproxy/CarInstrumentRelatedManagerSDKImpl;.sCarInstrumentRelatedManager:Lltd/qisi/adapterproxy/CarInstrumentRelatedManagerSDKImpl; // field@3a6b
+      7acca2: 1e00                                   |0012: monitor-exit v0
+      7acca4: 2804                                   |0013: goto 0017 // +0004
+      7acca6: 0d01                                   |0014: move-exception v1
+      7acca8: 1e00                                   |0015: monitor-exit v0
+      7accaa: 2701                                   |0016: throw v1
+      7accac: 6200 6b3a                              |0017: sget-object v0, Lltd/qisi/adapterproxy/CarInstrumentRelatedManagerSDKImpl;.sCarInstrumentRelatedManager:Lltd/qisi/adapterproxy/CarInstrumentRelatedManagerSDKImpl; // field@3a6b
+      7accb0: 1100                                   |0019: return-object v0
+   virtual_method #43533: sendCallInfoToCluster (Lltd/qisi/adapterproxy/data/QisiCallInfo;)I
+    access=0001 (PUBLIC)
+    codeOff=7aca70 (8047216)
+    quickening_size=7 (7)
+      7aca74: 7100 72d9 0000                         |0000: invoke-static {}, Lltd/qisi/adapterproxy/car/QISICarManger;.getInstance:()Lltd/qisi/adapterproxy/car/QISICarManger; // method@d972
+      7aca7a: 0c00                                   |0003: move-result-object v0
+      7aca7c: e910 0f00 0000                         |0004: invoke-virtual-quick {v0}, [000f] // vtable #000f
+[new] 7aca7c: 6e10 44d9 0000                         |0004: invoke-virtual {v0}, Lltd/qisi/adapterproxy/car/QISICarManger;.getCarClusterManager:()Lltd/qisi/adapterproxy/car/QISICarClusterManager; // method@d944
+      7aca82: 0c00                                   |0007: move-result-object v0
+      7aca84: 3800 0f00                              |0008: if-eqz v0, 0017 // +000f
+      7aca88: 7100 72d9 0000                         |000a: invoke-static {}, Lltd/qisi/adapterproxy/car/QISICarManger;.getInstance:()Lltd/qisi/adapterproxy/car/QISICarManger; // method@d972
+      7aca8e: 0c00                                   |000d: move-result-object v0
+      7aca90: e910 0f00 0000                         |000e: invoke-virtual-quick {v0}, [000f] // vtable #000f
+[new] 7aca90: 6e10 44d9 0000                         |000e: invoke-virtual {v0}, Lltd/qisi/adapterproxy/car/QISICarManger;.getCarClusterManager:()Lltd/qisi/adapterproxy/car/QISICarClusterManager; // method@d944
+      7aca96: 0c00                                   |0011: move-result-object v0
+      7aca98: e920 0c00 2000                         |0012: invoke-virtual-quick {v0, v2}, [000c] // vtable #000c
+[new] 7aca98: 6e20 19d7 2000                         |0012: invoke-virtual {v0, v2}, Lltd/qisi/adapterproxy/car/QISICarClusterManager;.sendCallInfo:(Lltd/qisi/adapterproxy/data/QisiCallInfo;)I // method@d719
+      7aca9e: 0a02                                   |0015: move-result v2
+      7acaa0: 0f02                                   |0016: return v2
+      7acaa2: 1402 0100 ffff                         |0017: const v2, #float nan // #ffff0001
+      7acaa8: 0f02                                   |001a: return v2
+   virtual_method #43534: sendFullMapInfoToCluster (Lltd/qisi/adapterproxy/data/QisiFullMapInfo;)I
+    access=0001 (PUBLIC)
+    codeOff=7acaaa (8047274)
+    quickening_size=7 (7)
+      7acaae: 7100 72d9 0000                         |0000: invoke-static {}, Lltd/qisi/adapterproxy/car/QISICarManger;.getInstance:()Lltd/qisi/adapterproxy/car/QISICarManger; // method@d972
+      7acab4: 0c00                                   |0003: move-result-object v0
+      7acab6: e910 0f00 0000                         |0004: invoke-virtual-quick {v0}, [000f] // vtable #000f
+[new] 7acab6: 6e10 44d9 0000                         |0004: invoke-virtual {v0}, Lltd/qisi/adapterproxy/car/QISICarManger;.getCarClusterManager:()Lltd/qisi/adapterproxy/car/QISICarClusterManager; // method@d944
+      7acabc: 0c00                                   |0007: move-result-object v0
+      7acabe: 3800 0f00                              |0008: if-eqz v0, 0017 // +000f
+      7acac2: 7100 72d9 0000                         |000a: invoke-static {}, Lltd/qisi/adapterproxy/car/QISICarManger;.getInstance:()Lltd/qisi/adapterproxy/car/QISICarManger; // method@d972
+      7acac8: 0c00                                   |000d: move-result-object v0
+      7acaca: e910 0f00 0000                         |000e: invoke-virtual-quick {v0}, [000f] // vtable #000f
+[new] 7acaca: 6e10 44d9 0000                         |000e: invoke-virtual {v0}, Lltd/qisi/adapterproxy/car/QISICarManger;.getCarClusterManager:()Lltd/qisi/adapterproxy/car/QISICarClusterManager; // method@d944
+      7acad0: 0c00                                   |0011: move-result-object v0
+      7acad2: e920 0d00 2000                         |0012: invoke-virtual-quick {v0, v2}, [000d] // vtable #000d
+[new] 7acad2: 6e20 1ad7 2000                         |0012: invoke-virtual {v0, v2}, Lltd/qisi/adapterproxy/car/QISICarClusterManager;.sendFullMapInfo:(Lltd/qisi/adapterproxy/data/QisiFullMapInfo;)I // method@d71a
+      7acad8: 0a02                                   |0015: move-result v2
+      7acada: 0f02                                   |0016: return v2
+      7acadc: 1402 0100 ffff                         |0017: const v2, #float nan // #ffff0001
+      7acae2: 0f02                                   |001a: return v2
+   virtual_method #43535: sendMusicInfoToCluster (Lltd/qisi/adapterproxy/data/QisiMusicInfo;)I
+    access=0001 (PUBLIC)
+    codeOff=7acae4 (8047332)
+    quickening_size=7 (7)
+      7acae8: 7100 72d9 0000                         |0000: invoke-static {}, Lltd/qisi/adapterproxy/car/QISICarManger;.getInstance:()Lltd/qisi/adapterproxy/car/QISICarManger; // method@d972
+      7acaee: 0c00                                   |0003: move-result-object v0
+      7acaf0: e910 0f00 0000                         |0004: invoke-virtual-quick {v0}, [000f] // vtable #000f
+[new] 7acaf0: 6e10 44d9 0000                         |0004: invoke-virtual {v0}, Lltd/qisi/adapterproxy/car/QISICarManger;.getCarClusterManager:()Lltd/qisi/adapterproxy/car/QISICarClusterManager; // method@d944
+      7acaf6: 0c00                                   |0007: move-result-object v0
+      7acaf8: 3800 0f00                              |0008: if-eqz v0, 0017 // +000f
+      7acafc: 7100 72d9 0000                         |000a: invoke-static {}, Lltd/qisi/adapterproxy/car/QISICarManger;.getInstance:()Lltd/qisi/adapterproxy/car/QISICarManger; // method@d972
+      7acb02: 0c00                                   |000d: move-result-object v0
+      7acb04: e910 0f00 0000                         |000e: invoke-virtual-quick {v0}, [000f] // vtable #000f
+[new] 7acb04: 6e10 44d9 0000                         |000e: invoke-virtual {v0}, Lltd/qisi/adapterproxy/car/QISICarManger;.getCarClusterManager:()Lltd/qisi/adapterproxy/car/QISICarClusterManager; // method@d944
+      7acb0a: 0c00                                   |0011: move-result-object v0
+      7acb0c: e920 0e00 2000                         |0012: invoke-virtual-quick {v0, v2}, [000e] // vtable #000e
+[new] 7acb0c: 6e20 1bd7 2000                         |0012: invoke-virtual {v0, v2}, Lltd/qisi/adapterproxy/car/QISICarClusterManager;.sendMusicInfo:(Lltd/qisi/adapterproxy/data/QisiMusicInfo;)I // method@d71b
+      7acb12: 0a02                                   |0015: move-result v2
+      7acb14: 0f02                                   |0016: return v2
+      7acb16: 1402 0100 ffff                         |0017: const v2, #float nan // #ffff0001
+      7acb1c: 0f02                                   |001a: return v2
+   virtual_method #43536: sendNAVIStatusToCluster (I)I
+    access=0001 (PUBLIC)
+    codeOff=7acb1e (8047390)
+    quickening_size=7 (7)
+      7acb22: 7100 72d9 0000                         |0000: invoke-static {}, Lltd/qisi/adapterproxy/car/QISICarManger;.getInstance:()Lltd/qisi/adapterproxy/car/QISICarManger; // method@d972
+      7acb28: 0c00                                   |0003: move-result-object v0
+      7acb2a: e910 0f00 0000                         |0004: invoke-virtual-quick {v0}, [000f] // vtable #000f
+[new] 7acb2a: 6e10 44d9 0000                         |0004: invoke-virtual {v0}, Lltd/qisi/adapterproxy/car/QISICarManger;.getCarClusterManager:()Lltd/qisi/adapterproxy/car/QISICarClusterManager; // method@d944
+      7acb30: 0c00                                   |0007: move-result-object v0
+      7acb32: 3800 0f00                              |0008: if-eqz v0, 0017 // +000f
+      7acb36: 7100 72d9 0000                         |000a: invoke-static {}, Lltd/qisi/adapterproxy/car/QISICarManger;.getInstance:()Lltd/qisi/adapterproxy/car/QISICarManger; // method@d972
+      7acb3c: 0c00                                   |000d: move-result-object v0
+      7acb3e: e910 0f00 0000                         |000e: invoke-virtual-quick {v0}, [000f] // vtable #000f
+[new] 7acb3e: 6e10 44d9 0000                         |000e: invoke-virtual {v0}, Lltd/qisi/adapterproxy/car/QISICarManger;.getCarClusterManager:()Lltd/qisi/adapterproxy/car/QISICarClusterManager; // method@d944
+      7acb44: 0c00                                   |0011: move-result-object v0
+      7acb46: e920 1000 2000                         |0012: invoke-virtual-quick {v0, v2}, [0010] // vtable #0010
+[new] 7acb46: 6e20 1dd7 2000                         |0012: invoke-virtual {v0, v2}, Lltd/qisi/adapterproxy/car/QISICarClusterManager;.sendNaviStatus:(I)I // method@d71d
+      7acb4c: 0a02                                   |0015: move-result v2
+      7acb4e: 0f02                                   |0016: return v2
+      7acb50: 1402 0100 ffff                         |0017: const v2, #float nan // #ffff0001
+      7acb56: 0f02                                   |001a: return v2
+   virtual_method #43537: sendNaviInfoToCluster (Lltd/qisi/adapterproxy/data/QisiNaviInfo;)I
+    access=0001 (PUBLIC)
+    codeOff=7acb58 (8047448)
+    quickening_size=7 (7)
+      7acb5c: 7100 72d9 0000                         |0000: invoke-static {}, Lltd/qisi/adapterproxy/car/QISICarManger;.getInstance:()Lltd/qisi/adapterproxy/car/QISICarManger; // method@d972
+      7acb62: 0c00                                   |0003: move-result-object v0
+      7acb64: e910 0f00 0000                         |0004: invoke-virtual-quick {v0}, [000f] // vtable #000f
+[new] 7acb64: 6e10 44d9 0000                         |0004: invoke-virtual {v0}, Lltd/qisi/adapterproxy/car/QISICarManger;.getCarClusterManager:()Lltd/qisi/adapterproxy/car/QISICarClusterManager; // method@d944
+      7acb6a: 0c00                                   |0007: move-result-object v0
+      7acb6c: 3800 0f00                              |0008: if-eqz v0, 0017 // +000f
+      7acb70: 7100 72d9 0000                         |000a: invoke-static {}, Lltd/qisi/adapterproxy/car/QISICarManger;.getInstance:()Lltd/qisi/adapterproxy/car/QISICarManger; // method@d972
+      7acb76: 0c00                                   |000d: move-result-object v0
+      7acb78: e910 0f00 0000                         |000e: invoke-virtual-quick {v0}, [000f] // vtable #000f
+[new] 7acb78: 6e10 44d9 0000                         |000e: invoke-virtual {v0}, Lltd/qisi/adapterproxy/car/QISICarManger;.getCarClusterManager:()Lltd/qisi/adapterproxy/car/QISICarClusterManager; // method@d944
+      7acb7e: 0c00                                   |0011: move-result-object v0
+      7acb80: e920 0f00 2000                         |0012: invoke-virtual-quick {v0, v2}, [000f] // vtable #000f
+[new] 7acb80: 6e20 1cd7 2000                         |0012: invoke-virtual {v0, v2}, Lltd/qisi/adapterproxy/car/QISICarClusterManager;.sendNaviInfo:(Lltd/qisi/adapterproxy/data/QisiNaviInfo;)I // method@d71c
+      7acb86: 0a02                                   |0015: move-result v2
+      7acb88: 0f02                                   |0016: return v2
+      7acb8a: 1402 0100 ffff                         |0017: const v2, #float nan // #ffff0001
+      7acb90: 0f02                                   |001a: return v2
+   virtual_method #43538: sendNewsInfoToCluster (Lltd/qisi/adapterproxy/data/QisiNewsInfo;)I
+    access=0001 (PUBLIC)
+    codeOff=7acb92 (8047506)
+    quickening_size=7 (7)
+      7acb96: 7100 72d9 0000                         |0000: invoke-static {}, Lltd/qisi/adapterproxy/car/QISICarManger;.getInstance:()Lltd/qisi/adapterproxy/car/QISICarManger; // method@d972
+      7acb9c: 0c00                                   |0003: move-result-object v0
+      7acb9e: e910 0f00 0000                         |0004: invoke-virtual-quick {v0}, [000f] // vtable #000f
+[new] 7acb9e: 6e10 44d9 0000                         |0004: invoke-virtual {v0}, Lltd/qisi/adapterproxy/car/QISICarManger;.getCarClusterManager:()Lltd/qisi/adapterproxy/car/QISICarClusterManager; // method@d944
+      7acba4: 0c00                                   |0007: move-result-object v0
+      7acba6: 3800 0f00                              |0008: if-eqz v0, 0017 // +000f
+      7acbaa: 7100 72d9 0000                         |000a: invoke-static {}, Lltd/qisi/adapterproxy/car/QISICarManger;.getInstance:()Lltd/qisi/adapterproxy/car/QISICarManger; // method@d972
+      7acbb0: 0c00                                   |000d: move-result-object v0
+      7acbb2: e910 0f00 0000                         |000e: invoke-virtual-quick {v0}, [000f] // vtable #000f
+[new] 7acbb2: 6e10 44d9 0000                         |000e: invoke-virtual {v0}, Lltd/qisi/adapterproxy/car/QISICarManger;.getCarClusterManager:()Lltd/qisi/adapterproxy/car/QISICarClusterManager; // method@d944
+      7acbb8: 0c00                                   |0011: move-result-object v0
+      7acbba: e920 1100 2000                         |0012: invoke-virtual-quick {v0, v2}, [0011] // vtable #0011
+[new] 7acbba: 6e20 1ed7 2000                         |0012: invoke-virtual {v0, v2}, Lltd/qisi/adapterproxy/car/QISICarClusterManager;.sendNewsInfo:(Lltd/qisi/adapterproxy/data/QisiNewsInfo;)I // method@d71e
+      7acbc0: 0a02                                   |0015: move-result v2
+      7acbc2: 0f02                                   |0016: return v2
+      7acbc4: 1402 0100 ffff                         |0017: const v2, #float nan // #ffff0001
+      7acbca: 0f02                                   |001a: return v2
+   virtual_method #43539: sendRadioInfoToCluster (Lltd/qisi/adapterproxy/data/QisiRadioInfo;)I
+    access=0001 (PUBLIC)
+    codeOff=7acbcc (8047564)
+    quickening_size=7 (7)
+      7acbd0: 7100 72d9 0000                         |0000: invoke-static {}, Lltd/qisi/adapterproxy/car/QISICarManger;.getInstance:()Lltd/qisi/adapterproxy/car/QISICarManger; // method@d972
+      7acbd6: 0c00                                   |0003: move-result-object v0
+      7acbd8: e910 0f00 0000                         |0004: invoke-virtual-quick {v0}, [000f] // vtable #000f
+[new] 7acbd8: 6e10 44d9 0000                         |0004: invoke-virtual {v0}, Lltd/qisi/adapterproxy/car/QISICarManger;.getCarClusterManager:()Lltd/qisi/adapterproxy/car/QISICarClusterManager; // method@d944
+      7acbde: 0c00                                   |0007: move-result-object v0
+      7acbe0: 3800 0f00                              |0008: if-eqz v0, 0017 // +000f
+      7acbe4: 7100 72d9 0000                         |000a: invoke-static {}, Lltd/qisi/adapterproxy/car/QISICarManger;.getInstance:()Lltd/qisi/adapterproxy/car/QISICarManger; // method@d972
+      7acbea: 0c00                                   |000d: move-result-object v0
+      7acbec: e910 0f00 0000                         |000e: invoke-virtual-quick {v0}, [000f] // vtable #000f
+[new] 7acbec: 6e10 44d9 0000                         |000e: invoke-virtual {v0}, Lltd/qisi/adapterproxy/car/QISICarManger;.getCarClusterManager:()Lltd/qisi/adapterproxy/car/QISICarClusterManager; // method@d944
+      7acbf2: 0c00                                   |0011: move-result-object v0
+      7acbf4: e920 1200 2000                         |0012: invoke-virtual-quick {v0, v2}, [0012] // vtable #0012
+[new] 7acbf4: 6e20 1fd7 2000                         |0012: invoke-virtual {v0, v2}, Lltd/qisi/adapterproxy/car/QISICarClusterManager;.sendRadioInfo:(Lltd/qisi/adapterproxy/data/QisiRadioInfo;)I // method@d71f
+      7acbfa: 0a02                                   |0015: move-result v2
+      7acbfc: 0f02                                   |0016: return v2
+      7acbfe: 1402 0100 ffff                         |0017: const v2, #float nan // #ffff0001
+      7acc04: 0f02                                   |001a: return v2
+   virtual_method #43540: sendVideoInfoToCluster (Lltd/qisi/adapterproxy/data/QisiVideoInfo;)I
+    access=0001 (PUBLIC)
+    codeOff=7acc06 (8047622)
+    quickening_size=7 (7)
+      7acc0a: 7100 72d9 0000                         |0000: invoke-static {}, Lltd/qisi/adapterproxy/car/QISICarManger;.getInstance:()Lltd/qisi/adapterproxy/car/QISICarManger; // method@d972
+      7acc10: 0c00                                   |0003: move-result-object v0
+      7acc12: e910 0f00 0000                         |0004: invoke-virtual-quick {v0}, [000f] // vtable #000f
+[new] 7acc12: 6e10 44d9 0000                         |0004: invoke-virtual {v0}, Lltd/qisi/adapterproxy/car/QISICarManger;.getCarClusterManager:()Lltd/qisi/adapterproxy/car/QISICarClusterManager; // method@d944
+      7acc18: 0c00                                   |0007: move-result-object v0
+      7acc1a: 3800 0f00                              |0008: if-eqz v0, 0017 // +000f
+      7acc1e: 7100 72d9 0000                         |000a: invoke-static {}, Lltd/qisi/adapterproxy/car/QISICarManger;.getInstance:()Lltd/qisi/adapterproxy/car/QISICarManger; // method@d972
+      7acc24: 0c00                                   |000d: move-result-object v0
+      7acc26: e910 0f00 0000                         |000e: invoke-virtual-quick {v0}, [000f] // vtable #000f
+[new] 7acc26: 6e10 44d9 0000                         |000e: invoke-virtual {v0}, Lltd/qisi/adapterproxy/car/QISICarManger;.getCarClusterManager:()Lltd/qisi/adapterproxy/car/QISICarClusterManager; // method@d944
+      7acc2c: 0c00                                   |0011: move-result-object v0
+      7acc2e: e920 1300 2000                         |0012: invoke-virtual-quick {v0, v2}, [0013] // vtable #0013
+[new] 7acc2e: 6e20 20d7 2000                         |0012: invoke-virtual {v0, v2}, Lltd/qisi/adapterproxy/car/QISICarClusterManager;.sendVideoInfo:(Lltd/qisi/adapterproxy/data/QisiVideoInfo;)I // method@d720
+      7acc34: 0a02                                   |0015: move-result v2
+      7acc36: 0f02                                   |0016: return v2
+      7acc38: 1402 0100 ffff                         |0017: const v2, #float nan // #ffff0001
+      7acc3e: 0f02                                   |001a: return v2
+   virtual_method #43541: setCurrentSourceToCluster (II)I
+    access=0001 (PUBLIC)
+    codeOff=7acc40 (8047680)
+    quickening_size=7 (7)
+      7acc44: 7100 72d9 0000                         |0000: invoke-static {}, Lltd/qisi/adapterproxy/car/QISICarManger;.getInstance:()Lltd/qisi/adapterproxy/car/QISICarManger; // method@d972
+      7acc4a: 0c00                                   |0003: move-result-object v0
+      7acc4c: e910 0f00 0000                         |0004: invoke-virtual-quick {v0}, [000f] // vtable #000f
+[new] 7acc4c: 6e10 44d9 0000                         |0004: invoke-virtual {v0}, Lltd/qisi/adapterproxy/car/QISICarManger;.getCarClusterManager:()Lltd/qisi/adapterproxy/car/QISICarClusterManager; // method@d944
+      7acc52: 0c00                                   |0007: move-result-object v0
+      7acc54: 3800 0f00                              |0008: if-eqz v0, 0017 // +000f
+      7acc58: 7100 72d9 0000                         |000a: invoke-static {}, Lltd/qisi/adapterproxy/car/QISICarManger;.getInstance:()Lltd/qisi/adapterproxy/car/QISICarManger; // method@d972
+      7acc5e: 0c00                                   |000d: move-result-object v0
+      7acc60: e910 0f00 0000                         |000e: invoke-virtual-quick {v0}, [000f] // vtable #000f
+[new] 7acc60: 6e10 44d9 0000                         |000e: invoke-virtual {v0}, Lltd/qisi/adapterproxy/car/QISICarManger;.getCarClusterManager:()Lltd/qisi/adapterproxy/car/QISICarClusterManager; // method@d944
+      7acc66: 0c00                                   |0011: move-result-object v0
+      7acc68: e930 1400 2003                         |0012: invoke-virtual-quick {v0, v2, v3}, [0014] // vtable #0014
+[new] 7acc68: 6e30 21d7 2003                         |0012: invoke-virtual {v0, v2, v3}, Lltd/qisi/adapterproxy/car/QISICarClusterManager;.setCurrentSource:(II)I // method@d721
+      7acc6e: 0a02                                   |0015: move-result v2
+      7acc70: 0f02                                   |0016: return v2
+      7acc72: 1402 0100 ffff                         |0017: const v2, #float nan // #ffff0001
+      7acc78: 0f02                                   |001a: return v2

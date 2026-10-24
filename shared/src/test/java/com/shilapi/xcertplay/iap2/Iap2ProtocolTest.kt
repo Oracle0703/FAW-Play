@@ -162,7 +162,8 @@ class Iap2ProtocolTest {
 
         assertTrue(formatted.startsWith("IAP2 TX [wired] 0x4301 CarPlayStartSession"))
         assertTrue("wired:" in formatted)
-        assertTrue("wiredIP: \"fe80::2\"" in formatted)
+        assertTrue("wiredIP: <redacted string" in formatted)
+        assertFalse("fe80::2" in formatted)
         assertTrue("airPlayPort: u32=7000" in formatted)
         assertTrue("raw-body=" in formatted)
     }
@@ -176,14 +177,20 @@ class Iap2ProtocolTest {
         )
 
         assertTrue(formatted.contains("body=malformed TLV"))
-        assertTrue(formatted.contains("raw-body=00 01 02"))
+        assertTrue(formatted.contains("raw-body=<suppressed 3B>"))
     }
 
     @Test
-    fun formatterEscapesLineBreaksInNmeaStrings() {
+    fun formatterSuppressesLocationsAndOpaqueSecrets() {
         val frame = Iap2ControlMessages.locationInformation("\$GPGGA,1\r\n")
         val formatted = Iap2FrameFormatter.format(Iap2TraceDirection.TX, "wired", frame)
 
-        assertTrue(formatted.contains("\\r\\n"))
+        assertFalse(formatted.contains("GPGGA"))
+        assertTrue(formatted.contains("redacted string"))
+        val secret = "private-password".toByteArray()
+        val opaque = Iap2FrameFormatter.format(Iap2TraceDirection.RX, "wire\nunsafe", Iap2Frame(0xffff, secret))
+        assertFalse(opaque.contains("private-password"))
+        assertFalse(opaque.contains("wire\nunsafe"))
+        assertTrue(opaque.contains("raw-body=<suppressed"))
     }
 }

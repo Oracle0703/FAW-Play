@@ -1,5 +1,6 @@
 package com.shilapi.xcertplay.network
 
+import java.io.IOException
 import java.net.BindException
 import java.net.InetAddress
 import java.net.InetSocketAddress
@@ -46,6 +47,32 @@ object AirPlayPortSelector {
             }
         }
         throw BindException("No common AirPlay port available for the selected interface addresses")
+    }
+
+    /** A secondary family must not take an otherwise usable primary listener offline. */
+    fun bindWithOptionalAddresses(
+        primaryAddress: InetAddress,
+        additionalAddresses: List<InetAddress>,
+        preferredPort: Int,
+        fallbackPorts: Iterable<Int> = FALLBACK_PORTS,
+        onFallback: (Int, Int) -> Unit = { _, _ -> },
+        onOptionalFailure: (InetAddress, IOException) -> Unit = { _, _ -> },
+    ): List<ServerSocket> {
+        val primary = bind(primaryAddress, preferredPort, fallbackPorts, onFallback)
+        val servers = mutableListOf(primary)
+        try {
+            for (address in additionalAddresses.distinct().filter { it != primaryAddress }) {
+                try {
+                    servers.add(bindPort(address, primary.localPort))
+                } catch (error: IOException) {
+                    onOptionalFailure(address, error)
+                }
+            }
+            return servers
+        } catch (error: Throwable) {
+            servers.forEach { closeAfterFailure(it, error) }
+            throw error
+        }
     }
 
     fun bind(

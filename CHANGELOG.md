@@ -2,6 +2,14 @@
 
 Add changes after 0.2.12 here.
 
+## Autunn Play 170 — HS5 experimental Ultra integration — 2026-10-24
+
+- Connect the HS5 CAF vehicle plugin, confirmed vehicle writes, UI Sync execution and local resources to fresh CarPlay sessions.
+- Add opt-in experimental negotiation without claiming phone verification; keep classic CarPlay as the default.
+- Apply local 1920×720 overview/navigation layouts through the OEM map display lease, with stationary P-gear eligibility, priority interruption, hard-quit and classic restoration.
+- Cancel stale streams/vehicle writes and restore the display on reset or ACK timeout; rebuild profile selection on background recovery.
+- See `docs/HONGQI_HS5_VEHICLE_ADAPTER.md` for the implemented subset and pending vehicle/iPhone acceptance.
+
 # DiPlay 0.2.12 — 2026-10-04
 
 - Add Existing Wi-Fi / Same LAN wireless CarPlay with scoped IPv4/IPv6 discovery and network-change cleanup (#223).

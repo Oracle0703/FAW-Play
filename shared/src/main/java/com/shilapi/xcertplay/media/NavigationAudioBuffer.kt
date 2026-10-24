@@ -2,8 +2,9 @@ package com.shilapi.xcertplay.media
 
 /** Covers the measured Wi-Fi gaps without adding the music buffer to calls. */
 internal object NavigationAudioBuffer {
-    private const val START_MILLIS = 160L
-    private const val CAPACITY_MILLIS = 280L
+    // The measured ~188 ms gaps exceeded the old 160 ms starting reserve.
+    private const val START_MILLIS = 240L
+    private const val CAPACITY_MILLIS = 400L
 
     fun plan(sampleRate: Int, channels: Int, minBufferBytes: Int): MediaAudioBuffer.Plan {
         val frameBytes = channels.coerceIn(1, 2) * 2

@@ -12,6 +12,11 @@ The resulting source-only APK contains no accessory identity. Standalone CarPlay
 
 ## Local release packaging
 
+Release now always enables product licensing and R8 optimization. It requires the HTTPS licensing
+configuration and APK signer fingerprint described in [Product authorization](PRODUCT_AUTHORIZATION.md).
+Use `scripts/build-licensed-apk.py` for configured release builds. The legacy signing/runtime inputs
+below remain necessary, but are no longer sufficient by themselves to build a release APK.
+
 Provide an external asset directory using `DIPLAY_AUTH_ASSETS_DIR`. The directory must contain exactly the intended runtime files under `offline-mfi/identity.pk8` and `offline-mfi/certificate.p7b`. Neither file belongs in Git. The build permits those two files only when this explicit input is set and rejects unexpected credential containers elsewhere in APK assets.
 
 Set `ANDROID_KEYSTORE_PATH`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, and `ANDROID_KEY_PASSWORD` locally for your Android signing key. Never commit these values or the keystore. Different signing keys cannot update an existing project-signed installation.
@@ -37,3 +42,7 @@ source/CI build when the explicit asset input is absent; do not install that out
 standalone car-test package. Before delivery, verify both `assets/offline-mfi/identity.pk8`
 and `assets/offline-mfi/certificate.p7b` in the APK against the selected local inputs.
 Update the existing test app without uninstalling it to preserve its settings.
+
+## Development probes
+
+`LocalMfiProbe` is an ADB/app_process command-line crypto self-check in `shared/src/debug`. Its console output and entry point are included only in debug builds; release builds exclude the probe. It uses externally supplied runtime identity files and is not part of the app activation API.

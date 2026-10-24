@@ -1,0 +1,111 @@
+{
+  "verifiedAt": "2026-10-15T14:03:42+08:00",
+  "snapshot": "DiPlay-0.2.49-REFACTOR1-source-20261015",
+  "versionName": "0.2.49-FAW-REFACTOR1",
+  "versionCode": 123,
+  "verificationScope": "Fresh independent copy of the packaged source; offline dependency cache; no production credentials or runtime authentication assets",
+  "checks": {
+    "android": {
+      "scope": "android",
+      "exitCode": 0,
+      "elapsedSeconds": 183.6,
+      "productionCredentialsUsed": false
+    },
+    "server": {
+      "scope": "server",
+      "exitCode": 0,
+      "elapsedSeconds": 18.5,
+      "productionCredentialsUsed": false
+    },
+    "web": {
+      "scope": "web",
+      "exitCode": 0,
+      "elapsedSeconds": 0.4,
+      "productionCredentialsUsed": false
+    },
+    "admin-cli": {
+      "scope": "admin-cli",
+      "exitCode": 0,
+      "elapsedSeconds": 0.6,
+      "productionCredentialsUsed": false
+    }
+  },
+  "tests": {
+    "shared": {
+      "tests": 902,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 1,
+      "passed": 901
+    },
+    "common": {
+      "tests": 777,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 17,
+      "passed": 760
+    },
+    "authorization-server": {
+      "tests": 89,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "passed": 89
+    },
+    "web": {
+      "tests": 20,
+      "passed": 20,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "admin-cli": {
+      "tests": 3,
+      "passed": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "lint": {
+    "severities": {
+      "Warning": 4
+    },
+    "issueIds": {
+      "UnusedAttribute": 1,
+      "TrustAllX509TrustManager": 2,
+      "UnusedResources": 1
+    }
+  },
+  "builds": {
+    "mobileDebug": true,
+    "serverBootJar": true,
+    "releaseApkBuilt": false,
+    "automotiveBuilt": false
+  },
+  "sourceIntegrity": {
+    "projectFiles": 1278,
+    "allSha256Match": true,
+    "businessSourceMatchesWorkingTree": true,
+    "redactedDocumentationFiles": 2,
+    "privateKeyBlocksFound": 0,
+    "productionCredentialFilesIncluded": false,
+    "syntheticApkFixturesRetained": 7,
+    "runtimeAssetsInFixtures": false,
+    "originalSourceUnmodified": true
+  },
+  "notRun": [
+    "Signed Release build",
+    "HS5 / iPhone runtime acceptance",
+    "Real PostgreSQL or Keycloak integration",
+    "Production deployment",
+    "Automotive build"
+  ],
+  "totals": {
+    "tests": 1791,
+    "passed": 1773,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 18
+  }
+}

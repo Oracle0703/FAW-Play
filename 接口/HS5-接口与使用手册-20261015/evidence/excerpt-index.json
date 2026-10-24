@@ -1,0 +1,85 @@
+[
+  {
+    "source": "work/update-package-20261009/format-audit/QisiAdapterService/bytecode.dis.txt",
+    "lfStart": 1362801,
+    "descriptor": "Lltd/qisi/adapterproxy/ICarClusterUpdateManager;",
+    "copy": "evidence/excerpts/ltd_qisi_adapterproxy_ICarClusterUpdateManager.txt"
+  },
+  {
+    "source": "work/update-package-20261009/format-audit/QisiAdapterService/bytecode.dis.txt",
+    "lfStart": 1367492,
+    "descriptor": "Lltd/qisi/adapterproxy/ICarInstrumentRelatedManager;",
+    "copy": "evidence/excerpts/ltd_qisi_adapterproxy_ICarInstrumentRelatedManager.txt"
+  },
+  {
+    "source": "work/update-package-20261009/format-audit/QisiAdapterService/bytecode.dis.txt",
+    "lfStart": 1415195,
+    "descriptor": "Lltd/qisi/adapterproxy/data/QisiCallInfo;",
+    "copy": "evidence/excerpts/ltd_qisi_adapterproxy_data_QisiCallInfo.txt"
+  },
+  {
+    "source": "work/update-package-20261009/format-audit/QisiAdapterService/bytecode.dis.txt",
+    "lfStart": 1415540,
+    "descriptor": "Lltd/qisi/adapterproxy/data/QisiFullMapInfo;",
+    "copy": "evidence/excerpts/ltd_qisi_adapterproxy_data_QisiFullMapInfo.txt"
+  },
+  {
+    "source": "work/update-package-20261009/format-audit/QisiAdapterService/bytecode.dis.txt",
+    "lfStart": 1417324,
+    "descriptor": "Lltd/qisi/adapterproxy/data/QisiMusicInfo;",
+    "copy": "evidence/excerpts/ltd_qisi_adapterproxy_data_QisiMusicInfo.txt"
+  },
+  {
+    "source": "work/update-package-20261009/format-audit/QisiAdapterService/bytecode.dis.txt",
+    "lfStart": 1417781,
+    "descriptor": "Lltd/qisi/adapterproxy/data/QisiNaviInfo;",
+    "copy": "evidence/excerpts/ltd_qisi_adapterproxy_data_QisiNaviInfo.txt"
+  },
+  {
+    "source": "work/update-package-20261009/format-audit/QisiAdapterService/bytecode.dis.txt",
+    "lfStart": 1797093,
+    "descriptor": "Lltd/qisi/adapterproxy/CarInstrumentRelatedManagerSDKImpl;",
+    "copy": "evidence/excerpts/ltd_qisi_adapterproxy_CarInstrumentRelatedManagerSDKImpl.txt"
+  },
+  {
+    "source": "work/vehicle-controls-audit-20261015/QisiHVAC-3222/bytecode.dis.txt",
+    "sha256": "9caf1f497a312a218111d6447b9898fa0931390defecb8a557c97da254708227",
+    "methodsRequested": 32,
+    "methodsExtracted": 32,
+    "lfStarts": [
+      2408891,
+      2409159,
+      2412735,
+      2412763,
+      2412790,
+      2412818,
+      2412846,
+      2413090,
+      2413526,
+      2413701,
+      2424572,
+      2431442,
+      2431555,
+      2928246,
+      2928570,
+      2928655,
+      2928949,
+      2929013,
+      2929150,
+      2930074,
+      2930392,
+      2930413,
+      2930470,
+      2930526,
+      2930546,
+      2930959,
+      3042898,
+      3043270,
+      3045235,
+      3045345,
+      3045455,
+      3045565
+    ],
+    "copy": "evidence/excerpts/3222-HVAC-UI-cited-methods.txt"
+  }
+]

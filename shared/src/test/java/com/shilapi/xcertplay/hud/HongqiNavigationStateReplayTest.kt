@@ -13,50 +13,50 @@ import org.robolectric.util.ReflectionHelpers
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [28], manifest = Config.NONE)
 class HongqiNavigationStateReplayTest {
-    private val route = FawNavigationOutputs::class.java.getDeclaredField("overlayRoute")
-        .apply { isAccessible = true }.get(FawNavigationOutputs) as FawHudRouteState
+    private val route = AutunnNavigationOutputs::class.java.getDeclaredField("overlayRoute")
+        .apply { isAccessible = true }.get(AutunnNavigationOutputs) as AutunnHudRouteState
 
     @Before fun setUp() {
         ReflectionHelpers.setStaticField(Build::class.java, "MODEL", "HONG QI")
         ReflectionHelpers.setStaticField(Build::class.java, "DEVICE", "t1c_acrn")
-        FawNavigationOutputs.endNow()
-        route.accept(FawHudRouteState.ROUTE_GUIDANCE_MANEUVER_UPDATE,
+        AutunnNavigationOutputs.endNow()
+        route.accept(AutunnHudRouteState.ROUTE_GUIDANCE_MANEUVER_UPDATE,
             tlv(0x01, 0, 7) + tlv(0x03, 1))
-        route.accept(FawHudRouteState.ROUTE_GUIDANCE_UPDATE,
+        route.accept(AutunnHudRouteState.ROUTE_GUIDANCE_UPDATE,
             tlv(0x01, 1) + tlv(0x0a, 0, 0, 0, 150) + tlv(0x0d, 0, 7))
     }
 
     @After fun tearDown() {
-        FawNavigationOutputs.endNow()
-        FawNavigationOutputs.setTurnOverlayListener(null)
+        AutunnNavigationOutputs.endNow()
+        AutunnNavigationOutputs.setTurnOverlayListener(null)
     }
 
     @Test fun attachingAHostReplaysTheExistingRouteToTheVehicleAndTheOverlay() {
         val events = mutableListOf<ClusterTurnGuidance?>()
-        FawNavigationOutputs.setTurnOverlayListener { events += it }
+        AutunnNavigationOutputs.setTurnOverlayListener { events += it }
         assertTrue("Existing guidance must enable the gesture and instrument output", HongqiNavigation.isNavigating())
         assertEquals(150, events.single()!!.distanceMeters)
-        FawNavigationOutputs.refreshTurnOverlay()
+        AutunnNavigationOutputs.refreshTurnOverlay()
         assertTrue(HongqiNavigation.isNavigating())
         assertEquals(1, events.size)
     }
 
     @Test fun reopeningTheHostResynchronizesVehicleStateWithoutWaitingForAMovingCar() {
-        FawNavigationOutputs.setTurnOverlayListener { }
+        AutunnNavigationOutputs.setTurnOverlayListener { }
         HongqiNavigation.clear()
         assertFalse(HongqiNavigation.isNavigating())
-        FawNavigationOutputs.setTurnOverlayListener { }
+        AutunnNavigationOutputs.setTurnOverlayListener { }
         assertTrue(HongqiNavigation.isNavigating())
-        FawNavigationOutputs.endNow()
-        FawNavigationOutputs.setTurnOverlayListener { assertNull(it) }
+        AutunnNavigationOutputs.endNow()
+        AutunnNavigationOutputs.setTurnOverlayListener { assertNull(it) }
         assertFalse(HongqiNavigation.isNavigating())
     }
 
     @Test fun removingTheScreenListenerKeepsLiveVehicleGuidanceUntilTheRouteEnds() {
-        FawNavigationOutputs.setTurnOverlayListener { }
-        FawNavigationOutputs.setTurnOverlayListener(null)
+        AutunnNavigationOutputs.setTurnOverlayListener { }
+        AutunnNavigationOutputs.setTurnOverlayListener(null)
         assertTrue(HongqiNavigation.isNavigating())
-        FawNavigationOutputs.endNow()
+        AutunnNavigationOutputs.endNow()
         assertFalse(HongqiNavigation.isNavigating())
     }
 

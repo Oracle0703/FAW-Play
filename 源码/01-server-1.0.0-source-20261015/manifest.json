@@ -1,0 +1,630 @@
+{
+  "algorithm": "SHA-256",
+  "files": [
+    {
+      "path": "README-交付.md",
+      "bytes": 2625,
+      "sha256": "1be5f24dc6af52b9967f9b52938dffcabb043d227bb5a055a51b8dfc4eed3593"
+    },
+    {
+      "path": "SOURCE_PROVENANCE.json",
+      "bytes": 44595,
+      "sha256": "8355df3329bc4e0f4ca1ca3ff20f78773b1da65bead5b6465eddf0d96559bdae"
+    },
+    {
+      "path": "VERSION.json",
+      "bytes": 229,
+      "sha256": "7dcd461c977496cd0fd7d5686afc24248771583809bf5a7852c26ae2848635cc"
+    },
+    {
+      "path": "docs/构建部署与运维.md",
+      "bytes": 3948,
+      "sha256": "f0bade24f03e4ceed8b130277f58da5b6f81d623fdb75bad71300a80c9f2524c"
+    },
+    {
+      "path": "docs/架构与维护.md",
+      "bytes": 2626,
+      "sha256": "0466ad3831a551ae131cdcde230eca46b605012adca03cc7a28c42a48a900e63"
+    },
+    {
+      "path": "evidence/check-summary.txt",
+      "bytes": 85,
+      "sha256": "afb1cf35b1b0a875cb2fc52a3826e6e8a9dc63d3acf43672713a90cacbee1e22"
+    },
+    {
+      "path": "evidence/current-checks.json",
+      "bytes": 937,
+      "sha256": "03ec383c64bbde40e97dc25c8a448e414ea5116de2c23a0184467fd87cfe13b6"
+    },
+    {
+      "path": "evidence/test-report-digests.json",
+      "bytes": 1507,
+      "sha256": "18f085975f32e239a02a71b0cb15e16b7231d1c666fc155e5b054cb83acb23d8"
+    },
+    {
+      "path": "server/.gitignore",
+      "bytes": 531,
+      "sha256": "d3db882f462bfb668af1e5bbfc7d3eea60aa8060afe3653a548f59897d180c58"
+    },
+    {
+      "path": "server/LICENSE",
+      "bytes": 35149,
+      "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+    },
+    {
+      "path": "server/SECURITY.md",
+      "bytes": 1196,
+      "sha256": "2a27aacd66f4985a4730708a2cfcd82b98ecbeab7de59878296a752c088cab28"
+    },
+    {
+      "path": "server/authorization-server/.gitignore",
+      "bytes": 49,
+      "sha256": "60c4a2b39a1236501ad0fae7364f37c1c12067363fd1adab56e5ceea8f39490a"
+    },
+    {
+      "path": "server/authorization-server/Dockerfile",
+      "bytes": 577,
+      "sha256": "297d54cfb4959bac29b7842f1aa2820488d19e4cf6cda5cd87da6364c322eaaa"
+    },
+    {
+      "path": "server/authorization-server/Dockerfile.dockerignore",
+      "bytes": 329,
+      "sha256": "df23e8851b03db9ddf78d09264d431b9b86ffe686570226155a6795562ed08c5"
+    },
+    {
+      "path": "server/authorization-server/README.md",
+      "bytes": 30856,
+      "sha256": "dda81532c06fb67d23f76b5047fe1c46357f1752010844b99fb98ae9e0ee0168"
+    },
+    {
+      "path": "server/authorization-server/build.gradle.kts",
+      "bytes": 1775,
+      "sha256": "b7af14a813faafb13830580f27032a39b06f0ebcd2c83da683745dcc61c5b0c8"
+    },
+    {
+      "path": "server/authorization-server/compose.production.yml",
+      "bytes": 1065,
+      "sha256": "0158ad348a96dbb9b35101c89f1450e1272658e3b083463f3dd11a92ac1f0bfe"
+    },
+    {
+      "path": "server/authorization-server/compose.yml",
+      "bytes": 2559,
+      "sha256": "319a635c2008a26f8f346b8b294492443d9809e42e9d42935a835619d91c1269"
+    },
+    {
+      "path": "server/authorization-server/docker/Caddyfile",
+      "bytes": 178,
+      "sha256": "eb19f5e5853f76d5aa81d4cadbd01953e8e024b06c895813c37599686bcebfb0"
+    },
+    {
+      "path": "server/authorization-server/docker/init-db.sh",
+      "bytes": 410,
+      "sha256": "77e14336ddcc3c9f122517771860b40fa3c7a59aa4ddea1a5b3cd49e8c39cbca"
+    },
+    {
+      "path": "server/authorization-server/keycloak/faw-play-realm.json",
+      "bytes": 4771,
+      "sha256": "e90f948ca60af8ab7cd9973a01f305af831521b574320fb14832987662b9d6a2"
+    },
+    {
+      "path": "server/authorization-server/scripts/admin.py",
+      "bytes": 7860,
+      "sha256": "4757f94ae84afa3cf2d5aa3150b08b4feee3d81d0fd88475f5ebd677a40dc588"
+    },
+    {
+      "path": "server/authorization-server/scripts/bootstrap-local.sh",
+      "bytes": 853,
+      "sha256": "b599586874324735c1cb1ee482cc1b0a11437ea236532bb6aec3ee16edd1dc74"
+    },
+    {
+      "path": "server/authorization-server/scripts/generate-keys.sh",
+      "bytes": 817,
+      "sha256": "5b40c62cfc782e9add45dfce031915677dd6ce4fa057bfd50a464715559b9211"
+    },
+    {
+      "path": "server/authorization-server/scripts/publish-update.py",
+      "bytes": 10648,
+      "sha256": "217a9091a705e66fe5d310316b1e6c5cd36036a1267191a8b62000c8c8e04167"
+    },
+    {
+      "path": "server/authorization-server/scripts/test_admin.py",
+      "bytes": 2726,
+      "sha256": "1db56b0778fe94249bff09ca4213b92b843facede5923df4e1b201bb9eabb2f8"
+    },
+    {
+      "path": "server/authorization-server/scripts/test_admin_web.cjs",
+      "bytes": 22470,
+      "sha256": "f154bd2b75b564fad9f4ed6069b2b4cfd94774e6a57f91b2e6b7be8de21a6a61"
+    },
+    {
+      "path": "server/authorization-server/scripts/test_web_api.cjs",
+      "bytes": 11318,
+      "sha256": "5c2d0b3b555d369b129d2bce61261a1ce227868081518e53aceccf09213e93f8"
+    },
+    {
+      "path": "server/authorization-server/settings.gradle.kts",
+      "bytes": 44,
+      "sha256": "22fec8a5ef140c3e8622fe6bfa01543e8546b7f390ea8c40db97e803f8dc6e70"
+    },
+    {
+      "path": "server/authorization-server/src/main/java/com/shilapi/license/ActivationController.java",
+      "bytes": 2089,
+      "sha256": "87c706062d5a152e35c6327c967178e716953f6faded717bf2bb3ad82e4faf30"
+    },
+    {
+      "path": "server/authorization-server/src/main/java/com/shilapi/license/ActivationPageController.java",
+      "bytes": 514,
+      "sha256": "4b57d692664e9fa0cdc4d7a41d01fe91b5c7098641abe1d838ac9f1e35c54ff1"
+    },
+    {
+      "path": "server/authorization-server/src/main/java/com/shilapi/license/ActivationService.java",
+      "bytes": 9045,
+      "sha256": "7f6a1e31c7239309f7b17aa4e465d8caa0a610d1881b133b003bab6d6289add8"
+    },
+    {
+      "path": "server/authorization-server/src/main/java/com/shilapi/license/AdminLogin.java",
+      "bytes": 6774,
+      "sha256": "df6f505e5251a82ecc529f7bc0d4fae38a74c961aa8c457cf54cc3d7f85aae02"
+    },
+    {
+      "path": "server/authorization-server/src/main/java/com/shilapi/license/AdminPageController.java",
+      "bytes": 516,
+      "sha256": "3310125360df9b1b0fa18c3391d2e7332b0e7d968e55765814e173b8c8ce4ddd"
+    },
+    {
+      "path": "server/authorization-server/src/main/java/com/shilapi/license/Administration.java",
+      "bytes": 18175,
+      "sha256": "947ce62b8d73dcf2038dd4f68964699c1ad201ca3ef382fd47d1116a23cf7709"
+    },
+    {
+      "path": "server/authorization-server/src/main/java/com/shilapi/license/ApiErrors.java",
+      "bytes": 1377,
+      "sha256": "fdeb912d765fad8e2ff4e4d06833f54413ac4ce07863e4bdca9df173ad4a076c"
+    },
+    {
+      "path": "server/authorization-server/src/main/java/com/shilapi/license/ApiException.java",
+      "bytes": 474,
+      "sha256": "49f677e4a0b058d0998ec3e9f42ddf2f4e9cc71b6fd566e8594f0ae1a926103e"
+    },
+    {
+      "path": "server/authorization-server/src/main/java/com/shilapi/license/ApkInspection.java",
+      "bytes": 3525,
+      "sha256": "e20830b8dec9ba71538a2d89a522e65cc499a8cd40a521c9ecd2df527cdb6f10"
+    },
+    {
+      "path": "server/authorization-server/src/main/java/com/shilapi/license/AuthorizationApplication.java",
+      "bytes": 677,
+      "sha256": "a33d24d904f71faf947cb76754ad702193dcf4497ea985d966a696dc9b5961c5"
+    },
+    {
+      "path": "server/authorization-server/src/main/java/com/shilapi/license/Crypto.java",
+      "bytes": 3125,
+      "sha256": "0d2b4c829de1ec5543b6964811863a48cc275ef493e78f30362b8119a048a71a"
+    },
+    {
+      "path": "server/authorization-server/src/main/java/com/shilapi/license/DiagnosticBodyLimit.java",
+      "bytes": 2897,
+      "sha256": "8dd15a69808c648971c49302cc3fba7931bf9574bbd2c66830177b1b359337a4"
+    },
+    {
+      "path": "server/authorization-server/src/main/java/com/shilapi/license/DiagnosticController.java",
+      "bytes": 2044,
+      "sha256": "475c22745b9607174d97caf32c4e2a9fa7973b9fd5c64d39242ea368aaa553c3"
+    },
+    {
+      "path": "server/authorization-server/src/main/java/com/shilapi/license/DiagnosticService.java",
+      "bytes": 8333,
+      "sha256": "d2d6e7614fb4f6ea04dc75deb4cd688a39c8f9f511372641bdf0a92ecb854692"
+    },
+    {
+      "path": "server/authorization-server/src/main/java/com/shilapi/license/LicenseController.java",
+      "bytes": 1990,
+      "sha256": "ad84dc197e116cc1134c7fddd2c2c117893587e051c99253fdf0f679962f8f0d"
+    },
+    {
+      "path": "server/authorization-server/src/main/java/com/shilapi/license/LicenseProperties.java",
+      "bytes": 650,
+      "sha256": "ea09068685a94d8116fae4f07f7bb37b227004506d473f420e8e67d1f952ff78"
+    },
+    {
+      "path": "server/authorization-server/src/main/java/com/shilapi/license/LicenseService.java",
+      "bytes": 13856,
+      "sha256": "ac94002532c0ef87024945ce8634b32003332f3a564de39fb6b6a4841ce23f33"
+    },
+    {
+      "path": "server/authorization-server/src/main/java/com/shilapi/license/LicenseTokens.java",
+      "bytes": 6630,
+      "sha256": "ea2f1f28fb339e4983807c24365ff283e48ef89d07cfdbc63808b693f7840553"
+    },
+    {
+      "path": "server/authorization-server/src/main/java/com/shilapi/license/OfflineLicensePeriod.java",
+      "bytes": 1756,
+      "sha256": "b8b9145c90dfd42c386df4393ac7d33ed27a4d10dc80b9bc49528eca4fb200c3"
+    },
+    {
+      "path": "server/authorization-server/src/main/java/com/shilapi/license/RequestLimits.java",
+      "bytes": 3242,
+      "sha256": "def46e0c72bf847e088cf799b653411927946ab0fcb12726c73728857ed5d956"
+    },
+    {
+      "path": "server/authorization-server/src/main/java/com/shilapi/license/SecurityConfiguration.java",
+      "bytes": 4275,
+      "sha256": "ac34e7c447f70c73be300f35420a5831c35a14d4bf70cc972fd4f7cd6578f9ca"
+    },
+    {
+      "path": "server/authorization-server/src/main/java/com/shilapi/license/UpdateAdministration.java",
+      "bytes": 2218,
+      "sha256": "a9982cb4b10eecc38c31b75465b2fa1820488d5d42e5daa2f7bf73c542def5bc"
+    },
+    {
+      "path": "server/authorization-server/src/main/java/com/shilapi/license/UpdateAuthorization.java",
+      "bytes": 1828,
+      "sha256": "92582cb72e0f4e5e4f4d473bdba264ad3e772dd1ed915f975481ea0ecdf751e2"
+    },
+    {
+      "path": "server/authorization-server/src/main/java/com/shilapi/license/UpdateController.java",
+      "bytes": 3453,
+      "sha256": "8140c32b23288b627dd61b095a32e4094f58819a29b35155bca73b9a75acb31e"
+    },
+    {
+      "path": "server/authorization-server/src/main/java/com/shilapi/license/UpdatePublisher.java",
+      "bytes": 9315,
+      "sha256": "2fbc498cb5312e22449ff6b8e9d684799568fddb3c2dc6747fc4ce2e0bf652b1"
+    },
+    {
+      "path": "server/authorization-server/src/main/java/com/shilapi/license/UpdateRequestSettings.java",
+      "bytes": 4384,
+      "sha256": "1fb40462bc06643d0f2fa727c562e38bdeeeb4f497f6d6fcf7844305f11dfc19"
+    },
+    {
+      "path": "server/authorization-server/src/main/java/com/shilapi/license/UpdateService.java",
+      "bytes": 6288,
+      "sha256": "d9fe4aa764d97bc4a0fb2f5c226e1e60038f9afb75e1fc20ab4fde22e2a2b84d"
+    },
+    {
+      "path": "server/authorization-server/src/main/java/com/shilapi/license/WebsitePageController.java",
+      "bytes": 819,
+      "sha256": "9a79efe79c52e7b2de8866b63c0211ea480295a9a89f70adf6fee89cb47c1482"
+    },
+    {
+      "path": "server/authorization-server/src/main/resources/application.yml",
+      "bytes": 1174,
+      "sha256": "f1bca4d70bc2c241ba42053c750daf8eec695c2a64e12f60cf533a5a2469dc4d"
+    },
+    {
+      "path": "server/authorization-server/src/main/resources/db/migration/V1__authorization.sql",
+      "bytes": 1518,
+      "sha256": "fb811b1d37dcdd63e39c3969a20c3a30305a879f83311192f192561df395d2bf"
+    },
+    {
+      "path": "server/authorization-server/src/main/resources/db/migration/V2__qr_activation.sql",
+      "bytes": 820,
+      "sha256": "6d83c1e5e8902bd231bd6c3900cfd071f5c82b1190aca83e271ae724644983cb"
+    },
+    {
+      "path": "server/authorization-server/src/main/resources/db/migration/V3__permanent_and_device_management.sql",
+      "bytes": 737,
+      "sha256": "6510eac0fc563f571e75849c23c1cc14cadefa007f95d9b4904142ec07f035f4"
+    },
+    {
+      "path": "server/authorization-server/src/main/resources/db/migration/V4__license_deletion.sql",
+      "bytes": 148,
+      "sha256": "4839e50df64d640fca16e2fbfbd510de56e76a21fe37258ebbd613f0a93c09f0"
+    },
+    {
+      "path": "server/authorization-server/src/main/resources/db/migration/V5__activation_code_deletion.sql",
+      "bytes": 152,
+      "sha256": "a219e4a4ced0ef138eef22638d80096a2c0e645fe5d784b6b9c2e33cb3b0647b"
+    },
+    {
+      "path": "server/authorization-server/src/main/resources/db/migration/V6__diagnostic_reports.sql",
+      "bytes": 987,
+      "sha256": "2fdb34705c0e83f4043616bfba59d5f8f5eee31611d66819ce38cdf84ec76ef6"
+    },
+    {
+      "path": "server/authorization-server/src/main/resources/db/migration/V7__activation_reset.sql",
+      "bytes": 60,
+      "sha256": "8e597a722ee7c2ec7e39955f11b02ace4ed3f677ad0baf2e7fa8cf13afb18726"
+    },
+    {
+      "path": "server/authorization-server/src/main/resources/static/activate/activate.css",
+      "bytes": 1799,
+      "sha256": "50acb27e56d1f5fcd56f64978e7198eb32468337cdcdd59ca8826d9565a448e6"
+    },
+    {
+      "path": "server/authorization-server/src/main/resources/static/activate/activate.js",
+      "bytes": 3624,
+      "sha256": "074c3cc03c0696215ce2f7e30034475e28170e08ef065f8e45279d922e56b25d"
+    },
+    {
+      "path": "server/authorization-server/src/main/resources/static/activate/index.html",
+      "bytes": 2132,
+      "sha256": "3db5f4325938983675f1e297827742e287b3c3206b1a2010c14502facfaab0c9"
+    },
+    {
+      "path": "server/authorization-server/src/main/resources/static/activate/purchase-qr.png",
+      "bytes": 19896,
+      "sha256": "3a880bd58d46dd24a1f5d04e74603f7dc3c0e27783f82011024f6a7694e25e38"
+    },
+    {
+      "path": "server/authorization-server/src/main/resources/static/admin/admin.css",
+      "bytes": 8019,
+      "sha256": "be737d1684786361c8d279e34b35e668b06e9f065c46a5262ac082ef38bb3a4e"
+    },
+    {
+      "path": "server/authorization-server/src/main/resources/static/admin/admin.js",
+      "bytes": 46708,
+      "sha256": "7b1385df089960e01f93102eea571f2227f42068f6e6f2bca418bff702fb111a"
+    },
+    {
+      "path": "server/authorization-server/src/main/resources/static/admin/brand.png",
+      "bytes": 31938,
+      "sha256": "df8cda7629aa8dd9740434688e1d64d222ea16a6b017d600f8fb09db4cc6e20b"
+    },
+    {
+      "path": "server/authorization-server/src/main/resources/static/admin/index.html",
+      "bytes": 13027,
+      "sha256": "e20ac11739773bed9046db856f1f779bde66defec994110fd35e4db595e99eaa"
+    },
+    {
+      "path": "server/authorization-server/src/test/java/com/shilapi/license/AdminLoginTest.java",
+      "bytes": 5318,
+      "sha256": "1d1569b182cf51fecb2c3b7b96765820f734ad1829864c703c568d4132a99734"
+    },
+    {
+      "path": "server/authorization-server/src/test/java/com/shilapi/license/AuthorizationIntegrationTest.java",
+      "bytes": 76629,
+      "sha256": "1424bf68f8a0fdd9b31544196829afd66edf3af0e9b4dea0f32cfdeb1bf55862"
+    },
+    {
+      "path": "server/authorization-server/src/test/java/com/shilapi/license/DiagnosticBodyLimitTest.java",
+      "bytes": 1688,
+      "sha256": "b0ebb81a63b04b2b3186dd71a6f2e701fd65c58508cde46af2cb693a0e8b8e18"
+    },
+    {
+      "path": "server/authorization-server/src/test/java/com/shilapi/license/DiagnosticIntegrationTest.java",
+      "bytes": 10931,
+      "sha256": "2da0272bac68a073082f2753f18c5fc5b8a2dba5fc6404f78c1a3e7c4f6903a9"
+    },
+    {
+      "path": "server/authorization-server/src/test/java/com/shilapi/license/KeycloakRealmConfigurationTest.java",
+      "bytes": 2472,
+      "sha256": "8ba14169345c3612c1fe292c42b6822a7fa9d8a6d5bb3fa360322f0fbbef29bf"
+    },
+    {
+      "path": "server/authorization-server/src/test/java/com/shilapi/license/OfflineLicensePeriodTest.java",
+      "bytes": 1716,
+      "sha256": "c303b077c60e37ccbe7fac56426760387447c49c8d0e6da0d465a597999ea5f6"
+    },
+    {
+      "path": "server/authorization-server/src/test/java/com/shilapi/license/SchemaUpgradeTest.java",
+      "bytes": 7928,
+      "sha256": "cad142bf0d7b24e6bd07eb45d8aed3123d71f119e1f4e219b558244a36bc126a"
+    },
+    {
+      "path": "server/authorization-server/src/test/java/com/shilapi/license/UpdateAuthorizationIntegrationTest.java",
+      "bytes": 18075,
+      "sha256": "070aef2b7742aaa7a2e7e2f4d24b9afad795ffdff9edad45c1d398d4f63583fb"
+    },
+    {
+      "path": "server/authorization-server/src/test/java/com/shilapi/license/UpdatePublisherTest.java",
+      "bytes": 6621,
+      "sha256": "e4e579ab594a67d03c1576df2eb46f2a05b684dc39c4e63d5035f1a6d23db555"
+    },
+    {
+      "path": "server/authorization-server/src/test/java/com/shilapi/license/UpdateRequestSettingsTest.java",
+      "bytes": 5465,
+      "sha256": "d6c88c5a14b32db710ffd819b8f4d05f0af79485b96a007e3384427d77482c85"
+    },
+    {
+      "path": "server/authorization-server/src/test/java/com/shilapi/license/UpdateServiceTest.java",
+      "bytes": 5595,
+      "sha256": "0845001085b2799d2fd60c461122cec083b2bdd67a7304a90343c744f7a4b2d9"
+    },
+    {
+      "path": "server/authorization-server/src/test/resources/backend-es256-fixture.json",
+      "bytes": 1163,
+      "sha256": "d4eb8302dfb909ce98f11417f39775fa00fee10a43233a578d798fef7bb86e24"
+    },
+    {
+      "path": "server/authorization-server/src/test/resources/update-apks/README.md",
+      "bytes": 353,
+      "sha256": "d61f727a76e1b1a85eed93212b90d1371c1e49a115ffd5105f6ff2ad1649f342"
+    },
+    {
+      "path": "server/authorization-server/src/test/resources/update-apks/conflict-96.apk",
+      "bytes": 8470,
+      "sha256": "d1b27aca4e6890fb7cc9f736675a7d0862211eeb1c53317bb85bdaf5dc1840df"
+    },
+    {
+      "path": "server/authorization-server/src/test/resources/update-apks/debug-98.apk",
+      "bytes": 8470,
+      "sha256": "c3ea1b241d4a73cf9f401f45707d7279a779c457239f43848ceb9a54e5c97ffd"
+    },
+    {
+      "path": "server/authorization-server/src/test/resources/update-apks/old-sdk-98.apk",
+      "bytes": 8470,
+      "sha256": "44ac01f7178efcc29d70b686e6502dc8e42160ad03d758535e590d18970ff467"
+    },
+    {
+      "path": "server/authorization-server/src/test/resources/update-apks/release-96.apk",
+      "bytes": 8470,
+      "sha256": "d3c101751171ae28b9e0bad4065886062bf6ad5440f1ce654004ec32b7ac8df8"
+    },
+    {
+      "path": "server/authorization-server/src/test/resources/update-apks/release-97.apk",
+      "bytes": 8470,
+      "sha256": "ef855bd1ddc5295729140a8b74623dcdf7392484452c4d8161a20486e0c055b7"
+    },
+    {
+      "path": "server/authorization-server/src/test/resources/update-apks/split-98.apk",
+      "bytes": 8470,
+      "sha256": "f02f7fe65c8978b44c910ecae545f4003f643de9fe47e62ed392533179a4f2a9"
+    },
+    {
+      "path": "server/authorization-server/src/test/resources/update-apks/wrong-signer-98.apk",
+      "bytes": 8470,
+      "sha256": "1eab0de5ffd40cf474cdc36fd3f1cb110f4127e809171d6046c87d3ca3f85eac"
+    },
+    {
+      "path": "server/docs/API.md",
+      "bytes": 31903,
+      "sha256": "9ab1dcb64ebf2946d4f092c6b5b05820fde37c7bc7efcbb4e687903ebac70610"
+    },
+    {
+      "path": "server/docs/PRODUCT_AUTHORIZATION.md",
+      "bytes": 11269,
+      "sha256": "26f670129c6b9645315cdd8c468c69f996c7d18d596aef1502b0c65a34841fd9"
+    },
+    {
+      "path": "server/docs/REMOTE_UPDATES.md",
+      "bytes": 14763,
+      "sha256": "b89cfb843a54f758f3cc0e089422a9e35535f58ac94c07918360773eada7590b"
+    },
+    {
+      "path": "server/docs/WEBSITE.md",
+      "bytes": 5857,
+      "sha256": "9f8f706202ac7087a5acfd76cfd762f200cabb19dcd0db2ba14635f9e5ccd39f"
+    },
+    {
+      "path": "server/gradle/wrapper/gradle-wrapper.jar",
+      "bytes": 45457,
+      "sha256": "76805e32c009c0cf0dd5d206bddc9fb22ea42e84db904b764f3047de095493f3"
+    },
+    {
+      "path": "server/gradle/wrapper/gradle-wrapper.properties",
+      "bytes": 369,
+      "sha256": "23804af6966b6200d67ad050516cf187f2e85d80bc1fc97d7603831be04df08d"
+    },
+    {
+      "path": "server/gradlew",
+      "bytes": 8728,
+      "sha256": "3238afb2aed5cb16eb7d6718077e7138059108f007b54179e9cc157c5a6e0e89"
+    },
+    {
+      "path": "server/gradlew.bat",
+      "bytes": 2843,
+      "sha256": "94102713eb8fb22d032397924c0f38ab2da783ba60d07054339f1190a0c4e2cd"
+    },
+    {
+      "path": "server/scripts/build_site.py",
+      "bytes": 5063,
+      "sha256": "907b4c1d4df4cdd7bdbe9faea04ef2b82aadf17c5333544385c71220ae75cd19"
+    },
+    {
+      "path": "server/site/.nojekyll",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "server/site/README.md",
+      "bytes": 591,
+      "sha256": "dde1f36aabaa717feb729a3cde4664dbcbc6182a70fca6bd0604460a73606e04"
+    },
+    {
+      "path": "server/site/ar/index.html",
+      "bytes": 267,
+      "sha256": "fcaf1a20fd21cf0eb8433d1657532679184570171aac6272fc52e3376517e2b3"
+    },
+    {
+      "path": "server/site/assets/api.js",
+      "bytes": 5150,
+      "sha256": "c841d7802cda0b6ffff7cd45f5b8920a43664ed3e091cb4616e6d823020d2a5c"
+    },
+    {
+      "path": "server/site/assets/app-icon.png",
+      "bytes": 31938,
+      "sha256": "df8cda7629aa8dd9740434688e1d64d222ea16a6b017d600f8fb09db4cc6e20b"
+    },
+    {
+      "path": "server/site/assets/home.png",
+      "bytes": 130440,
+      "sha256": "c04e4253d313bd966bfb9a850bfb6bd8cce30bd3b11b7da2776ad205f683225d"
+    },
+    {
+      "path": "server/site/assets/icon.png",
+      "bytes": 35437,
+      "sha256": "43163249a2d80780e580404bbff177a76aad160d07650c62d77ea32dfeb127b0"
+    },
+    {
+      "path": "server/site/assets/logo-dark.png",
+      "bytes": 21653,
+      "sha256": "6f03abe2adde7e1d8540cd0e1eacc088221a9f3fdffcede51023e461c4273ed2"
+    },
+    {
+      "path": "server/site/assets/logo-light.png",
+      "bytes": 21637,
+      "sha256": "7fc10baec7a43715713947ac49575152604b1eefbad59aa2e03617967cf2d33d"
+    },
+    {
+      "path": "server/site/assets/settings.png",
+      "bytes": 123439,
+      "sha256": "214584162e21c3f857a2b8499f495e017777822c14ed828db9677fde6cc28bdd"
+    },
+    {
+      "path": "server/site/assets/site.css",
+      "bytes": 18701,
+      "sha256": "ee3c9a1423b735e04d0d8deb4c70b9386e10fb6dd28278163f6008a91b61720b"
+    },
+    {
+      "path": "server/site/assets/site.js",
+      "bytes": 7598,
+      "sha256": "6f65167b2ab84009efdc3865f40c835a0dae3ea0b2eb8e13b509732d2c487186"
+    },
+    {
+      "path": "server/site/assets/theme.js",
+      "bytes": 1362,
+      "sha256": "2c83718dd2106ed7eef5e055c8e7590f0e57047c5f3694c3b00b474f044ad2fa"
+    },
+    {
+      "path": "server/site/content.json",
+      "bytes": 46082,
+      "sha256": "2cd91f177b093a9e1dfb9631ff3b0f3fc61bd76597ff8e32fdc18f9d1c6ff685"
+    },
+    {
+      "path": "server/site/downloads.json",
+      "bytes": 852,
+      "sha256": "881b03b02ac1fce6d81c0e8956803a0dd4e31a7a9a4423621782e819f55e87b0"
+    },
+    {
+      "path": "server/site/en/index.html",
+      "bytes": 267,
+      "sha256": "fcaf1a20fd21cf0eb8433d1657532679184570171aac6272fc52e3376517e2b3"
+    },
+    {
+      "path": "server/site/es/index.html",
+      "bytes": 267,
+      "sha256": "fcaf1a20fd21cf0eb8433d1657532679184570171aac6272fc52e3376517e2b3"
+    },
+    {
+      "path": "server/site/index.html",
+      "bytes": 13724,
+      "sha256": "ef98c3f5495c02e48d978ae252d99b027617b382f39bf2728e784aa8c0b4395d"
+    },
+    {
+      "path": "server/site/ru/index.html",
+      "bytes": 267,
+      "sha256": "fcaf1a20fd21cf0eb8433d1657532679184570171aac6272fc52e3376517e2b3"
+    },
+    {
+      "path": "server/site/uk/index.html",
+      "bytes": 267,
+      "sha256": "fcaf1a20fd21cf0eb8433d1657532679184570171aac6272fc52e3376517e2b3"
+    },
+    {
+      "path": "server/site/zh-Hans/index.html",
+      "bytes": 267,
+      "sha256": "fcaf1a20fd21cf0eb8433d1657532679184570171aac6272fc52e3376517e2b3"
+    },
+    {
+      "path": "verification.json",
+      "bytes": 9724,
+      "sha256": "a8435011ea210ec270fe5a5343cf131c278f06a65ee22f4b46293e86874255ea"
+    },
+    {
+      "path": "verify_source.py",
+      "bytes": 1064,
+      "sha256": "fcad19322449cd741d76f35b9d4958d1a2b85b4baae78d0da55fbb414d38062c"
+    }
+  ]
+}

@@ -30,10 +30,32 @@ class P2pChannelRestrictionTest {
             assertNotNull(error); assertTrue(pending); assertFalse(logs.any { "clean_auto" in it })
         } finally { release() }
     }
+    @Test fun channelLossDoesNotWaitInsideSetterSerializationOrDiscardCleanupResponsibility() {
+        val failure = P2pTransientFailure("Channel recovering")
+        try {
+            assertSame(failure, assertThrows(P2pTransientFailure::class.java) {
+                acquire({ value, _ -> calls.add(value); throw failure })
+            })
+            assertEquals(listOf(36), calls)
+            assertTrue(pending)
+        } finally { release() }
+        assertFalse(pending)
+    }
     @Test fun nextAttemptClearsAnUnfinishedPriorProcessRestrictionFirst() {
         pending = true
         try { assertEquals(36, acquire()); assertEquals(listOf(0, 36), calls) }
         finally { release() }
+    }
+    @Test fun systemAutoClearsThePreviousRestrictionOnceBeforeReturning() {
+        acquire()
+        val selection = P2pChannelRestriction.acquire("test", 0,
+            System.nanoTime() + TimeUnit.SECONDS.toNanos(3), { pending }, { pending = it },
+            { owned }, accepted, logs::add)
+        assertEquals(0, selection)
+        assertEquals(listOf(36, 0), calls)
+        assertFalse(pending)
+        release()
+        assertEquals(listOf(36, 0), calls)
     }
     @Test fun replacementOwnerIsNeverBlindlyCleared() {
         acquire()

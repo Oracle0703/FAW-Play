@@ -7,26 +7,29 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.LinearGradient
 import android.graphics.Shader
-import android.graphics.Matrix
-import android.graphics.SurfaceTexture
 import android.graphics.drawable.ColorDrawable
 import android.view.WindowManager
 import android.graphics.Point
 import android.hardware.display.DisplayManager
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.os.SystemClock
 import android.util.Log
 import android.view.Display
 import android.view.Gravity
 import android.view.Surface
-import android.view.SurfaceHolder
-import android.view.SurfaceView
 import android.view.View
-import android.view.TextureView
 import android.widget.FrameLayout
 import android.widget.TextView
 import com.shilapi.xcertplay.airplay.CarPlayClusterDisplay
 import com.shilapi.xcertplay.host.R
 import com.shilapi.xcertplay.hud.ClusterTurnGuidance
+import com.shilapi.xcertplay.hud.ClusterLaneGuidance
+import com.shilapi.xcertplay.hud.HongqiUltraDisplayLease
+import com.shilapi.xcertplay.hud.HongqiVehicleData
+import com.shilapi.xcertplay.airplay.rcs.uisync.HongqiHs5UiState
+import com.shilapi.xcertplay.airplay.rcs.uisync.HongqiHs5UiLayouts
 
 /**
  * Shows CarPlay's instrument-cluster stream on a BYD cluster projection display.
@@ -40,9 +43,33 @@ internal class ClusterMapPresentation(
     display: Display,
     private val theme: DiLink51ClusterLayout.Theme = DiLink51ClusterLayout.theme(context),
     private val onSurface: (Surface?) -> Unit,
-) : Presentation(context, display) {
+) : Presentation(context, display), Hs5UltraRenderer {
     private var waitingLabel: TextView? = null
     private var turnCardView: ClusterTurnCardView? = null
+    private var laneView: ClusterLaneGuidanceView? = null
+    private var rootView: FrameLayout? = null
+    private var videoView: VideoSurfaceView? = null
+    private var classicVideoLayout: FrameLayout.LayoutParams? = null
+    private var classicWaitingLayout: FrameLayout.LayoutParams? = null
+    private var classicBackground: android.graphics.drawable.Drawable? = null
+    private var ultraView: Hs5UltraClusterView? = null
+    private var ultraState: HongqiHs5UiState? = null
+    private var ultraLease: HongqiUltraDisplayLease? = null
+    private var streamActive = false
+    internal val ultraRendererReady: Boolean get() = ultraState?.let { state ->
+        state.activeComponents.any { it in setOf("speed", "gear", "vehicleStatus") } ||
+            streamActive && "navigation" in state.activeComponents
+    } ?: false
+    private var currentTurnGuidance: ClusterTurnGuidance? = null
+    private var currentLaneGuidance: ClusterLaneGuidance? = null
+    private val ultraMain = Handler(Looper.getMainLooper())
+    private val ultraRefresh = object : Runnable {
+        override fun run() {
+            val state = ultraState ?: return
+            ultraView?.update(state, ultraDark(state), HongqiVehicleData.snapshot(), SystemClock.elapsedRealtime())
+            ultraMain.postDelayed(this, 250L)
+        }
+    }
     var outputSurface: Surface? = null
         private set
     var mapVisible = true
@@ -59,6 +86,8 @@ internal class ClusterMapPresentation(
         val root = FrameLayout(context).apply {
             setBackgroundColor(if (plan == null) Color.BLACK else if (plan.fullMap) backdrop else Color.TRANSPARENT)
         }
+        rootView = root
+        classicBackground = root.background
         if (plan != null) {
             window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
             window?.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
@@ -67,55 +96,17 @@ internal class ClusterMapPresentation(
             FrameLayout.LayoutParams(plan.width, plan.height, Gravity.TOP or Gravity.LEFT).apply {
                 leftMargin = plan.left; topMargin = plan.top
             }
+        val video = VideoSurfaceView(context, onSurface = { surface ->
+            outputSurface = surface
+            onSurface(surface)
+        })
+        videoView = video
+        classicVideoLayout = FrameLayout.LayoutParams(videoParams)
+        classicWaitingLayout = FrameLayout.LayoutParams(videoParams)
+        root.addView(video, videoParams)
         if (plan != null) {
-            val textureView = TextureView(context)
-            fun transform() {
-                textureView.setTransform(Matrix().apply {
-                    setScale(DiLink51ClusterLayout.STREAM_WIDTH.toFloat() / plan.width,
-                        DiLink51ClusterLayout.STREAM_HEIGHT.toFloat() / plan.height)
-                    postTranslate(-plan.sourceLeft.toFloat(), -plan.sourceTop.toFloat())
-                })
-            }
-            textureView.surfaceTextureListener = object : TextureView.SurfaceTextureListener {
-                override fun onSurfaceTextureAvailable(texture: SurfaceTexture, width: Int, height: Int) {
-                    texture.setDefaultBufferSize(DiLink51ClusterLayout.STREAM_WIDTH, DiLink51ClusterLayout.STREAM_HEIGHT)
-                    transform()
-                    outputSurface = Surface(texture).also(onSurface)
-                }
-                override fun onSurfaceTextureSizeChanged(texture: SurfaceTexture, width: Int, height: Int) = transform()
-                override fun onSurfaceTextureUpdated(texture: SurfaceTexture) = Unit
-                override fun onSurfaceTextureDestroyed(texture: SurfaceTexture): Boolean {
-                    onSurface(null)
-                    outputSurface?.release()
-                    outputSurface = null
-                    return true
-                }
-            }
-            root.addView(textureView, videoParams)
             if (plan.fullMap) root.addView(InstrumentContrastView(context, plan, backdrop), FrameLayout.LayoutParams(-1, -1))
-            Log.i(TAG, "layout=$theme viewport=$plan source=${plan.sourceLeft},${plan.sourceTop} dark=$dark")
-        } else {
-            // Preserve the original PR renderer for DiLink 5 and unverified firmware.
-            val surfaceView = SurfaceView(context)
-            surfaceView.holder.addCallback(object : SurfaceHolder.Callback {
-                override fun surfaceCreated(holder: SurfaceHolder) {
-                    Log.i(TAG, "cluster surface created")
-                    outputSurface = holder.surface
-                    onSurface(holder.surface)
-                }
-
-                override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
-                    Log.i(TAG, "cluster surface ${width}x$height")
-                }
-
-                override fun surfaceDestroyed(holder: SurfaceHolder) {
-                    Log.i(TAG, "cluster surface destroyed")
-                    onSurface(null)
-                    // SurfaceHolder owns this surface; do not release it ourselves.
-                    outputSurface = null
-                }
-            })
-            root.addView(surfaceView, videoParams)
+            Log.i(TAG, "layout=$theme viewport=$plan renderer=SurfaceView")
         }
         waitingLabel = TextView(context).apply {
             text = context.getString(R.string.cluster_waiting_for_map)
@@ -126,23 +117,32 @@ internal class ClusterMapPresentation(
         root.addView(waitingLabel, FrameLayout.LayoutParams(videoParams))
         turnCardView = ClusterTurnCardView(context).apply { visibility = View.GONE }
         root.addView(turnCardView, FrameLayout.LayoutParams(-1, -1))
+        if (com.shilapi.xcertplay.hud.HongqiNavigation.supported()) {
+            laneView = ClusterLaneGuidanceView(context).apply { visibility = View.GONE }
+            root.addView(laneView, FrameLayout.LayoutParams(-1, -1))
+        }
         setContentView(root)
     }
 
     /** Hides the placeholder once the phone streams the cluster screen. */
     fun setStreamActive(active: Boolean) {
+        streamActive = active
         waitingLabel?.visibility = if (active) View.GONE else View.VISIBLE
         com.shilapi.xcertplay.hud.HongqiNavigation.streamActive(this, active)
+        ultraLease?.updateSession(true, ultraRendererReady)
     }
 
     override fun onStop() {
+        clearUltraState()
+        laneView?.setGuidance(null)
         com.shilapi.xcertplay.hud.HongqiNavigation.presentationStopped(this)
         super.onStop()
     }
 
-    /** Window alpha hides the pixels without destroying the TextureView/decoder surface. */
+    /** Window alpha hides the pixels without destroying the SurfaceView/decoder surface. */
     fun setMapVisible(visible: Boolean) {
         mapVisible = visible
+        if (ultraState != null) return // The session lease owns visibility during a local layout.
         window?.let { window ->
             val alpha = if (visible) 1f else 0f
             if (window.attributes.alpha != alpha) window.attributes = window.attributes.apply { this.alpha = alpha }
@@ -155,6 +155,7 @@ internal class ClusterMapPresentation(
 
     fun setTurnCardNightMode(night: Boolean) {
         turnCardView?.setNightMode(night)
+        laneView?.setNightMode(night)
     }
 
     fun setTurnCardOpacity(percent: Int) {
@@ -162,7 +163,97 @@ internal class ClusterMapPresentation(
     }
 
     fun setTurnCardGuidance(guidance: ClusterTurnGuidance?) {
-        turnCardView?.setGuidance(guidance)
+        currentTurnGuidance = guidance
+        if (ultraState == null) turnCardView?.setGuidance(guidance)
+    }
+
+    fun setLaneGuidance(guidance: ClusterLaneGuidance?) {
+        currentLaneGuidance = guidance
+        if (ultraState == null) laneView?.setGuidance(guidance)
+    }
+
+    /** Apply only the local, documented Autunn resource schema; opaque commands fail honestly. */
+    override fun applyUltraState(state: HongqiHs5UiState): Boolean {
+        if (Looper.myLooper() != Looper.getMainLooper() || !supportedUltraState(state)) return false
+        if (state.layoutId == null) { clearUltraState(); return true }
+        val root = rootView ?: return false
+        val video = videoView ?: return false
+        if (!isShowing || sizeOf(display) != Point(1920, 720) ||
+            !com.shilapi.xcertplay.hud.HongqiNavigation.supported()) return false
+        val lease = ultraLease ?: try { HongqiUltraDisplayLease(context, this) }
+            catch (failure: RuntimeException) {
+                Log.w(TAG, "local layout output unavailable: ${failure.javaClass.simpleName}")
+                return false
+            }
+        ultraLease = lease
+        ultraState = state.copy(activeComponents = state.activeComponents.toSet(),
+            driveModeToLayoutIdAssignments = state.driveModeToLayoutIdAssignments.toMap())
+        val overview = state.layoutId == HongqiHs5UiLayouts.OVERVIEW
+        video.layoutParams = if (overview) FrameLayout.LayoutParams(1280, 480, Gravity.TOP or Gravity.LEFT).apply {
+            leftMargin = 320; topMargin = 120
+        } else FrameLayout.LayoutParams(1920, 720, Gravity.TOP or Gravity.LEFT)
+        waitingLabel?.layoutParams = FrameLayout.LayoutParams(video.layoutParams as FrameLayout.LayoutParams)
+        root.setBackgroundColor(if (ultraDark(state)) Color.rgb(13, 20, 28) else Color.rgb(238, 243, 247))
+        turnCardView?.setGuidance(null)
+        laneView?.setGuidance(null)
+        val overlay = ultraView ?: Hs5UltraClusterView(context).also {
+            ultraView = it
+            root.addView(it, FrameLayout.LayoutParams(-1, -1))
+        }
+        overlay.update(state, ultraDark(state), HongqiVehicleData.snapshot(), SystemClock.elapsedRealtime())
+        ultraMain.removeCallbacks(ultraRefresh)
+        ultraMain.postDelayed(ultraRefresh, 250L)
+        lease.updateSession(true, ultraRendererReady)
+        return true
+    }
+
+    override fun clearUltraState() {
+        if (Looper.myLooper() != Looper.getMainLooper()) {
+            ultraMain.post { clearUltraState() }
+            return
+        }
+        if (ultraState == null && ultraLease == null && ultraView == null) return
+        ultraMain.removeCallbacks(ultraRefresh)
+        ultraState = null
+        ultraView?.let { rootView?.removeView(it) }
+        ultraView = null
+        classicVideoLayout?.let { videoView?.layoutParams = FrameLayout.LayoutParams(it) }
+        classicWaitingLayout?.let { waitingLabel?.layoutParams = FrameLayout.LayoutParams(it) }
+        rootView?.background = classicBackground
+        val closingLease = ultraLease
+        ultraLease = null
+        turnCardView?.setGuidance(currentTurnGuidance)
+        laneView?.setGuidance(currentLaneGuidance)
+        if (!com.shilapi.xcertplay.hud.HongqiNavigation.supported()) setMapVisible(mapVisible)
+        closingLease?.close()
+    }
+
+    private fun ultraDark(state: HongqiHs5UiState): Boolean {
+        val preference = if (state.appearanceOverride == true) state.appearancePreference
+            else state.appearanceMode ?: state.appearancePreference
+        return when (preference) {
+            "dark" -> true
+            "light" -> false
+            else -> DiLink51ClusterLayout.dark(context, theme)
+        }
+    }
+
+    private fun supportedUltraState(state: HongqiHs5UiState): Boolean {
+        val layout = state.layoutId?.let { id -> HongqiHs5UiLayouts.ALL.firstOrNull { it.id == id } ?: return false }
+        if (layout == null && state.activeComponents.isNotEmpty()) return false
+        if (layout != null && !layout.components.containsAll(state.activeComponents)) return false
+        if (state.fadeOutOldLayout || state.focusToken != null) return false
+        if (state.appearanceMode != null && state.appearanceMode !in setOf("dark", "light")) return false
+        if (state.appearancePreference != null && state.appearancePreference !in setOf("dark", "light", "system")) return false
+        if (state.appearanceOverride != null && state.appearanceOverride !is Boolean) return false
+        if (state.appearanceOverride == true && state.appearancePreference == null) return false
+        if (state.driveModeToLayoutIdAssignments.values.any { id -> HongqiHs5UiLayouts.ALL.none { it.id == id } }) return false
+        if (state.driveMode != null && (!state.driveModeToLayoutIdAssignments.containsKey(state.driveMode) ||
+                state.layoutId == null || state.driveModeToLayoutIdAssignments[state.driveMode] != state.layoutId)) return false
+        if (state.uiConfiguration != null && state.uiConfiguration != HongqiHs5UiLayouts.RESOURCE_VERSION &&
+            state.uiConfiguration != state.layoutId) return false
+        if (state.uiConfigurationData != null && state.uiConfigurationData != emptyMap<String, Any?>()) return false
+        return true
     }
 
     companion object {
@@ -203,7 +294,7 @@ internal class ClusterMapPresentation(
 
         fun diagnosticReport(context: Context): String = buildString {
             appendLine("clusterEnabled=${AirPlayPersistence.loadClusterMapEnabled(context)}")
-            appendLine("navigationReceiverAvailable=${com.shilapi.xcertplay.hud.FawOutputSettings.navigationAvailable(context)}")
+            appendLine("navigationReceiverAvailable=${com.shilapi.xcertplay.hud.AutunnOutputSettings.navigationAvailable(context)}")
             appendLine("allDisplays=${describeDisplays(context)}")
             val presentations = context.getSystemService(DisplayManager::class.java)
                 ?.getDisplays(DisplayManager.DISPLAY_CATEGORY_PRESENTATION).orEmpty()

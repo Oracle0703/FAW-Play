@@ -1,0 +1,314 @@
+{
+  "verifiedAt": "2026-10-15T21:01:36+08:00",
+  "component": "DiPlay",
+  "scope": "Local authorization and Autunn changes; licensed Release 124 built with new Android signature after original key loss; no production access",
+  "versionName": "0.2.50-FAW-AUTH1",
+  "versionCode": 124,
+  "currentChecks": {
+    "success": true,
+    "productionCredentialsUsed": false,
+    "commands": [
+      {
+        "command": [
+          "gradlew",
+          "--offline",
+          ":shared:testDebugUnitTest",
+          ":common:testDebugUnitTest",
+          ":mobile:lintDebug",
+          ":mobile:assembleDebug",
+          "-PfawLicenseDebug=false",
+          "--console=plain"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "apksigner",
+          "verify",
+          "mobile-debug.apk"
+        ],
+        "exitCode": 0
+      }
+    ]
+  },
+  "tests": {
+    "shared": {
+      "tests": 914,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 1,
+      "passed": 913,
+      "suites": 160
+    },
+    "common": {
+      "tests": 789,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 17,
+      "passed": 772,
+      "suites": 101
+    }
+  },
+  "lint": {
+    "severities": {
+      "Warning": 4
+    },
+    "newProductionWarnings": 0,
+    "existingWarningsRetained": true
+  },
+  "builds": [
+    {
+      "module": "mobile",
+      "task": "assembleDebug",
+      "ok": true,
+      "artifactSha256": "870ad1cb56fa3dc9a5dcbb41089ca918684ed8768f88bc4be1150b4a44f4aa8a",
+      "packageName": "com.shihab.diplay.hudtest",
+      "versionCode": 124,
+      "versionName": "0.2.50-FAW-AUTH1-hud-test",
+      "apkSignatureVerified": true,
+      "identityAssetPaths": [],
+      "productLicenseConfigured": false,
+      "suitableForProductionUpgrade": false
+    },
+    {
+      "module": "mobile",
+      "task": "lintVitalRelease assembleRelease",
+      "ok": true,
+      "artifactSha256": "6e5b6c762820f7ff45d2be2c2f9c9cc6a8e6a280073e1e5e7461e60654d866b7",
+      "packageName": "com.shihab.diplay",
+      "versionCode": 124,
+      "versionName": "0.2.50-FAW-AUTH1",
+      "apkSignatureVerified": true,
+      "signerCertificateSha256": "5fd58943ceeda724be033436387aa2fcea30209e568e8e64731fa74d40720991",
+      "newAndroidSigningIdentity": true,
+      "identityAssetPaths": [
+        "assets/offline-mfi/identity.pk8",
+        "assets/offline-mfi/certificate.p7b"
+      ],
+      "productLicenseConfigured": true,
+      "licenseRequired": true,
+      "compatibleWithInstalledOldSignature": false,
+      "suitableForExistingInPlaceUpgrade": false,
+      "firstInstallRequiresReinstallAndDeviceReactivation": true,
+      "runtimeAcceptance": "not run",
+      "verificationRecord": "交付/20261015-Autunn更新/android/APK验证记录.json"
+    }
+  ],
+  "notRun": [
+    "Production deployment or production database access",
+    "Existing PostgreSQL clone preservation acceptance",
+    "HS5 / iPhone runtime acceptance",
+    "Automotive build",
+    "Device install/uninstall and new-signature authorization migration acceptance",
+    "Production update certificate pin and release manifest migration"
+  ],
+  "historicalSnapshotVerification": {
+    "verifiedAt": "2026-10-15T14:28:19+08:00",
+    "component": "DiPlay",
+    "scope": "Independent copy of split source package",
+    "currentChecks": {
+      "component": "DiPlay",
+      "independentCopy": true,
+      "productionCredentialsUsed": false,
+      "accessoryIdentityBundled": false,
+      "commands": [
+        {
+          "command": [
+            "gradlew",
+            ":mobile:assembleDebug",
+            "-PfawLicenseDebug=false",
+            "--offline",
+            "--no-configuration-cache",
+            "--console=plain"
+          ],
+          "exitCode": 0,
+          "elapsedSeconds": 43.3
+        }
+      ],
+      "success": true
+    },
+    "tests": {},
+    "builds": [
+      {
+        "module": "mobile",
+        "task": "assembleDebug",
+        "ok": true,
+        "artifactSha256": "6074ec5cbc247034d2008ba913ba6e2599fdd1d0578a4be2cdade4276399dd06",
+        "packageName": "com.shihab.diplay.hudtest",
+        "versionCode": 123,
+        "versionName": "0.2.49-FAW-REFACTOR1-hud-test",
+        "apkSignatureVerified": true,
+        "identityAssetPaths": [],
+        "syntheticIdentityOnly": false,
+        "artifactIncludedInSourcePackage": false
+      }
+    ],
+    "lint": {},
+    "productionCredentialsUsed": false,
+    "notRun": [
+      "Production deployment",
+      "Real PostgreSQL / Keycloak integration",
+      "HS5 / iPhone runtime acceptance",
+      "Signed Release build",
+      "Automotive build"
+    ],
+    "reusedChecks": {
+      "originalVerifiedAt": "2026-10-15T14:03:42+08:00",
+      "reason": "All 1178 split Android project files equal the earlier verified snapshot; no Android source changes",
+      "allSelectedProjectFileHashesMatch": true,
+      "tests": {
+        "shared": {
+          "tests": 902,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 1,
+          "passed": 901
+        },
+        "common": {
+          "tests": 777,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 17,
+          "passed": 760
+        }
+      },
+      "mobileLint": {
+        "severities": {
+          "Warning": 4
+        },
+        "issueIds": {
+          "UnusedAttribute": 1,
+          "TrustAllX509TrustManager": 2,
+          "UnusedResources": 1
+        }
+      },
+      "notRerunInThisSplitCheck": true
+    },
+    "sourceIntegrity": {
+      "projectFiles": 1178,
+      "originalWorkingTreeStillMatchesCapturedHashes": true,
+      "allPackagedProjectFileHashesMatch": true,
+      "businessSourceRewritten": false,
+      "documentationAdaptedFiles": 1,
+      "credentialContainersIncluded": false
+    }
+  },
+  "previousLocalVerification": {
+    "verifiedAt": "2026-10-15T18:35:03+08:00",
+    "component": "DiPlay",
+    "scope": "Local authorization and update changes; production unchanged",
+    "versionName": "0.2.50-FAW-AUTH1",
+    "versionCode": 124,
+    "currentChecks": {
+      "success": true,
+      "productionCredentialsUsed": false,
+      "commands": [
+        {
+          "command": [
+            "gradlew",
+            "--offline",
+            ":shared:compileDebugKotlin",
+            ":common:compileDebugKotlin",
+            "-PfawLicenseDebug=false"
+          ],
+          "exitCode": 0
+        },
+        {
+          "command": [
+            "gradlew",
+            "--offline",
+            ":mobile:lintDebug",
+            ":mobile:assembleDebug",
+            "-PfawLicenseDebug=false"
+          ],
+          "exitCode": 0
+        },
+        {
+          "command": [
+            "gradlew",
+            "--offline",
+            ":shared:testDebugUnitTest",
+            ":common:testDebugUnitTest",
+            "-PfawLicenseDebug=false"
+          ],
+          "exitCode": 0
+        },
+        {
+          "command": [
+            "apksigner",
+            "verify",
+            "mobile-debug.apk"
+          ],
+          "exitCode": 0
+        }
+      ]
+    },
+    "tests": {
+      "shared": {
+        "tests": 913,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1,
+        "passed": 912,
+        "suites": 160
+      },
+      "common": {
+        "tests": 789,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 17,
+        "passed": 772,
+        "suites": 101
+      }
+    },
+    "lint": {
+      "severities": {
+        "Warning": 4
+      },
+      "newProductionWarnings": 0,
+      "existingWarningsRetained": true
+    },
+    "builds": [
+      {
+        "module": "mobile",
+        "task": "assembleDebug",
+        "ok": true,
+        "artifactSha256": "870ad1cb56fa3dc9a5dcbb41089ca918684ed8768f88bc4be1150b4a44f4aa8a",
+        "packageName": "com.shihab.diplay.hudtest",
+        "versionCode": 124,
+        "versionName": "0.2.50-FAW-AUTH1-hud-test",
+        "apkSignatureVerified": true,
+        "identityAssetPaths": [],
+        "productLicenseConfigured": false,
+        "suitableForProductionUpgrade": false
+      }
+    ],
+    "notRun": [
+      "Production deployment or production database access",
+      "Existing PostgreSQL clone preservation acceptance",
+      "HS5 / iPhone runtime acceptance",
+      "Signed Release build",
+      "Automotive build"
+    ]
+  },
+  "autunnHeader": {
+    "name": "Autunn",
+    "value": "1",
+    "operations": [
+      "check",
+      "download",
+      "install"
+    ],
+    "wireRegressionPassed": true
+  },
+  "releaseArtifactChecks": {
+    "releaseGuardPassed": true,
+    "lintVitalReleasePassed": true,
+    "assembleReleasePassed": true,
+    "carplayAssetsByteMatchOriginal": true,
+    "existingLicenseConfigRestored": true,
+    "AutunnHeaderInDex": true,
+    "updateAuthorizationInDex": true,
+    "androidSigningKeyBundled": false
+  }
+}

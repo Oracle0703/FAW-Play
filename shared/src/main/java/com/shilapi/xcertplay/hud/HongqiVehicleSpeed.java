@@ -24,7 +24,7 @@ import java.util.List;
 /** Read-only Android 9 vehicle HAL speed, already in m/s; no CAN scaling guesses or ADB. */
 public final class HongqiVehicleSpeed implements VehicleSpeedSource {
     public static final String PERMISSION = "android.car.permission.CAR_SPEED";
-    private static final String TAG = "FAW-VehicleSpeed";
+    private static final String TAG = "Autunn-VehicleSpeed";
     private static final String CAR = "android.car.ICar";
     private static final String PROPERTY = "android.car.hardware.property.ICarProperty";
     private static final String QISI_CLIENT = "ltd.qisi.adapterproxy.IVehicleRemoteClienter";
@@ -85,7 +85,7 @@ public final class HongqiVehicleSpeed implements VehicleSpeedSource {
 
     private final class Session implements ServiceConnection {
         final Handler main = new Handler(Looper.getMainLooper());
-        final HandlerThread thread = new HandlerThread("faw-vehicle-speed");
+        final HandlerThread thread = new HandlerThread("autunn-vehicle-speed");
         final Handler worker;
         final List<VehicleSpeedSample> samples = new ArrayList<>();
         final Runnable retry = this::bind;

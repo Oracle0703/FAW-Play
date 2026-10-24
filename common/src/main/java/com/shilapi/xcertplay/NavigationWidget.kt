@@ -66,11 +66,16 @@ internal object NavigationWidgetUpdater {
 
     fun views(context: Context, glance: CarPlayGlance.Snapshot): RemoteViews {
         val views = RemoteViews(context.packageName, R.layout.widget_navigation)
-        val target = if (glance.connected) CarPlayHostActivity::class.java else DiPlayActivity::class.java
+        // Every launcher-surface tap goes through the invisible router, connected or not. The
+        // router alone owns the "hand off to the retained surface vs. open software" decision,
+        // so a widget tap can never skip the launcher-entry contract.
         views.setOnClickPendingIntent(
             R.id.widget_root,
             PendingIntent.getActivity(
-                context, 0, Intent(context, target).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                context, 0, Intent(context, DiPlayActivity::class.java).apply {
+                    putExtra(LAUNCHER_ENTRY_MARKER, true)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                },
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
             ),
         )
@@ -78,7 +83,7 @@ internal object NavigationWidgetUpdater {
         when {
             !glance.connected -> {
                 views.setImageViewResource(R.id.widget_arrow, R.drawable.ic_dp_navigation)
-                views.setTextViewText(R.id.widget_distance, "FAW Play")
+                views.setTextViewText(R.id.widget_distance, "Autunn Play")
                 views.setTextViewText(R.id.widget_road, context.getString(R.string.widget_not_connected))
                 views.setViewVisibility(R.id.widget_eta, View.GONE)
             }

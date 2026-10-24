@@ -22,17 +22,20 @@ import org.robolectric.util.ReflectionHelpers
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [32])
 class LocationReportingSettingsTest {
+    private lateinit var stateIoScope: SessionStateIoTestScope
     private val context get() = RuntimeEnvironment.getApplication()
-    private var controller: ActivityController<DiPlayActivity>? = null
+    private var controller: ActivityController<DiPlaySettingsActivity>? = null
     private val activity get() = requireNotNull(controller).get()
 
     @Before fun setUp() {
+        stateIoScope = SessionStateIoTestScope()
         shadowOf(context).denyPermissions(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
     }
 
     @After fun tearDown() {
         CarPlayBackgroundSession.clear()
         controller?.pause()?.stop()?.destroy()
+        stateIoScope.close()
     }
 
     @Test fun currentSettingsExposeLocationSwitchWithDefaultOff() {
@@ -115,8 +118,8 @@ class LocationReportingSettingsTest {
     }
 
     private fun openSettings() {
-        controller = Robolectric.buildActivity(DiPlayActivity::class.java,
-            Intent(context, DiPlayActivity::class.java).putExtra("page", "settings")).setup()
+        controller = Robolectric.buildActivity(DiPlaySettingsActivity::class.java,
+            Intent(context, DiPlaySettingsActivity::class.java).putExtra("page", "settings")).setup()
         selectSettingsTab(activity, "导航与 HUD")
     }
 

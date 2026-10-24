@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Local-only ADB bridge for the FAW Play instrument layout panel (standard library)."""
+"""Local-only ADB bridge for the Autunn Play instrument layout panel (standard library)."""
 
 import argparse
 import json
@@ -79,7 +79,7 @@ def parse_reply(output):
                             "maps:/car/instrumentcluster")):
                     raise TunerError("App 返回的内容切换状态无效")
         return result
-    raise TunerError("未收到 App 的确认。请确认已安装配套仪表调节 APK 并打开过 FAW Play；NAVI29 不支持此接口。")
+    raise TunerError("未收到 App 的确认。请确认已安装配套仪表调节 APK 并打开过 Autunn Play；NAVI29 不支持此接口。")
 
 
 class AdbBridge:
@@ -197,7 +197,7 @@ class PanelHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         if not self.local_request():
             return
-        if not secrets.compare_digest(self.headers.get("X-FAW-Session", ""), self.server.token):
+        if not secrets.compare_digest(self.headers.get("X-Autunn-Session", ""), self.server.token):
             self.send(403, {"error": "会话已过期，请刷新页面"})
             return
         if self.path != "/api/layout":
@@ -214,7 +214,7 @@ class PanelHandler(BaseHTTPRequestHandler):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="FAW Play 仪表位置调节工具")
+    parser = argparse.ArgumentParser(description="Autunn Play 仪表位置调节工具")
     parser.add_argument("--adb", help="adb 可执行文件路径")
     parser.add_argument("--port", type=int, default=8765)
     parser.add_argument("--no-browser", action="store_true")
@@ -223,7 +223,7 @@ def main():
         server = PanelServer(("127.0.0.1", args.port), AdbBridge(find_adb(args.adb)))
     except (OSError, TunerError) as exc:
         parser.exit(1, "无法启动：%s\n" % exc)
-    print("FAW Play 仪表调节面板：" + server.origin, flush=True)
+    print("Autunn Play 仪表调节面板：" + server.origin, flush=True)
     print("保持此窗口打开；按 Control+C 退出。", flush=True)
     if not args.no_browser:
         webbrowser.open(server.origin)

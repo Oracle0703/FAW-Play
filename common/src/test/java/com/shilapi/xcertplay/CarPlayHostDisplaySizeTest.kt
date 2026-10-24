@@ -1,11 +1,11 @@
 package com.shilapi.xcertplay
 
-import android.graphics.Matrix
+import android.Manifest
+import android.app.Application
 import android.os.Handler
 import android.os.Looper
 import android.view.MotionEvent
 import android.view.Surface
-import android.view.TextureView
 import android.view.View
 import com.shilapi.xcertplay.airplay.*
 import com.shilapi.xcertplay.media.AndroidMediaSink
@@ -23,41 +23,64 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.MockedConstruction
-import org.mockito.Mockito.mockConstruction
+import org.mockito.Mockito.*
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.android.util.concurrent.PausedExecutorService
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.LooperMode
 import org.robolectric.shadows.ShadowLog
+import org.robolectric.util.ReflectionHelpers
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [29])
 @LooperMode(LooperMode.Mode.PAUSED)
 class CarPlayHostDisplaySizeTest {
     private lateinit var activity: CarPlayHostActivity
+    private lateinit var stateIoScope: SessionStateIoTestScope
     private lateinit var controllerConstruction: MockedConstruction<CarPlayController>
+    private val closer = PausedExecutorService()
+    private lateinit var previousCloser: ExecutorService
     private val sizeClass = Class.forName("com.shilapi.xcertplay.CarPlayHostActivity\$DisplaySize")
 
     @Before fun setUp() {
+        // Keep durable-intent/configuration tasks deterministic on the same thread as Mockito's
+        // construction scope. The viewport tests control teardown separately through closer.
+        stateIoScope = SessionStateIoTestScope()
+        previousCloser = backgroundField("closer")
+        setBackgroundField("closer", closer)
+        resetBackground()
         activity = Robolectric.buildActivity(CarPlayHostActivity::class.java).get()
+        shadowOf(RuntimeEnvironment.getApplication()).grantPermissions(
+            Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.RECORD_AUDIO,
+        )
+        CarPlayBackgroundSession.requestConnection(activity)
         // Source-only tests have no provisioned local authentication identity.
         AirPlayPersistence.saveMfiTarget(activity, MfiTarget.USB_CH341)
         // Exercise host startup without launching vendor-service workers or real transports.
-        controllerConstruction = mockConstruction(CarPlayController::class.java)
-        (getField("teardownExecutor") as ExecutorService).shutdownNow()
-        setField("teardownExecutor", PausedExecutorService())
-        CarPlayBackgroundSession::class.java.getDeclaredField("owner").apply { isAccessible = true }
-            .set(CarPlayBackgroundSession, activity)
+        controllerConstruction = mockConstruction(CarPlayController::class.java) { controller, _ ->
+            doAnswer { invocation ->
+                invocation.getArgument<(CarPlayController.CloseResult) -> Unit>(0)(CarPlayController.CloseResult(true))
+                null
+            }.`when`(controller).whenClosed(any<(CarPlayController.CloseResult) -> Unit>() ?: {})
+        }
+        setBackgroundField("owner", activity)
+        setField("airPlayIdentity", AirPlayIdentity.generate())
         setField("activeDisplaySize", size(1920, 990))
+        CarPlayBackgroundSession.setForegroundStartupReady(activity, false)
+        CarPlayBackgroundSession.watchIgnition(activity, {}, {}, { invoke("maybeStartCarPlay") })
     }
 
     @After fun tearDown() {
         (getField("shuttingDown") as AtomicBoolean).set(true)
+        setField("isActivityResumed", false)
+        CarPlayBackgroundSession.setProjectionUiVisible(activity, false)
         (getField("mainHandler") as Handler).removeCallbacksAndMessages(null)
         AirPlayPersistence.overlaySettingsListener = null
-        com.shilapi.xcertplay.hud.FawNavigationOutputs.setTurnOverlayListener(null)
+        com.shilapi.xcertplay.hud.AutunnNavigationOutputs.setTurnOverlayListener(null)
         (getField("controller") as? CarPlayController)?.let {
             CarPlayMediaKeys.detach(it)
             it.close()
@@ -66,19 +89,26 @@ class CarPlayHostDisplaySizeTest {
         (getField("sink") as? AndroidMediaSink)?.close()
         (getField("teardownExecutor") as ExecutorService).shutdownNow()
         (getField("airPlayCommandExecutor") as ExecutorService).shutdownNow()
-        CarPlayBackgroundSession.clear()
+        CarPlayBackgroundSession.stopIgnitionWatch(activity)
+        resetBackground()
         controllerConstruction.close()
+        setBackgroundField("closer", previousCloser)
+        closer.shutdownNow()
+        stateIoScope.close()
     }
 
-    @Test fun surroundViewOpenAndCloseKeepsTheNegotiatedCanvas() {
-        val display = startSession()
+    @Test fun surroundViewResizeRenegotiatesInsteadOfTransformingTheOldCanvas() {
+        startSession()
         applySize(1920, 942)
         assertEquals(size(1920, 942), getField("activeDisplaySize"))
+        assertNull(getField("sessionDisplay"))
+        assertEquals(1, getField("restartGeneration"))
+        assertTrue(getField("handshakeResetInProgress") as Boolean)
+        assertEquals(0, keepLogs())
+        // A second resize during teardown updates the next negotiation, without a second teardown.
         applySize(1920, 990)
-        assertSame(display, getField("sessionDisplay"))
-        assertEquals(0, getField("restartGeneration"))
-        assertFalse(getField("handshakeResetInProgress") as Boolean)
-        assertEquals(2, keepLogs())
+        assertEquals(size(1920, 990), getField("activeDisplaySize"))
+        assertEquals(1, getField("restartGeneration"))
     }
 
     @Test fun aNarrowWindowTriggersReconnectWithFixedPipAdaptation() {
@@ -190,6 +220,7 @@ class CarPlayHostDisplaySizeTest {
         assertNull(getField("sessionDisplay"))
 
         scheduleSize(1080, 2250)
+        shadowOf(Looper.getMainLooper()).idle()
 
         assertSessionSize(1080, 2250)
         assertNull(getField("pendingDisplaySize"))
@@ -217,6 +248,8 @@ class CarPlayHostDisplaySizeTest {
         startSession()
         applySize(990, 1920)
         setField("wirelessPermissionsReady", false)
+        shadowOf(RuntimeEnvironment.getApplication()).denyPermissions(Manifest.permission.ACCESS_FINE_LOCATION)
+        invoke("maybeStartCarPlay")
 
         finishTeardown()
 
@@ -240,33 +273,24 @@ class CarPlayHostDisplaySizeTest {
         assertFalse(getField("handshakeResetInProgress") as Boolean)
     }
 
-    @Test fun textureTransformFitsTheNegotiatedCanvas() {
-        startSession()
-        val view = TextureView(activity).apply { layout(0, 0, 1920, 942) }
-        setField("videoView", view)
-        activity.javaClass.getDeclaredMethod("updateVideoLayout", Int::class.javaPrimitiveType, Int::class.javaPrimitiveType)
-            .apply { isAccessible = true }.invoke(activity, 1920, 942)
-        val points = floatArrayOf(0f, 0f, 1920f, 942f)
-        view.getTransform(Matrix()).mapPoints(points)
-        val content = CarPlayVideoLayout.fit(1920, 990, 1920, 942)
-        assertArrayEquals(floatArrayOf(content.left, content.top, content.left + content.width,
-            content.top + content.height), points, 0.001f)
-    }
-
-    @Test fun touchesStartingInABarStaySuppressedUntilRelease() {
-        startSession()
+    @Test fun visibleViewportIsFullyMappedEvenWhileTheOldCanvasIsBeingReplaced() {
+        startSession(canvasWidth = 1536, canvasHeight = 792)
+        val content = activity.javaClass.getDeclaredMethod("contentRect", Int::class.javaPrimitiveType,
+            Int::class.javaPrimitiveType).apply { isAccessible = true }.invoke(activity, 1920, 942)
+        assertEquals(CarPlayVideoLayout(0f, 0f, 1920f, 942f), content)
         val view = View(activity).apply { layout(0, 0, 1920, 942) }
-        touch(view, MotionEvent.ACTION_DOWN, 1f, 471f)
+        for ((x, y) in listOf(1f to 1f, 1919f to 941f)) {
+            touch(view, MotionEvent.ACTION_DOWN, x, y)
+            assertEquals(false, getField("touchOutsideContent"))
+            touch(view, MotionEvent.ACTION_UP, x, y)
+        }
+        touch(view, MotionEvent.ACTION_DOWN, -1f, 471f)
         assertEquals(true, getField("touchOutsideContent"))
-        touch(view, MotionEvent.ACTION_MOVE, 960f, 471f)
-        assertEquals(true, getField("touchOutsideContent"))
-        touch(view, MotionEvent.ACTION_UP, 960f, 471f)
-        assertEquals(false, getField("touchOutsideContent"))
-        touch(view, MotionEvent.ACTION_DOWN, 960f, 471f)
+        touch(view, MotionEvent.ACTION_UP, -1f, 471f)
         assertEquals(false, getField("touchOutsideContent"))
     }
 
-    @Test fun adoptingABackgroundSessionPreservesItsCanvasOnResize() {
+    @Test fun adoptingABackgroundSessionRenegotiatesWhenItsViewportChanges() {
         val display = CarPlaySessionDisplay(1536, 792, Surface.ROTATION_0, true, true, 1920, 990)
         val sink = AndroidMediaSink()
         val controller = CarPlayController(activity,
@@ -282,19 +306,13 @@ class CarPlayHostDisplaySizeTest {
             val adopted = activity.javaClass.getDeclaredMethod("adoptBackgroundSession")
                 .apply { isAccessible = true }.invoke(activity)
             assertEquals(true, adopted)
-            applySize(1920, 942)
-            assertSame(controller, getField("controller"))
-            assertSame(sink, getField("sink"))
-            assertEquals(display, getField("sessionDisplay"))
-            assertEquals(display, CarPlayBackgroundSession.snapshot()?.display)
-            assertFalse(controller.isClosed())
-            assertEquals(0, getField("restartGeneration"))
             applySize(1920, 990)
             assertSame(display, getField("sessionDisplay"))
             assertEquals(0, getField("restartGeneration"))
-            applySize(2000, 990)
+            applySize(1920, 942)
             assertEquals(1, getField("restartGeneration"))
             assertNull(getField("sessionDisplay"))
+            assertTrue(getField("handshakeResetInProgress") as Boolean)
         } finally {
             controller.close()
             controller.awaitClosed(1000)
@@ -354,6 +372,14 @@ class CarPlayHostDisplaySizeTest {
         CarPlaySessionDisplay(canvasWidth, canvasHeight, rotation, true, true, windowWidth, windowHeight).also {
             setField("activeDisplaySize", size(windowWidth, windowHeight))
             setField("sessionDisplay", it)
+            val controller = mock(CarPlayController::class.java)
+            val sink = mock(AndroidMediaSink::class.java)
+            doAnswer { call ->
+                call.getArgument<(CarPlayController.CloseResult) -> Unit>(0)(CarPlayController.CloseResult(true)); null
+            }.`when`(controller).whenClosed(any<(CarPlayController.CloseResult) -> Unit>() ?: {})
+            setField("controller", controller)
+            setField("sink", sink)
+            CarPlayBackgroundSession.store(controller, sink, windowWidth, windowHeight, activity, it) { it() }
         }
 
     private fun keepLogs(): Int = ShadowLog.getLogsForTag("xcertplay-usb").count {
@@ -361,6 +387,10 @@ class CarPlayHostDisplaySizeTest {
     }
 
     private fun allowStartup() {
+        // This lightweight fixture skips lifecycle callbacks. Supply the foreground
+        // boundary established by onResume for cases that must restart the session.
+        setField("isActivityResumed", true)
+        CarPlayBackgroundSession.setProjectionUiVisible(activity, true)
         setField("airPlayIdentity", AirPlayIdentity.generate())
         setField("mfiTarget", MfiTarget.LOCAL)
         setField("wirelessPermissionsReady", true)
@@ -368,9 +398,35 @@ class CarPlayHostDisplaySizeTest {
     }
 
     private fun finishTeardown() {
-        (getField("teardownExecutor") as PausedExecutorService).runAll()
+        closer.runAll()
         shadowOf(Looper.getMainLooper()).idle()
     }
+
+    private fun resetBackground() {
+        CarPlayBackgroundSession.terminate()
+        closer.runAll()
+        shadowOf(Looper.getMainLooper()).idle()
+        backgroundField<Handler>("main").removeCallbacksAndMessages(null)
+        backgroundField<MutableList<*>>("retiring").clear()
+        backgroundField<MutableList<*>>("stopWaiters").clear()
+        setBackgroundField("stopping", false)
+        setBackgroundField("starting", false)
+        setBackgroundField("service", null)
+        CarPlayBackgroundSession.clear()
+        backgroundField<SessionLogFile?>("powerLog")?.let { AsyncDiagnosticLog.close(it) }
+        setBackgroundField("powerLog", null)
+        setBackgroundField("intentRevision", 0L)
+        setBackgroundField("durableIntentRevision", 0L)
+        setBackgroundField("configurationRevision", 0L)
+        setBackgroundField("configurationLoading", false)
+        setBackgroundField("preparationFailure", null)
+    }
+
+    private fun <T> backgroundField(name: String): T =
+        ReflectionHelpers.getStaticField(CarPlayBackgroundSession::class.java, name)
+
+    private fun setBackgroundField(name: String, value: Any?) =
+        ReflectionHelpers.setStaticField(CarPlayBackgroundSession::class.java, name, value)
 
     private fun assertSessionSize(width: Int, height: Int) {
         val display = getField("sessionDisplay") as? CarPlaySessionDisplay

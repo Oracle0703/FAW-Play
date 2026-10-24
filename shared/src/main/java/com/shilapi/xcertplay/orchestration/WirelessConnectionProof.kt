@@ -4,7 +4,7 @@ package com.shilapi.xcertplay.orchestration
 internal class WirelessConnectionProof<S : Any> {
     private var generation = -1
     private var session: S? = null
-    private var authenticated = false
+    private var authenticatedSession: S? = null
     private var rendered = false
     private var confirmation: (() -> Unit)? = null
 
@@ -17,15 +17,17 @@ internal class WirelessConnectionProof<S : Any> {
     @Synchronized fun activate(generation: Int, session: S) {
         if (this.generation != generation || this.session === session) return
         this.session = session
-        authenticated = false
         rendered = false
     }
 
-    @Synchronized fun authenticated(generation: Int) {
-        if (this.generation != generation || session == null) return
-        authenticated = true
+    @Synchronized fun authenticated(generation: Int, current: S) {
+        if (this.generation != generation) return
+        authenticatedSession = current
         confirmIfReady()
     }
+
+    @Synchronized fun isAuthenticated(generation: Int, current: S?): Boolean =
+        this.generation == generation && current != null && authenticatedSession === current
 
     @Synchronized fun rendered(generation: Int, session: S) {
         if (this.generation != generation || this.session !== session) return
@@ -39,23 +41,28 @@ internal class WirelessConnectionProof<S : Any> {
     @Synchronized fun hasRenderedFrame(generation: Int, current: S?): Boolean =
         this.generation == generation && current != null && session === current && rendered
 
+    @Synchronized fun authenticationEnded(generation: Int, current: S) {
+        if (this.generation == generation && authenticatedSession === current) authenticatedSession = null
+    }
+
     @Synchronized fun end(generation: Int, session: S) {
-        if (this.generation != generation || this.session !== session) return
+        if (this.generation != generation) return
+        if (authenticatedSession === session) authenticatedSession = null
+        if (this.session !== session) return
         this.session = null
-        authenticated = false
         rendered = false
     }
 
     @Synchronized fun clear() {
         generation = -1
         session = null
-        authenticated = false
+        authenticatedSession = null
         rendered = false
         confirmation = null
     }
 
     private fun confirmIfReady() {
-        if (!authenticated || !rendered) return
+        if (session == null || authenticatedSession !== session || !rendered) return
         val callback = confirmation ?: return
         confirmation = null
         callback()

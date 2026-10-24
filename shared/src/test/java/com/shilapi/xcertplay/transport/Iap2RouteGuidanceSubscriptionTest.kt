@@ -38,4 +38,13 @@ class Iap2RouteGuidanceSubscriptionTest {
             frame.payload,
         )
     }
+
+    @Test fun disablingNavigationPreservesAllOtherSubscriptionsAndTheirEncoding() {
+        val enabled = Iap2ControlMessages.subscriptions()
+        val disabled = Iap2WiredControlClient.subscriptions(routeGuidanceEnabled = false)
+        assertEquals(listOf(0x5000, 0xae00, 0x4157, 0x4154), disabled.map { it.messageId })
+        enabled.filterNot { it.messageId == 0x5200 }.zip(disabled).forEach { (before, after) ->
+            assertArrayEquals(before.encodedFrame(), after.encodedFrame())
+        }
+    }
 }

@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>FAW Play · 仪表调节</title>
+<title>Autunn Play · 仪表调节</title>
 <style>
 :root{color-scheme:dark;--bg:#11151c;--panel:#1b212b;--line:#333e4d;--muted:#a7b3c5;--red:#db5c58;--green:#66d6a6}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:#f2f5fa;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;font-size:16px}
@@ -13,7 +13,7 @@ button,select,input{font:inherit}button,select{border:1px solid var(--line);bord
 @media(max-width:950px){.grid{grid-template-columns:1fr}.fields{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.card{padding:18px}main{padding:18px}.tabs{max-width:440px}}@media(max-width:560px){.fields{display:block}header{flex-wrap:wrap}.badge{margin-left:0}}
 </style>
 <main>
-<header><div class="brand"></div><div><h1>FAW Play · 仪表调节</h1><span>转向提示 / 到达与里程信息栏 / CarPlay 原生内容</span></div><div class="badge">NAVI30 配套工具</div></header>
+<header><div class="brand"></div><div><h1>Autunn Play · 仪表调节</h1><span>转向提示 / 到达与里程信息栏 / CarPlay 原生内容</span></div><div class="badge">NAVI30 配套工具</div></header>
 <div class="devices"><select id="device" aria-label="ADB 设备"><option value="">正在查找设备…</option></select><button id="refresh">刷新设备</button><button id="read">读取车机参数</button></div>
 <div id="status" class="status" role="status" aria-live="polite">尚未连接车机。</div>
 <section class="card" style="margin-bottom:22px"><h2>仪表导航内容</h2>
@@ -51,7 +51,7 @@ let state=structuredClone(defaults),target='ete',connected=false,pending=new Map
 const context=$('preview').getContext('2d');
 function status(text,kind=''){ $('status').textContent=text; $('status').className='status '+kind; }
 async function api(path,payload){
-  const options=payload?{method:'POST',headers:{'Content-Type':'application/json','X-FAW-Session':token},body:JSON.stringify(payload)}:{};
+  const options=payload?{method:'POST',headers:{'Content-Type':'application/json','X-Autunn-Session':token},body:JSON.stringify(payload)}:{};
   const response=await fetch(path,options);const data=await response.json();
   if(!response.ok||data.error)throw new Error(data.error||'操作失败');return data;
 }
@@ -206,7 +206,7 @@ $('switchContent').addEventListener('click',switchContent);
 $('export').addEventListener('click',()=>{
   const profile={protocol:2,canvas:{width:1920,height:720},confirmedOnDevice:ready()&&!pending.size&&!syncing,tbt:state.tbt,ete:state.ete};
   const url=URL.createObjectURL(new Blob([JSON.stringify(profile,null,2)],{type:'application/json'}));
-  const a=document.createElement('a');a.href=url;a.download='FAW-Play-仪表参数.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  const a=document.createElement('a');a.href=url;a.download='Autunn-Play-仪表参数.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 });
 updateFields();refresh();
 </script>

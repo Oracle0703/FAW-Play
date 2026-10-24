@@ -9,6 +9,7 @@ import android.net.wifi.p2p.WifiP2pGroup
 import android.net.wifi.p2p.WifiP2pInfo
 import android.net.wifi.p2p.WifiP2pManager
 import android.os.Build
+import android.os.Looper
 import com.shilapi.xcertplay.network.P2pResetRequiredException
 import com.shilapi.xcertplay.network.WifiP2pChannels
 import com.shilapi.xcertplay.network.WifiP2pGroupManager
@@ -28,6 +29,7 @@ import org.robolectric.shadows.ShadowWifiP2pManager
 import org.robolectric.util.ReflectionHelpers
 import java.net.InetAddress
 import java.util.concurrent.ExecutionException
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
@@ -42,6 +44,7 @@ class WifiP2pGroupManagerTest {
         shadowOf(context).grantPermissions(Manifest.permission.ACCESS_FINE_LOCATION)
         val wifi = context.getSystemService(WifiManager::class.java)
         wifi.isWifiEnabled = true
+        shadowOf(wifi).setIs5GHzBandSupported(true)
         shadowOf(wifi.connectionInfo).setFrequency(5180)
         shadowOf(wifi.connectionInfo).setSupplicantState(SupplicantState.COMPLETED)
     }
@@ -90,7 +93,7 @@ class WifiP2pGroupManagerTest {
         WifiP2pGroupManager(context).use { manager ->
             val error = failure { manager.start(300) }
             assertTrue(error.message!!.contains("frequencyMHz=unknown"))
-            assertEquals(WirelessStartupFailure.HOTSPOT_CONFIGURATION,
+            assertEquals(WirelessStartupFailure.HOTSPOT_NOT_READY,
                 (error as WirelessStartupException).reason)
         }
         assertEquals(1, radio.legacyRequests)
@@ -105,13 +108,15 @@ class WifiP2pGroupManagerTest {
             ReflectionHelpers.setStaticField(Build::class.java, "MODEL", "HONG QI")
             ReflectionHelpers.setStaticField(Build::class.java, "DEVICE", "t1c_acrn")
             radio.legacyFrequencyReported = false
-            WifiP2pGroupManager(context).use { manager ->
+            val logs = mutableListOf<String>()
+            WifiP2pGroupManager(context, logs::add).use { manager ->
                 val info = background { manager.start(1000) }
                 assertEquals(0, info.channel)
                 assertNull(info.frequencyMHz)
                 assertEquals("DIRECT-system-test", info.ssid)
                 assertEquals("test-generated-key", info.passphrase)
                 assertEquals("WIFI_P2P", info.backend.name)
+                assertTrue(logs.any { it.contains("requestedMHz=5180 actualMHz=unknown matched=unknown radioSource=") })
             }
             assertEquals(1, radio.legacyRequests)
             assertEquals(1, radio.removals)
@@ -132,8 +137,8 @@ class WifiP2pGroupManagerTest {
                 assertEquals("test-generated-key", info.passphrase)
                 assertEquals("WIFI_P2P", info.backend.name)
                 manager.onCarPlayConfirmed()
-                assertNull(context.getSharedPreferences("carplay_wifi_p2p_success", 0)
-                    .getString("confirmed", null))
+                assertTrue(context.getSharedPreferences("carplay_wifi_p2p_success", 0)
+                    .getString("confirmed", null)!!.startsWith("system|0|0|"))
             }
         }
         assertEquals(2, radio.legacyRequests)
@@ -166,11 +171,139 @@ class WifiP2pGroupManagerTest {
 
     @Test @Config(sdk = [28]) fun android9UnansweredCreateIsBoundedAndNeverRetried() {
         radio.noCreateReply = true
-        WifiP2pGroupManager(context).use { manager ->
+        val manager = WifiP2pGroupManager(context)
+        try {
             assertTrue(failure { manager.start(100) }.message!!.contains("group creation"))
+            assertTrue(failure { manager.close() }.message!!.contains("awaiting its callback"))
+        } finally {
+            radio.pendingCreateListener?.onFailure(WifiP2pManager.ERROR)
+            background { manager.close() }
         }
         assertEquals(1, radio.legacyRequests)
         assertEquals(0, radio.removals)
+    }
+
+    @Test @Config(sdk = [28]) fun android9BusyRetriesTheSameRequestThenContinuesImmediatelyOnSuccess() {
+        radio.createFailures.addAll(listOf(WifiP2pManager.BUSY, WifiP2pManager.BUSY))
+        val logs = mutableListOf<String>()
+        WifiP2pGroupManager(context, logs::add).use { manager -> background { manager.start(4000) } }
+        assertEquals(3, radio.legacyRequests)
+        assertTrue(logs.any { it.contains("busy recovery delayMs=250") })
+        assertTrue(logs.any { it.contains("busy recovery delayMs=500") })
+        assertEquals(1, radio.removals)
+    }
+
+    @Test @Config(sdk = [28]) fun android9BusyExhaustionIsTransientAndCannotSubmitMoreThanSixRequests() {
+        repeat(10) { radio.createFailures += WifiP2pManager.BUSY }
+        WifiP2pGroupManager(context).use { manager ->
+            val error = failure { manager.start(6000) } as WirelessStartupException
+            assertEquals(WirelessStartupFailure.HOTSPOT_NOT_READY, error.reason)
+        }
+        assertEquals(6, radio.legacyRequests)
+        assertEquals(0, radio.removals)
+    }
+
+    @Test @Config(sdk = [28]) fun android9PermissionAndUnsupportedRejectionsArePermanentAndNeverRetried() {
+        for (reason in listOf(WifiP2pManager.NO_PERMISSION, WifiP2pManager.P2P_UNSUPPORTED)) {
+            val before = radio.legacyRequests
+            radio.createFailures += reason
+            WifiP2pGroupManager(context).use { manager ->
+                val error = failure { manager.start(1000) } as WirelessStartupException
+                assertEquals(WirelessStartupFailure.HOTSPOT_CONFIGURATION, error.reason)
+            }
+            assertEquals(before + 1, radio.legacyRequests)
+        }
+    }
+
+    @Test @Config(sdk = [28]) fun hs5AutoClearsEachRejectedCandidateBeforeSystemFallback() = withHs5 {
+        repeat(5) { radio.createFailures += WifiP2pManager.ERROR }
+        WifiP2pGroupManager(context).use { manager -> background { manager.start(4000) } }
+        assertEquals(6, radio.legacyRequests)
+        assertEquals(listOf("set:36", "create", "set:0", "set:149", "create", "set:0",
+            "set:6", "create", "set:0", "set:1", "create", "set:0", "set:11", "create", "set:0", "create"),
+            radio.channelOrder)
+    }
+
+    @Test @Config(sdk = [28]) fun hs5PreferredFiveGhzCanFallBackWhileManualChannelCannot() = withHs5 {
+        radio.createFailures += WifiP2pManager.ERROR
+        WifiP2pGroupManager(context, preferredChannel = WifiP2pChannels.PREFER_5_GHZ).use { manager ->
+            background { manager.start(4000) }
+        }
+        assertEquals(2, radio.legacyRequests)
+        assertEquals(listOf("set:36", "create", "set:0", "set:149", "create", "set:0"), radio.channelOrder)
+        radio.channelOrder.clear()
+        radio.createFailures += WifiP2pManager.ERROR
+        WifiP2pGroupManager(context, preferredChannel = 149).use { manager ->
+            assertEquals(WirelessStartupFailure.HOTSPOT_CONFIGURATION,
+                (failure { manager.start(1000) } as WirelessStartupException).reason)
+        }
+        assertEquals(3, radio.legacyRequests)
+        assertEquals(listOf("set:149", "create", "set:0"), radio.channelOrder)
+    }
+
+    @Test @Config(sdk = [28]) fun channelLossBeforeCreationReinitializesOnceAndIgnoresTheOldListener() {
+        radio.disconnectOnGroupQuery = 1
+        WifiP2pGroupManager(context).use { manager ->
+            background { manager.start(4000) }
+            assertEquals(2, radio.channelListeners.size)
+            assertEquals(1, radio.legacyRequests)
+            radio.channelListeners.first().onChannelDisconnected()
+            assertEquals(2, radio.channelListeners.size)
+            assertNotNull(radio.group)
+        }
+    }
+
+    @Test @Config(sdk = [28]) fun channelLossAfterCreateAcknowledgementVerifiesTheOwnedGroupWithoutRecreating() {
+        radio.disconnectAfterCreateSuccess = true
+        WifiP2pGroupManager(context).use { manager -> background { manager.start(4000) } }
+        assertEquals(2, radio.channelListeners.size)
+        assertEquals(1, radio.legacyRequests)
+        assertEquals(1, radio.removals)
+    }
+
+    @Test @Config(sdk = [28]) fun channelLossWithAnUnknownCreateKeepsTheLateCallbackCleanupBarrier() {
+        radio.noCreateReply = true
+        radio.disconnectDuringUnansweredCreate = true
+        val manager = WifiP2pGroupManager(context)
+        try {
+            val error = failure { manager.start(3000) } as WirelessStartupException
+            assertEquals(WirelessStartupFailure.HOTSPOT_NOT_READY, error.reason)
+            assertEquals(2, radio.channelListeners.size)
+            assertEquals(1, radio.legacyRequests)
+            assertTrue(failure { manager.close() }.message!!.contains("awaiting its callback"))
+            radio.group = radio.makeGroup(null)
+            radio.pendingCreateListener!!.onSuccess()
+            background { manager.close() }
+            assertNull(radio.group)
+            assertEquals(1, radio.removals)
+        } finally {
+            radio.pendingCreateListener?.onFailure(WifiP2pManager.ERROR)
+            background { manager.close() }
+        }
+    }
+
+    @Test @Config(sdk = [28]) fun runtimeChannelLossReportsAnUnverifiedGroupOutsideBothManagerLocks() {
+        val done = CountDownLatch(1)
+        var callbackFailure: java.io.IOException? = null
+        var callbackHeldLock = true
+        lateinit var manager: WifiP2pGroupManager
+        manager = WifiP2pGroupManager(context, onRuntimeFailure = { failure ->
+            callbackFailure = failure
+            callbackHeldLock = Thread.holdsLock(ReflectionHelpers.getField<Any>(manager, "stateLock")) ||
+                Thread.holdsLock(ReflectionHelpers.getField<Any>(manager, "cleanupLock"))
+            done.countDown()
+        })
+        try {
+            background { manager.start(4000) }
+            radio.group = null
+            radio.channelListeners.last().onChannelDisconnected()
+            assertTrue(done.await(3, TimeUnit.SECONDS))
+            assertFalse(callbackHeldLock)
+            assertEquals(WirelessStartupFailure.HOTSPOT_NOT_READY,
+                (callbackFailure as WirelessStartupException).reason)
+            assertEquals(2, radio.channelListeners.size)
+            assertEquals(1, radio.legacyRequests)
+        } finally { background { manager.close() } }
     }
 
     @Test @Config(sdk = [28]) fun android9ManualChannelDoesNotInvokeANewerApi() {
@@ -366,7 +499,8 @@ class WifiP2pGroupManagerTest {
             assertEquals(2437, info.frequencyMHz)
             assertEquals(6, info.channel)
             assertEquals("2.4 GHz", info.bandLabel)
-            assertTrue(info.ssid.startsWith("DIRECT-dp"))
+            assertTrue(info.ssid.startsWith("DIRECT-AP-Autunn-"))
+            assertEquals(radio.requests.last()!!.networkName, info.ssid)
             assertEquals(radio.requests.last()!!.passphrase, info.passphrase)
             assertTrue(logs.any { it.contains("ready mode=FIXED_2_GHZ") })
             assertTrue(logs.any { it.contains("requestedMHz=2437 actualMHz=2437 matched=true") })
@@ -507,12 +641,55 @@ class WifiP2pGroupManagerTest {
         assertTrue(logs.any { it.contains("cleanup skipped=another_app_owns_group") })
     }
 
+    @Test fun successfulRemoveCallbackStillWaitsForTheOwnedGroupToDisappear() {
+        val manager = WifiP2pGroupManager(context)
+        background { manager.start(5000) }
+        radio.removalConfirmationQueries = 3
+        background { manager.close() }
+        assertNull(radio.group)
+        assertEquals(0, radio.removalConfirmationQueries)
+        assertEquals(1, radio.removals)
+    }
+
+    @Test fun rejectedRemovalKeepsItsChannelAndCanBeRetried() {
+        val manager = WifiP2pGroupManager(context)
+        background { manager.start(5000) }
+        radio.rejectRemoval = true
+        try {
+            assertTrue(failure { manager.close() }.message!!.contains("remove rejected"))
+            assertNotNull(radio.group)
+            assertNotNull(ReflectionHelpers.getField(manager, "channel"))
+            radio.rejectRemoval = false
+            background { manager.close() }
+            assertNull(radio.group)
+            assertNull(ReflectionHelpers.getField(manager, "channel"))
+            assertEquals(2, radio.removals)
+        } finally { radio.rejectRemoval = false; background { manager.close() } }
+    }
+
+    @Test @Config(sdk = [28]) fun lateSuccessfulCreateIsRemovedBeforeCloseCanComplete() {
+        radio.noCreateReply = true
+        val manager = WifiP2pGroupManager(context)
+        try {
+            assertTrue(failure { manager.start(100) }.message!!.contains("group creation"))
+            assertTrue(failure { manager.close() }.message!!.contains("awaiting its callback"))
+            radio.group = radio.makeGroup(null)
+            radio.pendingCreateListener!!.onSuccess()
+            background { manager.close() }
+            assertNull(radio.group)
+            assertEquals(1, radio.removals)
+        } finally {
+            radio.pendingCreateListener?.onFailure(WifiP2pManager.ERROR)
+            background { manager.close() }
+        }
+    }
+
     @Test fun connectionSnapshotDoesNotInterpretAnEmptyP2pListAsFailedIphoneAssociation() {
         val manager = WifiP2pGroupManager(context)
         background { manager.start(5000) }
         val snapshot = background { manager.connectionDiagnosticSnapshot() }
         assertTrue(snapshot.contains("p2pGroup=present owner=true sameGroup=true"))
-        assertTrue(snapshot.contains("reportedP2pClients=0 association=unknown legacyClients=not_exposed"))
+        assertTrue(snapshot.contains("reportedP2pClients=0 association=unknown legacyClientIdentity=framework_snapshot_unverified"))
         radio.group = null
         assertEquals("p2pGroup=absent association=unknown", background { manager.connectionDiagnosticSnapshot() })
         background { manager.close() }
@@ -557,8 +734,13 @@ class WifiP2pGroupManagerTest {
 
     @Test fun unansweredCreateIsNotFollowedByASecondRequest() {
         radio.noCreateReply = true
-        WifiP2pGroupManager(context).use { manager ->
+        val manager = WifiP2pGroupManager(context)
+        try {
             assertTrue(failure { manager.start(300) }.message!!.contains("group creation"))
+            assertTrue(failure { manager.close() }.message!!.contains("awaiting its callback"))
+        } finally {
+            radio.pendingCreateListener?.onFailure(WifiP2pManager.ERROR)
+            background { manager.close() }
         }
         assertEquals(1, radio.requests.size)
         assertEquals(0, radio.removals)
@@ -594,6 +776,18 @@ class WifiP2pGroupManagerTest {
     @Implements(WifiP2pManager::class)
     class P2pRadio : ShadowWifiP2pManager() {
         val channelOrder = mutableListOf<String>()
+        val channelListeners = mutableListOf<WifiP2pManager.ChannelListener>()
+        val createFailures = mutableListOf<Int>()
+        var disconnectOnGroupQuery: Int? = null
+        private var groupQueries = 0
+        var disconnectAfterCreateSuccess = false
+        var disconnectDuringUnansweredCreate = false
+
+        @Implementation override fun initialize(context: Context, looper: Looper,
+            listener: WifiP2pManager.ChannelListener): WifiP2pManager.Channel {
+            channelListeners += listener
+            return super.initialize(context, looper, listener)
+        }
         @Implementation override fun setWifiP2pChannels(channel: WifiP2pManager.Channel, listen: Int, operating: Int, listener: WifiP2pManager.ActionListener) {
             assertEquals(0, listen); channelOrder.add("set:$operating"); listener.onSuccess()
         }
@@ -606,6 +800,10 @@ class WifiP2pGroupManagerTest {
         var competingGroup = false
         var missingCredentials = false
         var noCreateReply = false
+        var pendingCreateListener: WifiP2pManager.ActionListener? = null
+        var rejectRemoval = false
+        var removalConfirmationQueries = 0
+        private var removalPending = false
         var fixed24Only = false
         var allowed24 = setOf(2412, 2437, 2462)
         var reportedFrequency: Int? = null
@@ -615,6 +813,11 @@ class WifiP2pGroupManagerTest {
         }
 
         @Implementation override fun requestGroupInfo(channel: WifiP2pManager.Channel, listener: WifiP2pManager.GroupInfoListener) {
+            if (++groupQueries == disconnectOnGroupQuery) channelListeners.last().onChannelDisconnected()
+            if (removalPending && --removalConfirmationQueries <= 0) {
+                group = null
+                removalPending = false
+            }
             listener.onGroupInfoAvailable(group)
         }
 
@@ -628,13 +831,19 @@ class WifiP2pGroupManagerTest {
 
         @Implementation override fun createGroup(channel: WifiP2pManager.Channel, config: WifiP2pConfig?, listener: WifiP2pManager.ActionListener) {
             requests += config
-            if (noCreateReply) return
+            if (noCreateReply) {
+                pendingCreateListener = listener
+                if (disconnectDuringUnansweredCreate) channelListeners.last().onChannelDisconnected()
+                return
+            }
+            if (createFailures.isNotEmpty()) { listener.onFailure(createFailures.removeAt(0)); return }
             if ((rejectCustom && config != null) || (fixed24Only && config?.groupOwnerBand !in allowed24)) {
                 if (competingGroup) group = makeGroup(null)
                 listener.onFailure(WifiP2pManager.ERROR)
             } else {
                 group = makeGroup(config)
                 listener.onSuccess()
+                if (disconnectAfterCreateSuccess) channelListeners.last().onChannelDisconnected()
             }
         }
 
@@ -646,7 +855,8 @@ class WifiP2pGroupManagerTest {
 
         @Implementation override fun removeGroup(channel: WifiP2pManager.Channel, listener: WifiP2pManager.ActionListener) {
             removals++
-            group = null
+            if (rejectRemoval) { listener.onFailure(WifiP2pManager.BUSY); return }
+            if (removalConfirmationQueries > 0) removalPending = true else group = null
             listener.onSuccess()
         }
 

@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Autunn Play · 授权管理</title>
+  <link rel="icon" href="brand.png" type="image/png">
+  <link rel="stylesheet" href="admin.css">
+  <script src="/assets/api.js?v=autunn-20261017" defer></script>
+  <script src="admin.js?v=autunn-20261017" defer></script>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="brand"><img src="brand.png" width="36" height="36" alt=""><span>Autunn Play</span></div>
+      <div class="account"><span id="account">未登录</span><button id="login" type="button">管理员登录</button><button id="logout" type="button" hidden>退出管理页面</button></div>
+    </div>
+  </header>
+  <main>
+    <h1 id="page-title">授权管理</h1>
+    <nav class="admin-nav" aria-label="管理功能"><a id="licenses-nav" href="#licenses" aria-current="page">授权管理</a><a id="updates-nav" href="#updates">应用更新</a><a id="diagnostics-nav" href="#diagnostics">诊断报告</a></nav>
+    <section id="login-panel" aria-labelledby="login-title" hidden>
+      <h2 id="login-title">确认管理员登录</h2>
+      <div class="login-controls"><div><span class="label">登录验证码</span><strong id="user-code"></strong></div><a id="verification" target="_blank" rel="noopener noreferrer">继续登录</a><button id="cancel-login" type="button">取消</button></div>
+      <p id="login-status" role="status">等待登录确认…</p>
+    </section>
+    <div id="licenses-view">
+    <section aria-labelledby="generate-title">
+      <h2 id="generate-title">生成兑换码</h2>
+      <form id="generate-form">
+        <fieldset id="controls" disabled>
+          <div class="fields">
+            <div><label for="code-count">生成数量</label><input id="code-count" type="number" min="1" max="1000" step="1" value="1" required><p class="field-note">每批最多 1000 个，下面的额度按每个码分别设置</p></div>
+            <div><label for="devices">可绑定设备数量</label><input id="devices" name="devices" type="number" inputmode="numeric" min="1" max="100" step="1" value="1" required></div>
+            <div><label for="activations">累计激活次数上限</label><input id="activations" type="number" min="1" max="100000" step="1" value="1" required><p class="field-note">同一设备重复激活不扣次数，撤销不返还</p></div>
+            <div><label for="duration">授权期限</label><select id="duration"><option value="permanent">永久授权</option><option value="limited">按天授权</option></select></div>
+            <div><label for="days">有效天数</label><input id="days" name="days" type="number" inputmode="numeric" min="1" max="36500" step="1" value="365" required disabled><p class="field-note">按天授权从生成时间开始计算</p></div>
+          </div>
+          <label for="code-note">授权备注</label><input id="code-note" maxlength="500" placeholder="例如：客户称呼、订单编号"><p class="field-note">备注仅供管理员查看</p>
+          <button id="generate" class="primary" type="submit">生成兑换码</button>
+        </fieldset>
+      </form>
+      <p id="status" role="status">请先登录管理员账号。</p>
+    </section>
+    <section id="result" aria-labelledby="result-title" hidden>
+      <div class="section-heading"><h2 id="result-title">本次生成</h2><span class="notice">兑换码仅显示一次，请复制或导出保存</span></div>
+      <label for="activation-code">兑换码（每行一个）</label>
+      <div class="code-row"><textarea id="activation-code" rows="1" readonly autocomplete="off" spellcheck="false" wrap="off"></textarea><div class="code-actions"><button id="copy" type="button">复制兑换码</button><button id="export-codes" type="button">导出 CSV</button></div></div>
+      <dl><div><dt>生成数量</dt><dd id="result-count"></dd></div><div><dt>每码设备数量</dt><dd id="result-devices"></dd></div><div><dt>每码累计激活次数</dt><dd id="result-activations"></dd></div><div><dt>到期时间</dt><dd id="result-expiry"></dd></div></dl>
+      <p id="copy-status" role="status"></p>
+    </section>
+
+    <section id="code-search-panel" aria-labelledby="code-search-title" hidden>
+      <h2 id="code-search-title">搜索与删除卡密</h2>
+      <form id="code-search-form"><fieldset id="code-search-controls" disabled>
+        <label for="code-search-input">完整卡密</label>
+        <div class="search-row"><input id="code-search-input" maxlength="200" required autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="粘贴完整卡密（新旧卡密均可）"><button class="primary" type="submit">搜索卡密</button></div>
+        <p class="field-note">支持查询未激活、已激活、已失效和已删除的卡密。</p>
+      </fieldset></form>
+      <p id="code-search-status" role="status" aria-live="polite"></p>
+      <div id="code-search-result" class="code-card" hidden></div>
+      <div id="code-delete-confirm" class="delete-confirm" hidden>
+        <p>确认删除当前查到的卡密？删除后不能再次激活，关联设备停止续期；当前版本离线票据最长可继续使用 30 天；旧版本已签发票据可能按原期限继续有效（最长 90 天）。</p>
+        <button id="confirm-code-delete" class="danger" type="button">确认删除卡密</button> <button id="cancel-code-delete" type="button">取消</button>
+      </div>
+    </section>
+    <section id="detail-panel" aria-labelledby="detail-title" hidden>
+      <div class="section-heading"><h2 id="detail-title">授权详情</h2><button id="close-detail" type="button">收起</button></div>
+      <p id="license-id" class="identifier"></p>
+      <form id="edit-license"><fieldset id="edit-controls" disabled>
+        <label for="edit-note">授权备注</label><input id="edit-note" maxlength="500">
+        <div class="fields">
+          <div><label for="edit-devices">可同时使用设备数量</label><input id="edit-devices" type="number" min="1" max="100" step="1" required></div>
+          <div><label for="edit-activations">累计激活次数上限</label><input id="edit-activations" type="number" min="1" max="100000" step="1"><p class="field-note">旧授权无累计限制时可留空，设置后不得低于已用次数</p></div>
+          <div><label for="edit-duration">授权期限</label><select id="edit-duration"><option value="permanent">永久授权</option><option value="limited">指定到期时间</option></select></div>
+          <div><label for="edit-expiry">到期时间</label><input id="edit-expiry" type="datetime-local" required></div>
+        </div>
+        <p id="usage"></p><button id="reset-activations" class="danger" type="button">手动重置激活额度</button> <button class="primary" type="submit">保存授权设置</button>
+      </fieldset></form>
+      <p id="detail-status" role="status"></p><h3>授权设备</h3><div id="device-list"></div>
+      <div class="delete-area"><button id="delete-license" class="danger" type="button">删除此授权</button><p class="field-note">删除后旧兑换码失效，所有关联设备停止续期。历史记录保留供审计；当前版本离线票据最长可继续使用 30 天；旧版本已签发票据可能按原期限继续有效（最长 90 天）。</p></div>
+      <div id="delete-confirm" hidden><p>此操作不能撤销。确认删除这条授权及其所有设备的使用资格？</p><button id="confirm-delete" class="danger" type="button">确认删除授权</button> <button id="cancel-delete" type="button">取消</button></div>
+    </section>
+    <section id="licenses-panel" aria-labelledby="licenses-title" hidden>
+      <div class="section-heading"><h2 id="licenses-title">已兑换授权与设备</h2><div class="section-actions"><button id="toggle-licenses" type="button" aria-expanded="false">展开列表</button><button id="reload-licenses" type="button">刷新列表</button></div></div>
+      <p class="field-note">点击授权查看设备。永久购买授权也需联网刷新短期票据；基础 CarPlay 无需授权。</p>
+      <p id="list-status" role="status"></p><div id="licenses-content" hidden><div id="license-list"></div>
+      <div class="pagination"><button id="previous-page" type="button">上一页</button><span id="page-label"></span><button id="next-page" type="button">下一页</button></div></div>
+    </section>
+    </div>
+    <div id="updates-view" hidden>
+      <section aria-labelledby="updates-title">
+        <div class="section-heading"><h2 id="updates-title">上传并发布新版 APK</h2><button id="reload-updates" type="button" disabled>刷新发布状态</button></div>
+        <p class="field-note">发布后 App 的「检查更新」可获取此版本。APK 必须使用原发布签名，版本号不能降低；服务器自动读取实际版本并验签。</p>
+        <div class="update-settings">
+          <label class="check-label" for="update-header-validation"><input id="update-header-validation" type="checkbox" disabled aria-describedby="update-header-note update-settings-status">验证 Autunn 请求头 <span id="update-header-state">（状态待确认）</span></label>
+          <p id="update-header-note" class="field-note">开启后，App 更新请求必须携带 Autunn: 1；关闭时跳过此请求头验证。授权核验始终保留，切换后立即保存。</p>
+          <p id="update-settings-status" role="status" aria-live="polite">请先登录管理员账号。</p>
+        </div>
+        <form id="upload-form"><fieldset id="upload-controls" disabled>
+          <label for="update-app">应用包名</label><select id="update-app" required></select>
+          <div id="current-release" class="release-card"><p>请先登录管理员账号。</p></div>
+          <label for="update-apk">新版 APK 文件</label><input id="update-apk" type="file" accept=".apk,application/vnd.android.package-archive" required><p id="file-summary" class="field-note">支持单个完整 Release APK，最大 512 MiB。</p>
+          <label for="release-notes">更新说明</label><textarea id="release-notes" rows="5" maxlength="4000" placeholder="填写用户能看到的更新内容"></textarea>
+          <label class="check-label"><input id="publish-confirm" type="checkbox" required>我确认将此 APK 发布给用户</label>
+          <button id="upload-submit" class="primary" type="submit">上传并发布</button>
+        </fieldset></form>
+        <div id="upload-progress-panel" hidden><label for="upload-progress">上传进度</label><progress id="upload-progress" max="100" value="0"></progress><button id="cancel-upload" type="button">停止上传</button></div>
+        <p id="upload-status" role="status" aria-live="polite">请先登录管理员账号。</p>
+        <div id="published-release" class="release-card" hidden></div>
+      </section>
+    </div>
+    <div id="diagnostics-view" hidden>
+      <section aria-labelledby="diagnostics-title">
+        <div class="section-heading"><h2 id="diagnostics-title">设备诊断报告</h2><button id="reload-diagnostics" type="button" disabled>刷新列表</button></div>
+        <p class="field-note">用户在 App 的「诊断」中上传后，报告会出现在这里。保留最近 30 天，最多 1000 份／256 MiB；超过容量时淘汰最早报告。设备编号与扫码激活页面一致。</p>
+        <form id="diagnostic-search-form"><fieldset id="diagnostic-controls" disabled>
+          <div class="fields">
+            <div><label for="diagnostic-device">设备编号</label><input id="diagnostic-device" maxlength="64" autocomplete="off" spellcheck="false" placeholder="可输入编号前几位"></div>
+            <div><label for="diagnostic-version">App 版本</label><input id="diagnostic-version" maxlength="80" autocomplete="off" placeholder="完整版本名称或 versionCode"></div>
+          </div>
+          <button class="primary" type="submit">筛选报告</button>
+        </fieldset></form>
+        <p id="diagnostic-status" role="status" aria-live="polite">请先登录管理员账号。</p>
+        <div id="diagnostic-list"></div>
+        <div class="pagination"><button id="diagnostic-previous" type="button" disabled>上一页</button><span id="diagnostic-page"></span><button id="diagnostic-next" type="button" disabled>下一页</button></div>
+      </section>
+      <section id="diagnostic-detail" aria-labelledby="diagnostic-detail-title" hidden>
+        <div class="section-heading"><h2 id="diagnostic-detail-title">报告详情</h2><button id="diagnostic-close" type="button">收起</button></div>
+        <div id="diagnostic-metadata"></div>
+        <div class="device-actions"><button id="diagnostic-copy" type="button">复制报告</button><button id="diagnostic-download" type="button">下载 TXT</button></div>
+        <p id="diagnostic-detail-status" role="status" aria-live="polite"></p>
+        <pre id="diagnostic-text" tabindex="0" aria-label="诊断报告内容"></pre>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

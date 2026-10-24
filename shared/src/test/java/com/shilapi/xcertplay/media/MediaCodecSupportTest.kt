@@ -8,6 +8,30 @@ import org.junit.Assert.assertTrue
 import org.junit.Assert.assertFalse
 
 class MediaCodecSupportTest {
+    @Test fun wireFormatDoesNotGuessAnnexBFromAOneByteLength() {
+        val bytes = byteArrayOf(0, 0, 0, 1, 9, 0, 0, 0, 2, 0x65, 1)
+        assertArrayEquals(byteArrayOf(0, 0, 0, 1, 9, 0, 0, 0, 1, 0x65, 1),
+            MediaCodecSupport.toAnnexB(bytes, allowAnnexB = false))
+    }
+
+    @Test fun invalidLengthsRejectWholeAccessUnitForEverySupportedPrefixSize() {
+        for (lengthSize in listOf(1, 2, 4)) {
+            val prefix = ByteArray(lengthSize).apply { this[lastIndex] = 2 }
+            val valid = prefix + byteArrayOf(0x65, 1)
+            assertEquals(0, MediaCodecSupport.toAnnexB(valid + prefix + byteArrayOf(0x41), lengthSize, false).size)
+            assertEquals(0, MediaCodecSupport.toAnnexB(ByteArray(lengthSize), lengthSize, false).size)
+        }
+        assertEquals(0, MediaCodecSupport.toAnnexB(byteArrayOf(-1, -1, -1, -1, 0x65), allowAnnexB = false).size)
+        assertEquals(0, MediaCodecSupport.toAnnexB(byteArrayOf(0, 0, 2, 0x65, 1), 3, false).size)
+    }
+
+    @Test fun decoderAcceptsAlreadyConvertedAnnexBWithoutChangingItsBytes() {
+        for (prefix in listOf(byteArrayOf(0, 0, 1), byteArrayOf(0, 0, 0, 1))) {
+            val bytes = prefix + byteArrayOf(0x65, 1)
+            assertArrayEquals(bytes, MediaCodecSupport.toAnnexB(bytes))
+        }
+    }
+
     @Test fun truncatedAccessUnitIsRejectedInsteadOfSubmittingItsValidPrefix() {
         assertEquals(0, MediaCodecSupport.toAnnexB(byteArrayOf(0, 0, 0, 2, 0x41, 1, 0, 0, 0, 9, 0x41)).size)
         assertEquals(0, MediaCodecSupport.toAnnexB(byteArrayOf(0, 0, 0, 2, 0x41, 1, 0)).size)
@@ -63,6 +87,26 @@ class MediaCodecSupportTest {
         assertEquals(0, MediaCodecSupport.hevcCodecSpecificData(truncated).size)
     }
 
+    @Test fun incompleteHevcParameterSetsAreRejected() {
+        assertEquals(0, MediaCodecSupport.hevcCodecSpecificData(hevcRecord(byteArrayOf(0x40, 1))).size)
+    }
+
+    @Test fun hevcParameterSetsAreOrderedAndSeiIsPreserved() {
+        val vps = byteArrayOf(0x40, 1)
+        val sps = byteArrayOf(0x42, 1, 2)
+        val pps = byteArrayOf(0x44, 1)
+        val sei = byteArrayOf(0x4e, 1, 2)
+        val start = byteArrayOf(0, 0, 0, 1)
+        assertArrayEquals(start + vps + start + sps + start + pps + start + sei,
+            MediaCodecSupport.hevcCodecSpecificData(hevcRecord(pps, sei, sps, vps)))
+    }
+
+    @Test fun hevcNalHeadersMustMatchTheirArrayTypeAndHaveATemporalId() {
+        val record = hevcRecord(byteArrayOf(0x40, 1), byteArrayOf(0x42, 1), byteArrayOf(0x44, 1))
+        assertEquals(0, MediaCodecSupport.hevcCodecSpecificData(record.copyOf().apply { this[29] = 0 }).size)
+        assertEquals(0, MediaCodecSupport.hevcCodecSpecificData(record.copyOf().apply { this[28] = 0x42 }).size)
+    }
+
     private fun hevcRecord(vararg parameterSets: ByteArray): ByteArray {
         var size = 23
         parameterSets.forEach { size += 5 + it.size }
@@ -72,7 +116,8 @@ class MediaCodecSupportTest {
         record[22] = parameterSets.size.toByte()
         var cursor = 23
         parameterSets.forEachIndexed { index, parameterSet ->
-            record[cursor++] = (32 + index).toByte()
+            record[cursor++] = if (parameterSet.isEmpty()) (32 + index).toByte()
+                else ((parameterSet[0].toInt() ushr 1) and 0x3f).toByte()
             record[cursor++] = 0
             record[cursor++] = 1
             record[cursor++] = (parameterSet.size ushr 8).toByte()

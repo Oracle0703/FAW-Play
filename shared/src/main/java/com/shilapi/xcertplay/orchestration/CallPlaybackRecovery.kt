@@ -15,6 +15,8 @@ internal object CallPlaybackRecovery {
     private val states = WeakHashMap<AirPlaySession, CallPlaybackResumeState>()
     private val main = Handler(Looper.getMainLooper())
 
+    @Synchronized fun cancel(session: AirPlaySession) { states[session]?.cancel() }
+
     @JvmStatic
     @Synchronized
     fun onPlayback(session: AirPlaySession?, update: CarPlayNowPlaying) {
@@ -37,7 +39,7 @@ internal object CallPlaybackRecovery {
                 if (current.isClosed() || current.activeAirPlaySessionToken() !== token ||
                     AirPlayPhoneState.active(peer) != false || states[peer] !== state ||
                     !state.consume(ticket)) return@synchronized
-                val sent = current.sendMediaButton(CarPlayMediaButton.PLAY)
+                val sent = current.resumeMediaAutomatically()
                 peer.logDebug("Audio: post-call music resume requested=$sent")
             }
         }, 1_200L)

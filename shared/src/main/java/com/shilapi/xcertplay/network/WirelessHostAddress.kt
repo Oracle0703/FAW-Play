@@ -17,7 +17,7 @@ internal fun wirelessHostAddress(addresses: List<InetAddress>, interfaceIndex: I
     }
 }
 
-/** Station LAN discovery must cover IPv4 multicast as well as scoped link-local IPv6. */
+/** Interface discovery covers IPv4 multicast and scoped link-local IPv6, with IPv4 primary. */
 internal fun existingWifiHostAddresses(addresses: List<InetAddress>, interfaceIndex: Int): List<InetAddress> {
     val ipv4 = addresses.firstOrNull {
         it is Inet4Address && !it.isLoopbackAddress && !it.isLinkLocalAddress &&

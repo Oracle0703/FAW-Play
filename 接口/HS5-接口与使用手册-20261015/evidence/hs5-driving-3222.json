@@ -1,0 +1,348 @@
+{
+  "firmware": "3222",
+  "source": "work/update-package-20261009/format-audit/QisiAdapterService/bytecode.dis.txt",
+  "evidenceType": "static-recovered-CompactDex; not a live-car validation",
+  "module": 15,
+  "descriptor": "ltd.qisi.adapterproxy.ICarVehicleStateManager",
+  "listenerDescriptor": "ltd.qisi.adapterproxy.listener.IVehicleCarStateChangedListener",
+  "getters": [
+    {
+      "field": "SPEED_RAW",
+      "transaction": 7,
+      "indices": [],
+      "originalLine": 1926263,
+      "signature": "virtual_method #52664: getCarSpeed ()I",
+      "operations": [
+        "8221de: 1273                                   |000f: const/4 v3, #int 7 // #7",
+        "[new] 82221e: 6e10 9601 0100                         |002f: invoke-virtual {v1}, Landroid/os/Parcel;.readInt:()I // method@0196"
+      ]
+    },
+    {
+      "field": "GEAR_RAW",
+      "transaction": 6,
+      "indices": [],
+      "originalLine": 1927513,
+      "signature": "virtual_method #52692: getSensorTypeGear ()I",
+      "operations": [
+        "8230da: 1263                                   |000f: const/4 v3, #int 6 // #6",
+        "[new] 82311a: 6e10 9601 0100                         |002f: invoke-virtual {v1}, Landroid/os/Parcel;.readInt:()I // method@0196"
+      ]
+    },
+    {
+      "field": "FUEL_RAW",
+      "transaction": 31,
+      "indices": [],
+      "originalLine": 1927327,
+      "signature": "virtual_method #52688: getRemainFuel ()I",
+      "operations": [
+        "822e5a: 1303 1f00                              |000f: const/16 v3, #int 31 // #1f",
+        "[new] 822e9c: 6e10 9601 0100                         |0030: invoke-virtual {v1}, Landroid/os/Parcel;.readInt:()I // method@0196"
+      ]
+    },
+    {
+      "field": "LOW_FUEL",
+      "transaction": 58,
+      "indices": [],
+      "originalLine": 1926769,
+      "signature": "virtual_method #52675: getFuelLevelWarning ()I",
+      "operations": [
+        "82281a: 1303 3a00                              |000f: const/16 v3, #int 58 // #3a",
+        "[new] 82285c: 6e10 9601 0100                         |0030: invoke-virtual {v1}, Landroid/os/Parcel;.readInt:()I // method@0196"
+      ]
+    },
+    {
+      "field": "RANGE_KM",
+      "transaction": 2,
+      "indices": [],
+      "originalLine": 1927373,
+      "signature": "virtual_method #52689: getRemainMileage ()I",
+      "operations": [
+        "822efa: 1223                                   |000f: const/4 v3, #int 2 // #2",
+        "[new] 822f3a: 6e10 9601 0100                         |002f: invoke-virtual {v1}, Landroid/os/Parcel;.readInt:()I // method@0196"
+      ]
+    },
+    {
+      "field": "ODOMETER_KM",
+      "transaction": 24,
+      "indices": [],
+      "originalLine": 1927885,
+      "signature": "virtual_method #52700: getTotalMileage ()I",
+      "operations": [
+        "8235de: 1303 1800                              |000f: const/16 v3, #int 24 // #18",
+        "[new] 823620: 6e10 9601 0100                         |0030: invoke-virtual {v1}, Landroid/os/Parcel;.readInt:()I // method@0196"
+      ]
+    },
+    {
+      "field": "AVERAGE_FUEL_CONSUMPTION_RAW",
+      "transaction": 59,
+      "indices": [],
+      "originalLine": 1925755,
+      "signature": "virtual_method #52653: getAverageFuelConsumptionFloat ()F",
+      "operations": [
+        "8217b6: 1303 3b00                              |000f: const/16 v3, #int 59 // #3b",
+        "[new] 8217f8: 6e10 9401 0100                         |0030: invoke-virtual {v1}, Landroid/os/Parcel;.readFloat:()F // method@0194"
+      ]
+    },
+    {
+      "field": "DOOR_FL/FR/RL/RR",
+      "transaction": 5,
+      "indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "originalLine": 1925985,
+      "signature": "virtual_method #52658: getCarDoorState (I)I",
+      "operations": [
+        "[new] 821e1e: 6e20 a201 6000                         |000d: invoke-virtual {v0, v6}, Landroid/os/Parcel;.writeInt:(I)V // method@01a2",
+        "821e28: 1253                                   |0012: const/4 v3, #int 5 // #5",
+        "[new] 821e68: 6e10 9601 0100                         |0032: invoke-virtual {v1}, Landroid/os/Parcel;.readInt:()I // method@0196"
+      ]
+    },
+    {
+      "field": "TRUNK",
+      "transaction": 28,
+      "indices": [],
+      "originalLine": 1927931,
+      "signature": "virtual_method #52701: getTrunkLidStatus ()I",
+      "operations": [
+        "82367e: 1303 1c00                              |000f: const/16 v3, #int 28 // #1c",
+        "[new] 8236c0: 6e10 9601 0100                         |0030: invoke-virtual {v1}, Landroid/os/Parcel;.readInt:()I // method@0196"
+      ]
+    },
+    {
+      "field": "POSITION_LIGHT",
+      "transaction": 19,
+      "indices": [],
+      "originalLine": 1927235,
+      "signature": "virtual_method #52686: getPositionLightStatus ()I",
+      "operations": [
+        "822d1a: 1303 1300                              |000f: const/16 v3, #int 19 // #13",
+        "[new] 822d5c: 6e10 9601 0100                         |0030: invoke-virtual {v1}, Landroid/os/Parcel;.readInt:()I // method@0196"
+      ]
+    },
+    {
+      "field": "TIRE_PRESSURE_RAW_FL/FR/RL/RR",
+      "transaction": 26,
+      "indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "originalLine": 1927791,
+      "signature": "virtual_method #52698: getTirePressureStatus (I)I",
+      "operations": [
+        "[new] 823496: 6e20 a201 6000                         |000d: invoke-virtual {v0, v6}, Landroid/os/Parcel;.writeInt:(I)V // method@01a2",
+        "8234a0: 1303 1a00                              |0012: const/16 v3, #int 26 // #1a",
+        "[new] 8234e2: 6e10 9601 0100                         |0033: invoke-virtual {v1}, Landroid/os/Parcel;.readInt:()I // method@0196"
+      ]
+    }
+  ],
+  "subscription": {
+    "registerTransaction": 42,
+    "unregisterTransaction": 43,
+    "payload": "one strong Binder, no package string",
+    "registerEvidence": {
+      "originalLine": 1928163,
+      "signature": "virtual_method #52706: registerCarStateChangedListener (Lltd/qisi/adapterproxy/listener/IVehicleCarStateChangedListener;)V",
+      "operations": [
+        "[new] 82457a: 6e20 ad01 2000                         |0015: invoke-virtual {v0, v2}, Landroid/os/Parcel;.writeStrongBinder:(Landroid/os/IBinder;)V // method@01ad",
+        "824584: 1303 2a00                              |001a: const/16 v3, #int 42 // #2a"
+      ]
+    },
+    "unregisterEvidence": {
+      "originalLine": 1929163,
+      "signature": "virtual_method #52726: unregisterCarStateChangedListener (Lltd/qisi/adapterproxy/listener/IVehicleCarStateChangedListener;)V",
+      "operations": [
+        "[new] 8248d2: 6e20 ad01 2000                         |0015: invoke-virtual {v0, v2}, Landroid/os/Parcel;.writeStrongBinder:(Landroid/os/IBinder;)V // method@01ad",
+        "8248dc: 1303 2b00                              |001a: const/16 v3, #int 43 // #2b"
+      ]
+    }
+  },
+  "consumedCallbacks": [
+    {
+      "transaction": 8,
+      "payload": "int position, int state",
+      "originalLine": 1965920,
+      "signature": "virtual_method #58882: onCarDoorPosState (II)V",
+      "operations": [
+        "[new] 86e422: 6e20 a201 6000                         |0009: invoke-virtual {v0, v6}, Landroid/os/Parcel;.writeInt:(I)V // method@01a2",
+        "[new] 86e428: 6e20 a201 7000                         |000c: invoke-virtual {v0, v7}, Landroid/os/Parcel;.writeInt:(I)V // method@01a2",
+        "      86e436: 1203                                   |0013: const/4 v3, #int 0 // #0",
+        "      86e438: 1214                                   |0014: const/4 v4, #int 1 // #1",
+        "      86e43a: 7254 7e01 2130                         |0015: invoke-interface {v1, v2, v0, v3, v4}, Landroid/os/IBinder;.transact:(ILandroid/os/Parcel;Landroid/os/Parcel;I)Z // method@017e"
+      ],
+      "transactOriginalLine": 1965938,
+      "reply": "null",
+      "flags": 1,
+      "argumentRegisters": [
+        "v1",
+        "v2",
+        "v0",
+        "v3",
+        "v4"
+      ]
+    },
+    {
+      "transaction": 10,
+      "payload": "int state",
+      "originalLine": 1966072,
+      "signature": "virtual_method #58886: onCarSpeedChange (I)V",
+      "operations": [
+        "[new] 86e602: 6e20 a201 6000                         |0009: invoke-virtual {v0, v6}, Landroid/os/Parcel;.writeInt:(I)V // method@01a2",
+        "      86e610: 1203                                   |0010: const/4 v3, #int 0 // #0",
+        "      86e612: 1214                                   |0011: const/4 v4, #int 1 // #1",
+        "      86e614: 7254 7e01 2130                         |0012: invoke-interface {v1, v2, v0, v3, v4}, Landroid/os/IBinder;.transact:(ILandroid/os/Parcel;Landroid/os/Parcel;I)Z // method@017e"
+      ],
+      "transactOriginalLine": 1966088,
+      "reply": "null",
+      "flags": 1,
+      "argumentRegisters": [
+        "v1",
+        "v2",
+        "v0",
+        "v3",
+        "v4"
+      ]
+    },
+    {
+      "transaction": 11,
+      "payload": "int state",
+      "originalLine": 1965959,
+      "signature": "virtual_method #58883: onCarGearSelection (I)V",
+      "operations": [
+        "[new] 86e49e: 6e20 a201 6000                         |0009: invoke-virtual {v0, v6}, Landroid/os/Parcel;.writeInt:(I)V // method@01a2",
+        "      86e4ac: 1203                                   |0010: const/4 v3, #int 0 // #0",
+        "      86e4ae: 1214                                   |0011: const/4 v4, #int 1 // #1",
+        "      86e4b0: 7254 7e01 2130                         |0012: invoke-interface {v1, v2, v0, v3, v4}, Landroid/os/IBinder;.transact:(ILandroid/os/Parcel;Landroid/os/Parcel;I)Z // method@017e"
+      ],
+      "transactOriginalLine": 1965975,
+      "reply": "null",
+      "flags": 1,
+      "argumentRegisters": [
+        "v1",
+        "v2",
+        "v0",
+        "v3",
+        "v4"
+      ]
+    },
+    {
+      "transaction": 13,
+      "payload": "int state",
+      "originalLine": 1966805,
+      "signature": "virtual_method #58905: onPositionLight (I)V",
+      "operations": [
+        "[new] 86eef2: 6e20 a201 6000                         |0009: invoke-virtual {v0, v6}, Landroid/os/Parcel;.writeInt:(I)V // method@01a2",
+        "      86ef00: 1203                                   |0010: const/4 v3, #int 0 // #0",
+        "      86ef02: 1214                                   |0011: const/4 v4, #int 1 // #1",
+        "      86ef04: 7254 7e01 2130                         |0012: invoke-interface {v1, v2, v0, v3, v4}, Landroid/os/IBinder;.transact:(ILandroid/os/Parcel;Landroid/os/Parcel;I)Z // method@017e"
+      ],
+      "transactOriginalLine": 1966821,
+      "reply": "null",
+      "flags": 1,
+      "argumentRegisters": [
+        "v1",
+        "v2",
+        "v0",
+        "v3",
+        "v4"
+      ]
+    },
+    {
+      "transaction": 29,
+      "payload": "int state",
+      "originalLine": 1966618,
+      "signature": "virtual_method #58900: onFuelLevelWarning (I)V",
+      "operations": [
+        "[new] 86eca6: 6e20 a201 6000                         |0009: invoke-virtual {v0, v6}, Landroid/os/Parcel;.writeInt:(I)V // method@01a2",
+        "      86ecb4: 1203                                   |0010: const/4 v3, #int 0 // #0",
+        "      86ecb6: 1214                                   |0011: const/4 v4, #int 1 // #1",
+        "      86ecb8: 7254 7e01 2130                         |0012: invoke-interface {v1, v2, v0, v3, v4}, Landroid/os/IBinder;.transact:(ILandroid/os/Parcel;Landroid/os/Parcel;I)Z // method@017e"
+      ],
+      "transactOriginalLine": 1966634,
+      "reply": "null",
+      "flags": 1,
+      "argumentRegisters": [
+        "v1",
+        "v2",
+        "v0",
+        "v3",
+        "v4"
+      ]
+    },
+    {
+      "transaction": 30,
+      "payload": "int state",
+      "originalLine": 1966879,
+      "signature": "virtual_method #58907: onRemainFuel (I)V",
+      "operations": [
+        "[new] 86efda: 6e20 a201 6000                         |0009: invoke-virtual {v0, v6}, Landroid/os/Parcel;.writeInt:(I)V // method@01a2",
+        "      86efe8: 1203                                   |0010: const/4 v3, #int 0 // #0",
+        "      86efea: 1214                                   |0011: const/4 v4, #int 1 // #1",
+        "      86efec: 7254 7e01 2130                         |0012: invoke-interface {v1, v2, v0, v3, v4}, Landroid/os/IBinder;.transact:(ILandroid/os/Parcel;Landroid/os/Parcel;I)Z // method@017e"
+      ],
+      "transactOriginalLine": 1966895,
+      "reply": "null",
+      "flags": 1,
+      "argumentRegisters": [
+        "v1",
+        "v2",
+        "v0",
+        "v3",
+        "v4"
+      ]
+    },
+    {
+      "transaction": 31,
+      "payload": "int state",
+      "originalLine": 1966916,
+      "signature": "virtual_method #58908: onRemainMileage (I)V",
+      "operations": [
+        "[new] 86f04e: 6e20 a201 6000                         |0009: invoke-virtual {v0, v6}, Landroid/os/Parcel;.writeInt:(I)V // method@01a2",
+        "      86f05c: 1203                                   |0010: const/4 v3, #int 0 // #0",
+        "      86f05e: 1214                                   |0011: const/4 v4, #int 1 // #1",
+        "      86f060: 7254 7e01 2130                         |0012: invoke-interface {v1, v2, v0, v3, v4}, Landroid/os/IBinder;.transact:(ILandroid/os/Parcel;Landroid/os/Parcel;I)Z // method@017e"
+      ],
+      "transactOriginalLine": 1966932,
+      "reply": "null",
+      "flags": 1,
+      "argumentRegisters": [
+        "v1",
+        "v2",
+        "v0",
+        "v3",
+        "v4"
+      ]
+    }
+  ],
+  "businessEvidence": [
+    {
+      "class": "ltd.qisi.adapterproxy.car.QISICarVehicleStateManager",
+      "firstLine": 2158482,
+      "lastLine": 2159483,
+      "note": "getAverageFuelConsumptionFloat multiplies by 0.1; getTotalMileage multiplies by 0.1 then returns int; getTirePressureStatus multiplies by 2.75 then returns int. These are applied by the OEM service, never applied again by the client."
+    },
+    {
+      "class": "ltd.qisi.adapterproxy.car.QISICarVehicleStateManager$2",
+      "firstLine": 2218703,
+      "lastLine": 2219217,
+      "note": "Rule_DoorSt_FL/FR/RL/RR maps to callback index 0/1/2/3. LeverInfo, VehicleSpeed, PositionLightSt, FuelLevelWarning, FuelValue, EnduranceMileageValue are forwarded to confirmed callbacks. Raw speed/fuel/range invalid markers are replaced with OEM error -65533."
+    },
+    {
+      "class": "ltd.qisi.adapterproxy.canadapter.manager.AbsCanSignalAdapterManager",
+      "firstLine": 1936653,
+      "note": "parseGetMsgRetForInt returns -1 for missing rule and -65534 for timeout; these and any negative value are rejected."
+    }
+  ],
+  "unknowns": [
+    "Speed physical unit has not been verified: exposed as SPEED_RAW, not km/h or m/s.",
+    "Fuel, fuel-consumption and pressure physical units remain unverified. RAW denotes OEM-returned values, not raw bus bits.",
+    "Trunk, odometer, fuel consumption and tire-pressure callback signatures exist, but their full 3222 actual event-producing path is not confirmed here; polling getters remain the source.",
+    "Interface availability, permissions and vehicle values have not been validated on the current physical car. No RPM getter is added."
+  ],
+  "runtimeStatus": "not run by this subtask; root agent owns unified build/tests",
+  "callbackFlagsInterpretation": "IBinder.transact argument registers are receiver/code/data/reply/flags. All consumed3222 callbacks pass null reply and fifth argument1=FLAG_ONEWAY. Do not mistake the zero constant for reply as the flags argument."
+}

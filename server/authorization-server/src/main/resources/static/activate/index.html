@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Autunn Play · 车机激活</title>
+  <link rel="stylesheet" href="activate.css">
+  <script src="/assets/api.js?v=autunn-20261017" defer></script>
+  <script src="activate.js?v=autunn-20261017" defer></script>
+</head>
+<body>
+<main>
+  <p class="brand">AUTUNN PLAY</p>
+  <h1>激活这台车机</h1>
+  <p class="intro">请在停车后操作，核对车机上的设备识别码，然后输入提供方发给你的兑换码。</p>
+  <section aria-label="车机信息">
+    <span>设备名称</span><strong id="device-name">正在读取…</strong>
+    <span>设备识别码</span><strong id="fingerprint">—</strong>
+  </section>
+  <form id="activation-form" autocomplete="off">
+    <label for="code">兑换码</label>
+    <input id="code" name="activation-code" type="password" maxlength="200" autocomplete="off" autocapitalize="off" spellcheck="false" required disabled placeholder="输入完整兑换码">
+    <label class="confirm"><input id="confirmed" type="checkbox" required disabled> 我已核对，正在激活的是我的车机</label>
+    <button id="submit" type="submit" disabled>确认激活</button>
+  </form>
+  <p id="status" role="status" aria-live="polite">正在核对二维码…</p>
+  <section class="purchase" aria-labelledby="purchase-title">
+    <h2 id="purchase-title">还没有授权码？</h2>
+    <img src="purchase-qr.png" width="192" height="192" alt="购买授权码的二维码">
+    <a href="https://wzyp.cn/item/lwbqa1" target="_blank" rel="noopener noreferrer">购买授权码</a>
+    <p class="note">购买后返回此页面输入授权码。授权仅用于 HUD、仪表地图和方向盘键控；基础 CarPlay 可直接使用。</p>
+  </section>
+  <p class="note">无需注册账号或邮箱。授权绑定车机，手机仅用于确认；重装、清除数据或更换车机，请联系提供方迁移授权。</p>
+  <noscript>请允许浏览器运行 JavaScript 后，重新扫描车机二维码。</noscript>
+</main>
+</body>
+</html>

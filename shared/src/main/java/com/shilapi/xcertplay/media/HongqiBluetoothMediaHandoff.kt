@@ -23,6 +23,7 @@ internal class HongqiBluetoothMediaHandoff(context: Context) {
     private val journal = this.context.getSharedPreferences(JOURNAL, Context.MODE_PRIVATE)
     private val main = Handler(Looper.getMainLooper())
     private var session: Session? = null
+    @Volatile private var factoryRestoreAllowed = true
 
     fun start(device: BluetoothDevice, isCurrent: () -> Boolean) {
         if (!HongqiNavigation.supported()) return
@@ -33,7 +34,10 @@ internal class HongqiBluetoothMediaHandoff(context: Context) {
         }
     }
 
-    fun stop() {
+    fun stop(restoreFactoryMedia: Boolean = true) {
+        // Monotonic for this controller: an already queued normal cleanup must not reconnect
+        // A2DP after a later vehicle-stop request supersedes it.
+        if (!restoreFactoryMedia) factoryRestoreAllowed = false
         main.post {
             session?.close()
             session = null
@@ -110,11 +114,14 @@ internal class HongqiBluetoothMediaHandoff(context: Context) {
             }
             proxy?.let { connected ->
                 try {
-                    if (lease.restore(connected)) Log.i(TAG, "same-phone A2DP media returned to factory")
+                    if (factoryRestoreAllowed) {
+                        if (lease.restore(connected)) Log.i(TAG, "same-phone A2DP media returned to factory")
+                    } else lease.abandon()
                 } catch (error: Exception) {
                     Log.w(TAG, "A2DP media restore failed: ${error.javaClass.simpleName}")
                 }
             }
+            if (!factoryRestoreAllowed) lease.abandon()
             proxy = null
             if (bound) {
                 bound = false
@@ -183,6 +190,9 @@ internal class HongqiBluetoothMediaHandoff(context: Context) {
             return changed
         }
 
+        /** A real vehicle stop must not actively reconnect factory media now or on restart. */
+        fun abandon() = remember(false)
+
         private fun remember(value: Boolean) {
             disconnected = value
             val editor = journal?.edit() ?: return
@@ -194,7 +204,7 @@ internal class HongqiBluetoothMediaHandoff(context: Context) {
     }
 
     private companion object {
-        const val TAG = "FAW-BluetoothMedia"
+        const val TAG = "Autunn-BluetoothMedia"
         const val JOURNAL = "faw_bluetooth_media_handoff"
         const val SINK_DESCRIPTOR = "android.bluetooth.IBluetoothA2dpSink"
         val SINK_COMPONENT = ComponentName("com.android.bluetooth", "com.android.bluetooth.a2dpsink.A2dpSinkService")

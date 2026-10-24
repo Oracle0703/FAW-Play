@@ -51,7 +51,7 @@ class Iap2WiredControlClient(
         deadlineNanos.authenticated()
 
         send(powerSourceUpdate(availableCurrentMilliAmps), deadlineNanos)
-        for (subscription in subscriptions()) send(subscription, deadlineNanos)
+        for (subscription in subscriptions(identified.routeGuidanceEnabled)) send(subscription, deadlineNanos)
         stage = Iap2WiredControlStage.SUBSCRIBED
         onProgress("iap2 power/subscriptions sent")
 
@@ -138,8 +138,9 @@ class Iap2WiredControlClient(
         fun powerSourceUpdate(availableCurrentMilliAmps: Int): Iap2Frame =
             Iap2ControlMessages.powerSourceUpdate(availableCurrentMilliAmps, charging = true)
 
-        /** Exact five subscription requests emitted by LIVI's wired bring-up. */
-        fun subscriptions(): List<Iap2Frame> = Iap2ControlMessages.subscriptions()
+        /** Keep subscriptions consistent with the navigation component declared on this link. */
+        fun subscriptions(routeGuidanceEnabled: Boolean = true): List<Iap2Frame> =
+            Iap2ControlMessages.subscriptions(routeGuidanceEnabled)
 
         /** Builds the wired-only CarPlayStartSession message; no NCM or AirPlay socket is opened. */
         fun carPlayStartSession(endpoint: Iap2WiredCarPlayEndpoint): Iap2Frame =

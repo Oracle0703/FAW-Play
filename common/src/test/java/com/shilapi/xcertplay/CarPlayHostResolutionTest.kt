@@ -45,7 +45,7 @@ class CarPlayHostResolutionTest {
 
     @Test fun selectedFrameRatesReachTheAdvertisedDisplayWithoutChangingItsCanvas() {
         for (fps in listOf(30, 50, 60)) {
-            FawSystemParameters.saveFps(activity, fps)
+            AutunnSystemParameters.saveFps(activity, fps)
             invoke("loadPersistedSettings")
             val display = config(1920, 720).main
             assertEquals(fps, display.fps)

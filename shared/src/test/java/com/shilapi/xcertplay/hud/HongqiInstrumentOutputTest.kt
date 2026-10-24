@@ -215,6 +215,7 @@ class HongqiInstrumentOutputTest {
 
     private fun set(name: String, value: Any?) {
         HongqiNavigation::class.java.getDeclaredField(name).apply { isAccessible = true }.set(null, value)
+        if (name == "guidance") ReflectionHelpers.setStaticField(HongqiNavigation::class.java, "routeActive", value != null)
     }
 
     private fun get(name: String): Any? =

@@ -1,0 +1,10 @@
+{
+  "date": "2026-10-15",
+  "archive": "HS5-接口与使用手册-20261015.zip",
+  "sha256": "77c8d90242607c2e786303c36e1b1dc55f1d1619186bf56a028c52d1cb31ebe3",
+  "bytes": 1836403,
+  "files": 54,
+  "zipCRC": "pass",
+  "allArchivedFileBytesMatch": "pass",
+  "checksums": "per-file SHA256SUMS.txt inside archive"
+}

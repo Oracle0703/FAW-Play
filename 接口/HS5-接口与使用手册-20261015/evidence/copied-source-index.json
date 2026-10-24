@@ -1,0 +1,92 @@
+[
+  {
+    "source": "xcertplay-local-auth/shared/src/main/java/com/shilapi/xcertplay/vehicle/Hs5VehicleBinderRpc.kt",
+    "copy": "examples/xcertplay-vehicle/Hs5VehicleBinderRpc.kt",
+    "sha256": "ed3809c4c67b1da860b764fb849a5d66b07e3d29e8371e286a0a39df21487f57"
+  },
+  {
+    "source": "xcertplay-local-auth/shared/src/main/java/com/shilapi/xcertplay/vehicle/Hs5VehicleClient.kt",
+    "copy": "examples/xcertplay-vehicle/Hs5VehicleClient.kt",
+    "sha256": "fbf8e2561bec33284d74b302c56213a905563ecbc5af8eced49d88dc4ba0f6f4"
+  },
+  {
+    "source": "xcertplay-local-auth/shared/src/main/java/com/shilapi/xcertplay/vehicle/Hs5VehicleData.kt",
+    "copy": "examples/xcertplay-vehicle/Hs5VehicleData.kt",
+    "sha256": "de6740f70e1c4a4e841829d33a6b96998bac17306f80ee5c51632a70cad7f45b"
+  },
+  {
+    "source": "xcertplay-local-auth/shared/src/main/java/com/shilapi/xcertplay/vehicle/Hs5VehicleState.kt",
+    "copy": "examples/xcertplay-vehicle/Hs5VehicleState.kt",
+    "sha256": "f00c4d1086e36cb718f6c6c145e80608b4f05264862feb3728e0ee364eb3e165"
+  },
+  {
+    "source": "xcertplay-local-auth/shared/src/main/java/com/shilapi/xcertplay/vehicle/Hs5ComfortProtocol.kt",
+    "copy": "examples/xcertplay-vehicle/Hs5ComfortProtocol.kt",
+    "sha256": "179da9646ca9c6e1e59ae404ba9e8d28c2f376f485bda23ac7e27731f0d3868c"
+  },
+  {
+    "source": "xcertplay-local-auth/shared/src/main/java/com/shilapi/xcertplay/vehicle/Hs5DrivingProtocol.kt",
+    "copy": "examples/xcertplay-vehicle/Hs5DrivingProtocol.kt",
+    "sha256": "85207ddc6ed19fe50cc5705639939337d111de698ed00f77af0eed64fb85667a"
+  },
+  {
+    "source": "FAW-Play/shared/src/main/java/com/shilapi/xcertplay/hud/HongqiNavigation.java",
+    "copy": "examples/diplay-navigation/HongqiNavigation.java",
+    "sha256": "a9c69d5de37814f9f4727742b030327b4cc9802b2b59d8a2fcf3afc21132eff1"
+  },
+  {
+    "source": "FAW-Play/shared/src/main/java/com/shilapi/xcertplay/hud/HongqiInstrumentGuidance.java",
+    "copy": "examples/diplay-navigation/HongqiInstrumentGuidance.java",
+    "sha256": "ec92b933397eb121b078c5206a46349a99bc9eedce16c3d538b44f2b1affc515"
+  },
+  {
+    "source": "FAW-Play/shared/src/main/java/com/shilapi/xcertplay/hud/HongqiNavigationExitListener.java",
+    "copy": "examples/diplay-navigation/HongqiNavigationExitListener.java",
+    "sha256": "54246130ae4e348f92fd41f0c7c6f30f5400cc0ce47c7229b23b4771e15ae36e"
+  },
+  {
+    "source": "FAW-Play/shared/src/main/java/com/shilapi/xcertplay/hud/FawFactoryTurnCode.kt",
+    "copy": "examples/diplay-navigation/FawFactoryTurnCode.kt",
+    "sha256": "a4ebb69b8c599084214d750b25aefeb6f7d46c8395a21d441488f670c412d728"
+  },
+  {
+    "source": "FAW-Play/common/src/main/java/com/shilapi/xcertplay/HongqiWheelControls.java",
+    "copy": "examples/diplay-system/HongqiWheelControls.java",
+    "sha256": "1de514ba2ccd6d41193486b1bd84dc3f5547ae7686a6053efb0e1a760a6898f4"
+  },
+  {
+    "source": "FAW-Play/common/src/main/java/com/shilapi/xcertplay/FawVendorInstaller.kt",
+    "copy": "examples/diplay-system/FawVendorInstaller.kt",
+    "sha256": "20384c923d1bd4110517f1c22cae66f0539e72783a5fa63aea0eec9fa4641d96"
+  },
+  {
+    "source": "xcertplay-local-auth/docs/evidence/hs5-comfort-3222.json",
+    "copy": "evidence/hs5-comfort-3222.json",
+    "sha256": "0a9bdc0857c58b4ef98117e34dc7432b749f700e9933c784a96e8728ee66cbcb"
+  },
+  {
+    "source": "xcertplay-local-auth/docs/evidence/hs5-driving-3222.json",
+    "copy": "evidence/hs5-driving-3222.json",
+    "sha256": "2314ff1e6379f69152a0a10af8104bf1653158283f5b670b550adfdf5e3bf8ac"
+  },
+  {
+    "source": "xcertplay-local-auth/docs/evidence/hs5-comfort-ui-semantics-3222.json",
+    "copy": "evidence/hs5-comfort-ui-semantics-3222.json",
+    "sha256": "ea9d0210cf528bb79f13ceafb8cfe35e21b3e7cb65201fb65647056b5d152a60"
+  },
+  {
+    "source": "work/system-analysis-20261008/oem-apps/ViewControl/smali/classes/faw/system/viewservice/HVCtrlService.smali",
+    "copy": "evidence/excerpts/HVCtrlService.smali",
+    "sha256": "62cee7002b86a9ecf00d89ed175fb3590a07d4d030f2b2a877e41dfad2ac442b"
+  },
+  {
+    "source": "work/system-analysis-20261008/oem-apps/ViewControl/smali/classes/faw/system/viewservice/HVCtrlService$IncomingHandler.smali",
+    "copy": "evidence/excerpts/HVCtrlService$IncomingHandler.smali",
+    "sha256": "71c40a0c3039b5cf9a9a7a230e0400cfe8c6afec19957bf64e220206c507e051"
+  },
+  {
+    "source": "work/system-analysis-20261008/oem-apps/ViewControl/smali/classes/faw/system/viewservice/hardkeymanager/HardKeyManagerServer.smali",
+    "copy": "evidence/excerpts/HardKeyManagerServer.smali",
+    "sha256": "b1c61085a6434c61f38497aa01ab10b4acbc9dc1b0c418659f40a2e3ea945afb"
+  }
+]

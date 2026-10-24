@@ -1,0 +1,47 @@
+[
+  {
+    "source": "outputs/reports/current/红旗CarPlay接口清单核查-20261010.md",
+    "sha256": "bbfc9f9dd1c8151e62ef7ac9e872f7bb8d1ae97dc5883fa738e9b594a2446a53",
+    "included": false
+  },
+  {
+    "source": "outputs/reports/current/HS5-整体适配-车辆平台范围-20261009.md",
+    "sha256": "de60c6f862c301b8e3b8b31b89227a62272f939b0970de56a8e755ff48138f74",
+    "included": false
+  },
+  {
+    "source": "outputs/reports/current/HS5-整体适配-显示输入生命周期范围-20261009.md",
+    "sha256": "cbfd3bbbdaa433022986bd5d1c1984901e346804f09cca4905519eb92b7b3a0c",
+    "included": false
+  },
+  {
+    "source": "outputs/reports/current/HS5-整体适配-音频定位范围-20261009.md",
+    "sha256": "851e3cdbf3a4bfd599f3074107d47c6e2ac0c5ea8d96f865d6c9d0e763e1f718",
+    "included": false
+  },
+  {
+    "source": "outputs/reports/current/HS5-system-原厂投屏与界面服务解析-20261008.md",
+    "sha256": "371f11003eaf9ac8f8a310559434bbb91cd29ee286548150f86816007bef9d74",
+    "included": false
+  },
+  {
+    "source": "outputs/reports/current/FAW-Play-UPD2-厂商安装接口验证-20261010.md",
+    "sha256": "3c44a8e446c11b3ae89d964cc5100aec331e2d93eacd7f86fec7f02c7185cc29",
+    "included": false
+  },
+  {
+    "source": "outputs/reports/current/HS5-CarPlay残留与MFi硬件证据核查-20261014.md",
+    "sha256": "2f2d8c1aeaa684469df9f508939c691ba65f45a5b90108fdea935b87bcb32c86",
+    "included": false
+  },
+  {
+    "source": "xcertplay-local-auth/docs/HS5-VEHICLE-DATA-AND-CONTROLS.zh-CN.md",
+    "sha256": "e690ed5cb0f7dbe5e087d70971a8c6aa9d263ebf3b06457461a4a039096a0d9a",
+    "included": false
+  },
+  {
+    "source": "xcertplay-local-auth/docs/HS5-SYSTEM-INTEGRATION.zh-CN.md",
+    "sha256": "093a371acece02ede70f19023032b4e60328cb474ef97b71945323722b647116",
+    "included": false
+  }
+]

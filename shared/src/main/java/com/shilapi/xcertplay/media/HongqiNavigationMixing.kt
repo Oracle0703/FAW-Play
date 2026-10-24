@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 internal object HongqiNavigationMixing {
     private const val KEY = "mixing_down_media_volume"
     private val owners = Collections.newSetFromMap(IdentityHashMap<Any, Boolean>())
-    private val worker by lazy { Handler(HandlerThread("faw-navigation-mixing").apply { start() }.looper) }
+    private val worker by lazy { Handler(HandlerThread("autunn-navigation-mixing").apply { start() }.looper) }
     private val scheduled = AtomicBoolean()
     private var app: Context? = null
     private var report: (String) -> Unit = {}

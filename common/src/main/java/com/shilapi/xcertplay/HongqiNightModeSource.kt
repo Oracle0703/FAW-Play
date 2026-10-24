@@ -19,7 +19,7 @@ internal class HongqiNightModeSource(context: Context, private val onNight: (Boo
     private var session: Session? = null
 
     fun start() {
-        if (!com.shilapi.xcertplay.shared.BuildConfig.FAW_AUTOMATIC_APPEARANCE_ENABLED) return
+        if (!com.shilapi.xcertplay.shared.BuildConfig.AUTUNN_AUTOMATIC_APPEARANCE_ENABLED) return
         if (session != null || !HongqiWheelControls.supported(context)) return
         session = Session().also { it.bind() }
     }
@@ -30,7 +30,7 @@ internal class HongqiNightModeSource(context: Context, private val onNight: (Boo
     }
 
     private inner class Session : ServiceConnection {
-        private val thread = HandlerThread("faw-day-night").apply { start() }
+        private val thread = HandlerThread("autunn-day-night").apply { start() }
         private val worker = Handler(thread.looper)
         @Volatile private var closed = false
         private var bound = false
@@ -130,7 +130,7 @@ internal class HongqiNightModeSource(context: Context, private val onNight: (Boo
     }
 
     companion object {
-        private const val TAG = "FAW-DayNight"
+        private const val TAG = "Autunn-DayNight"
         private const val CLIENT = "ltd.qisi.adapterproxy.IVehicleRemoteClienter"
         private const val STATE = "ltd.qisi.adapterproxy.ICarVehicleStateManager"
         private const val VEHICLE_STATE_MODULE = 15

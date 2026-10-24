@@ -23,6 +23,28 @@ class VideoStatsTest {
         clock += 5_000_000_000
         val next = stats.logIfDue()!!
         assertTrue(next.contains("frameRenderedMaxGapMs=50")); assertTrue(next.contains("queueAgeMaxMs=0"))
-        assertTrue(next.contains("presentationEnds=surface_callback"))
+        assertTrue(next.contains("presentationEnds=codec_frame_rendered"))
     }
+    @Test fun longGapsAndZeroFrameWindowsRemainObservableWithPendingCodecOutput() {
+        var clock = 1L
+        val stats = VideoStats(label = " stream=111", nanoTime = { clock })
+        stats.onReceived(100)
+        stats.onCodecInput(1, clock)
+        clock += 5_000_000_000
+        val quiet = stats.logIfDue()!!
+        assertTrue(quiet.contains("outputPending=1"))
+        assertTrue(quiet.contains("outputPendingAgeMs=5000"))
+        assertTrue(quiet.contains("receiveIdleMs=5000"))
+        assertTrue(quiet.contains("gapClassification=unknown"))
+        clock += 5_000_000_000
+        assertNotNull(stats.logIfDue())
+        stats.onReceived(100)
+        stats.onCodecOutput(1)
+        clock += 5_000_000_000
+        val next = stats.logIfDue()!!
+        assertTrue(next.contains("maxGap=10000ms"))
+        assertTrue(next.contains("outputPending=0"))
+        assertTrue(next.contains("decodeMaxMs=10000"))
+    }
+
 }

@@ -13,49 +13,49 @@ class ClusterTurnOverlayExpiryTest {
     @Test fun silentRouteClearsThePublishedCardWithoutAnotherPhonePacket() = withRoute { route, advance, events ->
         advance(120_000_000_000L)
         assertNull(route.currentApple())
-        FawNavigationOutputs.refreshTurnOverlay()
+        AutunnNavigationOutputs.refreshTurnOverlay()
         assertNull(events.last())
         assertEquals(2, events.size)
-        FawNavigationOutputs.refreshTurnOverlay()
+        AutunnNavigationOutputs.refreshTurnOverlay()
         assertEquals(2, events.size)
     }
 
     @Test fun emptyManeuverListClearsTheCardAfterItsGracePeriod() = withRoute { route, advance, events ->
-        route.accept(FawHudRouteState.ROUTE_GUIDANCE_UPDATE, tlv(0x0d))
+        route.accept(AutunnHudRouteState.ROUTE_GUIDANCE_UPDATE, tlv(0x0d))
         advance(8_000_000_000L)
-        FawNavigationOutputs.refreshTurnOverlay()
+        AutunnNavigationOutputs.refreshTurnOverlay()
         assertNull(events.last())
-        route.accept(FawHudRouteState.ROUTE_GUIDANCE_UPDATE, tlv(0x0d, 0, 7))
-        FawNavigationOutputs.refreshTurnOverlay()
+        route.accept(AutunnHudRouteState.ROUTE_GUIDANCE_UPDATE, tlv(0x0d, 0, 7))
+        AutunnNavigationOutputs.refreshTurnOverlay()
         assertEquals(3, events.size)
         assertEquals(150, events.last()!!.distanceMeters)
     }
 
     @Test fun endingTheSessionClearsTheTurnCardImmediately() = withRoute { route, _, events ->
-        FawNavigationOutputs.endNow()
+        AutunnNavigationOutputs.endNow()
         assertNull(route.currentApple())
         assertNull(events.last())
         assertEquals(2, events.size)
     }
 
-    private fun withRoute(test: (FawHudRouteState, (Long) -> Unit, MutableList<ClusterTurnGuidance?>) -> Unit) {
+    private fun withRoute(test: (AutunnHudRouteState, (Long) -> Unit, MutableList<ClusterTurnGuidance?>) -> Unit) {
         var now = 0L
-        val field = FawNavigationOutputs::class.java.getDeclaredField("overlayRoute").apply { isAccessible = true }
-        val route = field.get(FawNavigationOutputs) as FawHudRouteState
-        val clock = FawHudRouteState::class.java.getDeclaredField("nanoTime").apply { isAccessible = true }
+        val field = AutunnNavigationOutputs::class.java.getDeclaredField("overlayRoute").apply { isAccessible = true }
+        val route = field.get(AutunnNavigationOutputs) as AutunnHudRouteState
+        val clock = AutunnHudRouteState::class.java.getDeclaredField("nanoTime").apply { isAccessible = true }
         val previousClock = clock.get(route)
         route.clear()
         clock.set(route, { now })
-        route.accept(FawHudRouteState.ROUTE_GUIDANCE_MANEUVER_UPDATE,
+        route.accept(AutunnHudRouteState.ROUTE_GUIDANCE_MANEUVER_UPDATE,
             tlv(0x01, 0, 7) + tlv(0x03, 1))
-        route.accept(FawHudRouteState.ROUTE_GUIDANCE_UPDATE,
+        route.accept(AutunnHudRouteState.ROUTE_GUIDANCE_UPDATE,
             tlv(0x01, 1) + tlv(0x0a, 0, 0, 0, 150) + tlv(0x0d, 0, 7))
         val events = mutableListOf<ClusterTurnGuidance?>()
         try {
-            FawNavigationOutputs.setTurnOverlayListener { events += it }
+            AutunnNavigationOutputs.setTurnOverlayListener { events += it }
             test(route, { now = it }, events)
         } finally {
-            FawNavigationOutputs.setTurnOverlayListener(null)
+            AutunnNavigationOutputs.setTurnOverlayListener(null)
             route.clear()
             clock.set(route, previousClock)
         }

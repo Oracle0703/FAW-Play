@@ -57,7 +57,7 @@ internal object SiriPlaybackRecovery {
                 if (current.isClosed() || current.activeAirPlaySessionToken() !== token ||
                     AirPlayPhoneState.active(peer) != false || AirPlaySpeechState.active(peer) != false ||
                     states[peer] !== state || !state.consume(ticket)) return@synchronized
-                val sent = current.sendMediaButton(CarPlayMediaButton.PLAY)
+                val sent = current.resumeMediaAutomatically()
                 peer.logDebug("Audio: post-Siri music resume requested=$sent")
             }
         }, RESUME_GRACE_MILLIS)

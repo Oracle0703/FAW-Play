@@ -44,7 +44,7 @@ class ClusterLayoutTuningTest {
     @Test fun manifestLimitsAdbInterfaceToTheTuningBuildAndPrivilegedSenders() {
         val info = app.packageManager.getReceiverInfo(ComponentName(app, ClusterLayoutReceiver::class.java),
             PackageManager.MATCH_DISABLED_COMPONENTS)
-        assertEquals(BuildConfig.FAW_CLUSTER_TUNING_ENABLED, info.enabled)
+        assertEquals(BuildConfig.AUTUNN_CLUSTER_TUNING_ENABLED, info.enabled)
         assertEquals("android.permission.DUMP", info.permission)
         assertTrue(info.exported)
     }
@@ -112,7 +112,7 @@ class ClusterLayoutTuningTest {
     }
 
     @Test @Config(sdk = [28]) fun invalidRequestsDoNotPartiallyOverwriteTheSavedLayout() {
-        assumeTrue(BuildConfig.FAW_CLUSTER_TUNING_ENABLED)
+        assumeTrue(BuildConfig.AUTUNN_CLUSTER_TUNING_ENABLED)
         val saved = ClusterLayoutTuning.Placement(100, 420, 75)
         ClusterLayoutTuning.save(app, ClusterLayoutTuning.Target.TBT, saved)
         for (bad in listOf(
@@ -133,7 +133,7 @@ class ClusterLayoutTuningTest {
     }
 
     @Test @Config(sdk = [28]) fun validAdbPayloadUpdatesTheSameStoreThatTheViewReads() {
-        assumeTrue(BuildConfig.FAW_CLUSTER_TUNING_ENABLED)
+        assumeTrue(BuildConfig.AUTUNN_CLUSTER_TUNING_ENABLED)
         val reply = execute(request("set").putExtra("target", "ete")
             .putExtra("x", 160).putExtra("y", 530).putExtra("scale", 110)
             .putExtra("width", 900).putExtra("height", 100)) as org.json.JSONObject
@@ -187,7 +187,7 @@ class ClusterLayoutTuningTest {
     }
 
     @Test @Config(sdk = [33]) fun unsupportedPlatformRemainsReadOnlyAndKeepsTheOriginalRendering() {
-        assumeTrue(BuildConfig.FAW_CLUSTER_TUNING_ENABLED)
+        assumeTrue(BuildConfig.AUTUNN_CLUSTER_TUNING_ENABLED)
         val reply = execute(request("get")) as org.json.JSONObject
         assertFalse(reply.getBoolean("supported"))
         val before = ClusterLayoutTuning.preferences(app).all

@@ -17,14 +17,19 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.LooperMode
+import org.robolectric.util.ReflectionHelpers
+import android.os.Build
+import com.shilapi.xcertplay.hud.AutunnNavigationOutputs
+import com.shilapi.xcertplay.hud.HongqiNavigation
+import com.shilapi.xcertplay.hud.ClusterTurnGuidance
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [29], manifest = Config.NONE)
 @LooperMode(LooperMode.Mode.PAUSED)
 class DashboardContentDeliveryTest {
-    private class Fixture : AutoCloseable {
+    private class Fixture(initialUrl: String = CarPlayClusterDisplay.Content.TURN_CARD.url) : AutoCloseable {
         val config = AirPlayConfig("test", "test", "", "1", AirPlayDisplayConfig(800, 480),
-            cluster = AirPlayDisplayConfig(1600, 600, initialUrl = CarPlayClusterDisplay.Content.TURN_CARD.url))
+            cluster = AirPlayDisplayConfig(1600, 600, initialUrl = initialUrl))
         val controller = CarPlayController(RuntimeEnvironment.getApplication(),
             CarPlayRuntimeConfig(mfiTarget = MfiTarget.LOCAL, identification = Iap2IdentificationConfig(
                 name = "test", modelIdentifier = "test", manufacturer = "test", serialNumber = "test",
@@ -38,7 +43,10 @@ class DashboardContentDeliveryTest {
                 override fun onScreen(session: AirPlaySession, type: Int, stream: Map<String, Any?>) = 1
             }).also {
                 phones += it
-                if (setup) setup(it)
+                if (setup) {
+                    setup(it)
+                    readyAfterSetup(it)
+                }
             }
         fun activate(phone: AirPlaySession) = set(controller, "activeSession", phone)
         fun record(phone: AirPlaySession) {
@@ -117,7 +125,7 @@ class DashboardContentDeliveryTest {
             val complete = Completion()
             f.controller.showDashboardContent(CarPlayClusterDisplay.MAP_URL, complete::accept)
             assertFalse(complete.await()) // Accepted by the executor, but there is no event channel.
-            assertEquals(CarPlayClusterDisplay.Content.TURN_CARD.url, phone.clusterUrl())
+            assertNull(phone.clusterUrl())
             assertNull(f.controller.dashboardMapRoute())
         }
     }
@@ -172,7 +180,7 @@ class DashboardContentDeliveryTest {
                 release.countDown()
                 assertFalse(complete.await())
                 assertEquals(0, event.writes)
-                assertEquals(CarPlayClusterDisplay.Content.TURN_CARD.url, phone.clusterUrl())
+                assertNull(phone.clusterUrl())
             } finally { release.countDown() }
         }
     }
@@ -186,7 +194,7 @@ class DashboardContentDeliveryTest {
             val complete = Completion()
             f.controller.showDashboardContent(CarPlayClusterDisplay.MAP_URL, complete::accept)
             assertFalse(complete.await())
-            assertEquals(CarPlayClusterDisplay.Content.TURN_CARD.url, replacement.clusterUrl())
+            assertNull(replacement.clusterUrl())
         }
     }
 
@@ -198,6 +206,8 @@ class DashboardContentDeliveryTest {
             assertFalse(phone.setClusterUiShown(false))
             assertNull(phone.clusterUrl())
             visibility(f.controller, true)
+            assertEquals(1, event.writes) // The replacement SETUP response is still pending.
+            readyAfterSetup(phone)
             assertEquals(3, event.writes)
             assertEquals(CarPlayClusterDisplay.Content.TURN_CARD.url, phone.clusterUrl())
         }
@@ -214,7 +224,7 @@ class DashboardContentDeliveryTest {
             f.controller.showDashboardContent(CarPlayClusterDisplay.MAP_URL, complete::accept)
             assertTrue(complete.await()) // The pending choice is safely retained while paused.
             assertEquals(1, event.writes)
-            assertEquals(CarPlayClusterDisplay.Content.TURN_CARD.url, phone.clusterUrl())
+            assertNull(phone.clusterUrl())
             assertNull(f.controller.dashboardMapRoute())
             visibility(f.controller, true)
             assertEquals(CarPlayClusterDisplay.MAP_URL, phone.clusterUrl())
@@ -237,7 +247,7 @@ class DashboardContentDeliveryTest {
             try {
                 f.record(second) // Activation must return while command execution is still blocked.
                 assertEquals(0, event.writes)
-                assertEquals(CarPlayClusterDisplay.Content.TURN_CARD.url, second.clusterUrl())
+                assertNull(second.clusterUrl())
                 release.countDown()
                 f.awaitCommands()
                 assertEquals(2, event.writes)
@@ -262,7 +272,7 @@ class DashboardContentDeliveryTest {
             assertEquals(0, event.writes)
             assertNull(second.clusterUrl())
             setup(second)
-            assertEquals(CarPlayClusterDisplay.Content.TURN_CARD.url, second.clusterUrl())
+            assertNull(second.clusterUrl())
             second.javaClass.getDeclaredMethod("notifySetupResponseSent").apply { isAccessible = true }.invoke(second)
             assertEquals(2, event.writes)
             assertEquals(CarPlayClusterDisplay.MAP_URL, second.clusterUrl())
@@ -346,10 +356,152 @@ class DashboardContentDeliveryTest {
             assertTrue(accepted.await())
             f.record(first)
             f.awaitCommands()
-            assertEquals(1, event.writes)
+            assertEquals(3, event.writes)
             assertEquals(CarPlayClusterDisplay.Content.TURN_CARD.url, first.clusterUrl())
             visibility(f.controller, true)
             assertEquals(CarPlayClusterDisplay.MAP_URL, first.clusterUrl())
+        }
+    }
+
+    @Test @Config(sdk = [28])
+    fun hs5CloseAndReopenTraversesTheActualOutputsControllerAndPhoneChain() {
+        ReflectionHelpers.setStaticField(Build::class.java, "MODEL", "HONG QI")
+        ReflectionHelpers.setStaticField(Build::class.java, "DEVICE", "t1c_acrn")
+        val app = RuntimeEnvironment.getApplication()
+        app.getSharedPreferences("diplay_byd_outputs", 0).edit().putBoolean("hongqi_cluster_visible", true).commit()
+        AutunnNavigationOutputs.setClusterMapShown(true)
+        Fixture(CarPlayClusterDisplay.Content.INSTRUMENTS.url).use { f ->
+            val phone = f.phone()
+            val event = eventReady(phone)
+            f.record(phone)
+            f.awaitCommands()
+            val firstWrites = event.writes
+            assertEquals(2, firstWrites)
+            HongqiNavigation.setMapShown(app, false)
+            f.awaitCommands()
+            assertEquals(firstWrites + 1, event.writes)
+            HongqiNavigation.setMapShown(app, true)
+            f.awaitCommands()
+            assertEquals(firstWrites + 3, event.writes)
+            assertEquals(CarPlayClusterDisplay.Content.INSTRUMENTS.url, phone.clusterUrl())
+
+            HongqiNavigation.clear()
+            HongqiNavigation.onGuidance(ClusterTurnGuidance(2, 0, 150, "test"))
+            f.awaitCommands()
+            val routeWrites = event.writes
+            assertEquals(firstWrites + 5, routeWrites)
+            HongqiNavigation.onGuidance(ClusterTurnGuidance(2, 0, 145, "test"))
+            f.awaitCommands()
+            assertEquals(routeWrites, event.writes) // Ordinary route updates do not request repeatedly.
+
+            // A mirror still needs the video even while the physical instrument is hidden.
+            AutunnNavigationOutputs.setClusterMapShown(false)
+            f.awaitCommands()
+            val beforeMirrorHide = event.writes
+            HongqiNavigation.setMapShown(app, false)
+            f.awaitCommands()
+            assertEquals(beforeMirrorHide, event.writes)
+            assertTrue(AutunnNavigationOutputs.clusterStreamRequestedShown())
+        }
+        AutunnNavigationOutputs.setClusterMapShown(false)
+        HongqiNavigation.clear()
+        app.getSharedPreferences("diplay_byd_outputs", 0).edit().putBoolean("hongqi_cluster_visible", true).commit()
+    }
+
+    @Test fun aVisibilityRequestQueuedForAnOldStreamCannotWriteToItsReplacement() {
+        Fixture().use { f ->
+            val phone = f.phone()
+            f.activate(phone)
+            val event = eventReady(phone)
+            val release = blockQueue(f.controller)
+            try {
+                f.controller.javaClass.getDeclaredMethod("queueClusterUi", Boolean::class.javaPrimitiveType)
+                    .apply { isAccessible = true }.invoke(f.controller, false)
+                setup(phone)
+                release.countDown()
+                f.awaitCommands()
+                assertEquals(0, event.writes)
+                assertNull(phone.clusterUrl())
+            } finally { release.countDown() }
+        }
+    }
+
+    @Test fun aRetiringControllerCannotWriteItsQueuedVisibilityAfterAnotherOwnerRegisters() {
+        Fixture().use { first ->
+            val phone = first.phone()
+            first.activate(phone)
+            val event = eventReady(phone)
+            val release = blockQueue(first.controller)
+            try {
+                first.controller.javaClass.getDeclaredMethod("queueClusterUi", Boolean::class.javaPrimitiveType)
+                    .apply { isAccessible = true }.invoke(first.controller, true)
+                Fixture().use { replacement ->
+                    release.countDown()
+                    first.awaitCommands()
+                    assertEquals(0, event.writes)
+                    replacement.awaitCommands()
+                }
+            } finally { release.countDown() }
+        }
+    }
+
+    @Test fun queuedVisibilityAndNewRouteRequestsRemainPendingUntilTheReplacementSetupWasAnswered() {
+        AutunnNavigationOutputs.setClusterMapShown(false)
+        Fixture(CarPlayClusterDisplay.Content.INSTRUMENTS.url).use { f ->
+            val phone = f.phone()
+            val event = eventReady(phone)
+            f.activate(phone)
+            setup(phone) // Re-SETUP is admitted; its control response has not been flushed.
+            f.controller.javaClass.getDeclaredMethod("queueClusterUi", Boolean::class.javaPrimitiveType)
+                .apply { isAccessible = true }.invoke(f.controller, false)
+            f.awaitCommands()
+            assertEquals(0, event.writes)
+            AutunnNavigationOutputs.requestClusterContent() // The route-start/reopen request supersedes hide.
+            f.awaitCommands()
+            assertEquals(0, event.writes)
+            assertNull(phone.clusterUrl())
+            readyAfterSetup(phone)
+            assertEquals(2, event.writes)
+            assertEquals(CarPlayClusterDisplay.Content.INSTRUMENTS.url, phone.clusterUrl())
+        }
+    }
+
+    @Test fun aVisibilityRequestWaitingForTheUiLockCannotAdoptAReplacementPhone() {
+        Fixture().use { f ->
+            val first = f.phone()
+            val firstEvent = eventReady(first)
+            val replacement = f.phone()
+            val replacementEvent = eventReady(replacement)
+            f.activate(first)
+            val executor = f.controller.javaClass.getDeclaredField("touchExecutor").apply { isAccessible = true }
+                .get(f.controller) as ExecutorService
+            val worker = executor.submit<Thread> { Thread.currentThread() }.get(3, TimeUnit.SECONDS)
+            val lock = f.controller.javaClass.getDeclaredField("clusterUiLock").apply { isAccessible = true }
+                .get(f.controller)
+            synchronized(lock) {
+                f.controller.javaClass.getDeclaredMethod("queueClusterUi", Boolean::class.javaPrimitiveType)
+                    .apply { isAccessible = true }.invoke(f.controller, true)
+                // Robolectric shadows sleep/nanoTime; JDK timed awaits give the real worker time
+                // to reach the held monitor, with at most three seconds of actual waiting.
+                val pollingDelay = CountDownLatch(1)
+                var remainingPolls = 300
+                var observedState = worker.state
+                while (observedState != Thread.State.BLOCKED && remainingPolls-- > 0) {
+                    pollingDelay.await(10, TimeUnit.MILLISECONDS)
+                    observedState = worker.state
+                }
+                // Assert the observation, not a second state read: monitor contention may briefly
+                // make the worker RUNNABLE again although this thread still holds the monitor.
+                if (observedState != Thread.State.BLOCKED) {
+                    fail("Queued visibility did not block at clusterUiLock: observed=$observedState " +
+                        "current=${worker.state} alive=${worker.isAlive}\n" + worker.stackTrace.joinToString("\n"))
+                }
+                f.activate(replacement)
+            }
+            f.awaitCommands()
+            assertEquals(0, firstEvent.writes)
+            assertEquals("An old admission must not write to the replacement session", 0, replacementEvent.writes)
+            assertNull(replacement.clusterUrl())
         }
     }
 
@@ -360,6 +512,9 @@ class DashboardContentDeliveryTest {
         private fun setup(phone: AirPlaySession) {
             phone.javaClass.getDeclaredMethod("handleStreams", List::class.java).apply { isAccessible = true }
                 .invoke(phone, listOf(mapOf("type" to 111L)))
+        }
+        private fun readyAfterSetup(phone: AirPlaySession) {
+            phone.javaClass.getDeclaredMethod("notifySetupResponseSent").apply { isAccessible = true }.invoke(phone)
         }
         private fun visibility(controller: CarPlayController, shown: Boolean) {
             controller.javaClass.getDeclaredMethod("applyClusterUi", Boolean::class.javaPrimitiveType)

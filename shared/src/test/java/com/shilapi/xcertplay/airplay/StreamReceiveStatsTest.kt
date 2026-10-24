@@ -82,4 +82,15 @@ class StreamReceiveStatsTest {
         stats.flush(true)
         assertTrue(output.last().contains("rtpStepMin=0 rtpStepMax=0"))
     }
+
+    @Test fun decryptTimingIsIndependentAndResetsBetweenWindows() {
+        val output = mutableListOf<String>()
+        val stats = StreamReceiveStats("video", output::add) { 0 }
+        stats.decrypted(20_000)
+        stats.decrypted(5_000)
+        stats.flush(true)
+        assertTrue(output.last().contains("decryptMaxUs=20"))
+        stats.flush(true)
+        assertTrue(output.last().contains("decryptMaxUs=0"))
+    }
 }

@@ -1,0 +1,8 @@
+{
+  "source": "https://github.com/shilapi/xcertplay",
+  "branch": "iAP2-rewrite",
+  "commit": "e021581f1cdcebc495e5a81aae1bef5154848657",
+  "archive_tar_sha256": "2e3c0b46feb2a60b016ebe411f9ad3126628dc545cd412f87dda9fcc9c0a3c59",
+  "fetched_on": "2026-10-24",
+  "executed_upstream_code": false
+}

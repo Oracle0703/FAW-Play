@@ -275,7 +275,7 @@ object Iap2ControlMessages {
         optionalVoid(5, maxNonSiphoningCurrentExceeded)
     }
 
-    fun subscriptions(): List<Iap2Frame> = listOf(
+    fun subscriptions(routeGuidanceEnabled: Boolean = true): List<Iap2Frame> = listOfNotNull(
         Iap2Messages.build(Iap2Endpoints.START_NOW_PLAYING_UPDATES) {
             group(0) {
                 listOf(1, 4, 6, 12, 26).forEach(::void)
@@ -284,11 +284,11 @@ object Iap2ControlMessages {
                 listOf(0, 1, 7).forEach(::void)
             }
         },
-        Iap2Messages.build(Iap2Endpoints.START_ROUTE_GUIDANCE_UPDATES) {
+        if (routeGuidanceEnabled) Iap2Messages.build(Iap2Endpoints.START_ROUTE_GUIDANCE_UPDATES) {
             u16(0, 42)
             void(1)
             void(2)
-        },
+        } else null,
         Iap2Messages.build(Iap2Endpoints.START_POWER_UPDATES) {
             void(4)
             void(5)

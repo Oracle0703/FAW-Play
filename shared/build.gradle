@@ -1,12 +1,17 @@
 plugins {
     id 'com.android.library'
 }
-def baselineTest = providers.gradleProperty('fawBaselineTest').map { value ->
-    if (!(value in ['true', 'false'])) throw new GradleException('fawBaselineTest must be true or false')
+// Existing build entry points remain valid; Autunn inputs take precedence.
+def baselineTest = providers.gradleProperty('autunnBaselineTest').orElse(providers.gradleProperty('fawBaselineTest')).map { value ->
+    if (!(value in ['true', 'false'])) throw new GradleException('autunnBaselineTest must be true or false')
     value.toBoolean()
 }.getOrElse(false)
-def clusterTuning = providers.gradleProperty('fawClusterTuning').map { value ->
-    if (!(value in ['true', 'false'])) throw new GradleException('fawClusterTuning must be true or false')
+def clusterTuning = providers.gradleProperty('autunnClusterTuning').orElse(providers.gradleProperty('fawClusterTuning')).map { value ->
+    if (!(value in ['true', 'false'])) throw new GradleException('autunnClusterTuning must be true or false')
+    value.toBoolean()
+}.getOrElse(false)
+def videoTrace = providers.gradleProperty('autunnVideoTrace').orElse(providers.gradleProperty('fawVideoTrace')).map { value ->
+    if (!(value in ['true', 'false'])) throw new GradleException('autunnVideoTrace must be true or false')
     value.toBoolean()
 }.getOrElse(false)
 
@@ -17,10 +22,19 @@ android {
     defaultConfig {
         minSdk = 28
         targetSdk = 37
-        buildConfigField 'boolean', 'FAW_NAVIGATION_OUTPUTS_ENABLED', (!baselineTest).toString()
-        buildConfigField 'boolean', 'FAW_WHEEL_CONTROL_ENABLED', (!baselineTest).toString()
-        buildConfigField 'boolean', 'FAW_AUTOMATIC_APPEARANCE_ENABLED', (!baselineTest).toString()
-        buildConfigField 'boolean', 'FAW_CLUSTER_TUNING_ENABLED', clusterTuning.toString()
+        buildConfigField 'boolean', 'AUTUNN_NAVIGATION_OUTPUTS_ENABLED', (!baselineTest).toString()
+        buildConfigField 'boolean', 'AUTUNN_WHEEL_CONTROL_ENABLED', (!baselineTest).toString()
+        buildConfigField 'boolean', 'AUTUNN_AUTOMATIC_APPEARANCE_ENABLED', (!baselineTest).toString()
+        buildConfigField 'boolean', 'AUTUNN_CLUSTER_TUNING_ENABLED', clusterTuning.toString()
+        buildConfigField 'boolean', 'AUTUNN_VIDEO_TRACE', videoTrace.toString()
+        ['SERVER_URL', 'PUBLIC_KEY_SPKI', 'OIDC_ISSUER', 'SIGNING_CERT_SHA256'].each { name ->
+            buildConfigField 'String', "AUTUNN_LICENSE_${name}", groovy.json.JsonOutput.toJson(
+                providers.environmentVariable("AUTUNN_LICENSE_${name}")
+                    .orElse(providers.environmentVariable("FAW_LICENSE_${name}")).getOrElse(''))
+        }
+        buildConfigField 'String', 'AUTUNN_LICENSE_OIDC_CLIENT_ID', groovy.json.JsonOutput.toJson(
+            providers.environmentVariable('AUTUNN_LICENSE_OIDC_CLIENT_ID')
+                .orElse(providers.environmentVariable('FAW_LICENSE_OIDC_CLIENT_ID')).getOrElse('faw-play-device'))
 
         ndk {
             abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86_64'
@@ -47,9 +61,32 @@ android {
     buildFeatures {
         buildConfig = true
     }
+    testOptions {
+        unitTests.all {
+            maxHeapSize = '1g'
+            forkEvery = 1
+            maxParallelForks = 2
+        }
+    }
+    buildTypes {
+        debug {
+            buildConfigField 'boolean', 'AUTUNN_LICENSE_REQUIRED', providers.gradleProperty('autunnLicenseDebug')
+                .orElse(providers.gradleProperty('fawLicenseDebug'))
+                .map { value ->
+                    if (!(value in ['true', 'false'])) throw new GradleException('autunnLicenseDebug must be true or false')
+                    value.toBoolean()
+                }.getOrElse(false).toString()
+            buildConfigField 'boolean', 'AUTUNN_LICENSE_ALLOW_HTTP', 'true'
+        }
+        release {
+            buildConfigField 'boolean', 'AUTUNN_LICENSE_REQUIRED', 'true'
+            buildConfigField 'boolean', 'AUTUNN_LICENSE_ALLOW_HTTP', 'false'
+        }
+    }
 }
 dependencies {
     implementation libs.androidx.app
+    implementation libs.androidx.media3.container
     implementation libs.bouncycastle
     implementation libs.jmdns
     testImplementation libs.junit

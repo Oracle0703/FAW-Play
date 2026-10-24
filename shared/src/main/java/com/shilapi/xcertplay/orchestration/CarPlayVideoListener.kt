@@ -5,7 +5,11 @@ import java.io.Closeable
 
 /** iOS 27 video in car, played by the host in the car's own player (see [VideoInCar]). */
 interface CarPlayVideoListener {
-    /** Whether the car is in P, or null when it cannot tell. Blocking; read once a second while CarPlay runs. */
+    /** Start and stop the independent parked-state source with the controller. */
+    fun onVideoMonitoringStarted() {}
+    fun onVideoMonitoringStopped() {}
+
+    /** Whether the car is in P, or null when it cannot tell. */
     fun readParked(): Boolean?
 
     /** Video became allowed or not; when not, the player must close. Any thread. */
@@ -23,7 +27,7 @@ interface CarPlayVideoListener {
 
 /**
  * Keeps [VideoInCar.allowed] in step with the car: allowed only while the gear reads P, so an unknown
- * gear (no ADB) keeps video off. Changes go to [onChanged].
+ * or stale gear keeps video off. Changes go to [onChanged].
  */
 internal class VideoInCarGate(
     private val readParked: () -> Boolean?,
@@ -47,24 +51,25 @@ internal class VideoInCarGate(
         }, "diplay-video-gate").apply { isDaemon = true }.start()
     }
 
-    internal fun update(parked: Boolean?) {
+    @Synchronized internal fun update(parked: Boolean?) {
+        if (closed) return
         if (!observed || parked != lastParked) {
             observed = true
             lastParked = parked
             onObserved(parked)
         }
         val allowed = parked == true
-        if (allowed == VideoInCar.allowed || closed) return
+        if (allowed == VideoInCar.allowed) return
         VideoInCar.allowed = allowed
         onChanged(allowed)
     }
 
-    override fun close() {
+    @Synchronized override fun close() {
         closed = true
         VideoInCar.allowed = false
     }
 
     private companion object {
-        const val POLL_MILLIS = 1_000L
+        const val POLL_MILLIS = 100L
     }
 }

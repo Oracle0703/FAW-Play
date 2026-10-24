@@ -39,3 +39,10 @@ release-signing.properties
 *.key
 *.apk
 *.aab
+
+# Local secrets and tooling
+.env
+.env.*
+!.env.example
+secrets/
+__pycache__/

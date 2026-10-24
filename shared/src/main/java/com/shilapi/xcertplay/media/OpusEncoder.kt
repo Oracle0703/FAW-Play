@@ -9,13 +9,13 @@ import java.io.Closeable
  * Encodes 20 ms chunks of 48 kHz mono PCM into raw Opus access units for the CarPlay
  * microphone uplink.
  */
-internal class OpusEncoder(bitrate: Int) : Closeable {
+internal class OpusEncoder(bitrate: Int, private val report: (String) -> Unit = {}) : Closeable {
     private val codec: MediaCodec? = createPlatformEncoder(bitrate)
     private val software = if (codec == null) NativeOpusEncoder(bitrate) else null
     private val bufferInfo = MediaCodec.BufferInfo()
-    private var presentationTimeUs = 0L
     private var closed = false
     private var outputPackets = 0
+    private val pump = OpusEncodingPump(::queueInput, ::drain)
 
     init {
         if (software?.isOpen == true) Log.i(TAG, "Opus microphone software encoder started bitrate=$bitrate")
@@ -52,43 +52,40 @@ internal class OpusEncoder(bitrate: Int) : Closeable {
         }
     }
 
-    /**
-     * Queues one 20 ms PCM frame and returns all Opus access units made available by the codec.
-     */
+    /** Encoded outputs carry the source RTP time even when the platform delays an input. */
     @Synchronized
-    fun encode(pcm: ByteArray): List<ByteArray> {
+    fun encode(pcm: ByteArray, rtpTimestamp: Int): List<OpusAccessUnit> {
         if (closed) return emptyList()
-        software?.let { return listOfNotNull(it.encode(pcm)) }
-        val codec = codec ?: return emptyList()
-        val inputIndex = try {
-            codec.dequeueInputBuffer(INPUT_TIMEOUT_US)
-        } catch (error: Exception) {
-            Log.w(TAG, "Opus microphone input dequeue failed", error)
-            return emptyList()
+        software?.let { return listOfNotNull(it.encode(pcm)?.let { bytes -> OpusAccessUnit(bytes, rtpTimestamp) }) }
+        if (codec == null) return emptyList()
+        return try { pump.encode(pcm, rtpTimestamp) }
+        catch (error: Exception) {
+            Log.w(TAG, "Opus microphone encoding failed", error)
+            runCatching { report("Microphone: encoder failure stage=platform error=${error.javaClass.simpleName}") }
+            emptyList()
         }
-        if (inputIndex >= 0) {
-            val input = codec.getInputBuffer(inputIndex)
-            if (input == null || pcm.size > input.remaining()) {
-                codec.queueInputBuffer(inputIndex, 0, 0, presentationTimeUs, 0)
-            } else {
-                input.clear()
-                input.put(pcm)
-                codec.queueInputBuffer(
-                    inputIndex,
-                    0,
-                    pcm.size,
-                    presentationTimeUs,
-                    0,
-                )
-                presentationTimeUs += INPUT_DURATION_US
-            }
-        }
-        return drain()
     }
 
-    private fun drain(): List<ByteArray> {
+    private fun queueInput(pcm: ByteArray, pts: Long): Boolean {
+        val codec = codec ?: return false
+        // Output is drained before this zero-wait dequeue. A busy codec leaves this exact PCM
+        // frame pending for a later capture tick instead of dropping it or stalling AudioRecord.
+        val inputIndex = codec.dequeueInputBuffer(0)
+        if (inputIndex < 0) return false
+        val input = codec.getInputBuffer(inputIndex)
+        if (input == null || pcm.size > input.capacity()) {
+            codec.queueInputBuffer(inputIndex, 0, 0, pts, 0)
+            throw IllegalStateException("Opus encoder input buffer unavailable or too small")
+        }
+        input.clear()
+        input.put(pcm)
+        codec.queueInputBuffer(inputIndex, 0, pcm.size, pts, 0)
+        return true
+    }
+
+    private fun drain(): List<OpusCodecOutput> {
         val codec = codec ?: return emptyList()
-        val output = ArrayList<ByteArray>()
+        val output = ArrayList<OpusCodecOutput>()
         while (!closed) {
             val index = try {
                 codec.dequeueOutputBuffer(bufferInfo, 0)
@@ -110,7 +107,7 @@ internal class OpusEncoder(bitrate: Int) : Closeable {
                         buffer.position(bufferInfo.offset)
                         buffer.limit(bufferInfo.offset + bufferInfo.size)
                         buffer.get(bytes)
-                        output.add(bytes)
+                        output.add(OpusCodecOutput(bytes, bufferInfo.presentationTimeUs))
                         outputPackets++
                         if (outputPackets <= FIRST_PACKET_LOG_COUNT) {
                             Log.i(
@@ -131,6 +128,8 @@ internal class OpusEncoder(bitrate: Int) : Closeable {
         if (closed) return
         closed = true
         software?.close()
+        runCatching { report("Microphone: encoder backlog pending=${pump.pendingFrames} " +
+            "backpressure=${pump.backpressureCalls} dropped=${pump.droppedFrames} unmatched=${pump.unmatchedOutputs}") }
         val codec = codec ?: return
         try {
             codec.stop()
@@ -148,8 +147,6 @@ internal class OpusEncoder(bitrate: Int) : Closeable {
         const val TAG = "xcertplay-usb"
         const val SAMPLE_RATE = 48_000
         const val CHANNELS = 1
-        const val INPUT_TIMEOUT_US = 10_000L
-        const val INPUT_DURATION_US = 20_000L
         const val MAX_INPUT_BYTES = 4_096
         const val FIRST_PACKET_LOG_COUNT = 3
     }

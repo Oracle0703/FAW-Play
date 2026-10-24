@@ -15,7 +15,15 @@ internal class AudioBufferProgress(private val frameBytes: Int) {
         return (writtenBytes - playedFrames * frameBytes).coerceAtLeast(0)
     }
 
-    fun shouldRebuffer(isMedia: Boolean, playing: Boolean, underrunSinceStart: Boolean,
-        compressedQueueEmpty: Boolean, rawHead: Int): Boolean =
-        isMedia && playing && underrunSinceStart && compressedQueueEmpty && queuedBytes(rawHead) == 0L
+    /**
+     * A hardware underrun can leave a small stale value in the written/playback ledger. Treat
+     * that low-water mark as drained so the renderer can pause and refill the track again.
+     * The default keeps callers that only need an exact drain check source-compatible.
+     */
+    // Compressed packets waiting for decode are not yet playable hardware reserve. Recover
+    // before writing the next burst, even if that burst has already filled the input queue.
+    fun shouldRebuffer(enabled: Boolean, playing: Boolean, underrunSinceStart: Boolean,
+        rawHead: Int, floorBytes: Long = 0L): Boolean =
+        enabled && playing && underrunSinceStart &&
+            queuedBytes(rawHead) <= floorBytes
 }

@@ -4,8 +4,6 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
-import android.graphics.Matrix
-import android.graphics.SurfaceTexture
 import android.hardware.display.DisplayManager
 import android.os.Build
 import android.os.Bundle
@@ -19,7 +17,6 @@ import android.util.Log
 import android.view.Gravity
 import android.view.Surface
 import android.view.SurfaceControlViewHost
-import android.view.TextureView
 import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.annotation.RequiresApi
@@ -137,36 +134,15 @@ class MapEmbedService : Service() {
     ) {
         private val host = SurfaceControlViewHost(context, display, hostToken)
         private var released = false
-        private var surface: Surface? = null
         private val waiting = TextView(context).apply {
             text = context.getString(R.string.cluster_waiting_for_map)
             setTextColor(Color.WHITE)
             textSize = 18f
             gravity = Gravity.CENTER
         }
-        private val video = TextureView(context).apply {
-            surfaceTextureListener = object : TextureView.SurfaceTextureListener {
-                override fun onSurfaceTextureAvailable(texture: SurfaceTexture, w: Int, h: Int) {
-                    if (released) return
-                    cropToFill(this@apply, w, h)
-                    surface = Surface(texture).also { MapMirrors.set(key, it) }
-                }
-
-                override fun onSurfaceTextureSizeChanged(texture: SurfaceTexture, w: Int, h: Int) = cropToFill(this@apply, w, h)
-                override fun onSurfaceTextureUpdated(texture: SurfaceTexture) = Unit
-
-                override fun onSurfaceTextureDestroyed(texture: SurfaceTexture): Boolean {
-                    MapMirrors.set(key, null)
-                    val old = surface
-                    surface = null
-                    main.postDelayed({ old?.release(); texture.release() }, RELEASE_DELAY_MILLIS)
-                    return false
-                }
-            }
-        }
-        private val aspectListener: () -> Unit = {
-            if (!released) cropToFill(video, video.width, video.height)
-        }
+        private val video = VideoSurfaceView(context, onSurface = { surface ->
+            if (!released || surface == null) MapMirrors.set(key, surface)
+        })
         private val streamListener: (Boolean) -> Unit = { active ->
             waiting.visibility = if (active) TextView.GONE else TextView.VISIBLE
             send(client, MSG_STREAM_STATE, Bundle().apply { putBoolean(KEY_STREAM_ACTIVE, active) })
@@ -186,7 +162,6 @@ class MapEmbedService : Service() {
         init {
             waiting.visibility = if (MapMirrors.streamActive) TextView.GONE else TextView.VISIBLE
             MapMirrors.addStreamListener(streamListener)
-            MapMirrors.addAspectListener(aspectListener)
             host.setView(root, width.coerceAtLeast(1), height.coerceAtLeast(1))
         }
 
@@ -198,7 +173,7 @@ class MapEmbedService : Service() {
             if (released) return
             released = true
             MapMirrors.removeStreamListener(streamListener)
-            MapMirrors.removeAspectListener(aspectListener)
+            video.close()
             MapMirrors.set(key, null)
             host.release()
         }
@@ -211,7 +186,6 @@ class MapEmbedService : Service() {
 
     companion object {
         private const val TAG = "DiPlay-MapEmbed"
-        private const val RELEASE_DELAY_MILLIS = 1_000L
 
         /** Bind to DiPlay's service with this action (the package differs between builds). */
         const val ACTION = "com.shihab.diplay.action.EMBED_MAP"
@@ -238,14 +212,5 @@ class MapEmbedService : Service() {
         const val ERROR_UNSUPPORTED = "unsupported" // Android 10 or older
         const val ERROR_BAD_REQUEST = "bad_request"
 
-        /** Keeps the stream's shape (8:3 or 16:9) and fills the view, cutting the edges that do not fit. */
-        internal fun cropToFill(view: TextureView, width: Int, height: Int) {
-            if (width <= 0 || height <= 0) return
-            val viewAspect = width.toFloat() / height
-            val stream = MapMirrors.streamAspect.toFloat()
-            val scaleX = if (viewAspect < stream) stream / viewAspect else 1f
-            val scaleY = if (viewAspect > stream) viewAspect / stream else 1f
-            view.setTransform(Matrix().apply { setScale(scaleX, scaleY, width / 2f, height / 2f) })
-        }
     }
 }

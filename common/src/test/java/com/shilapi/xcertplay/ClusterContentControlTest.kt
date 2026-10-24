@@ -79,6 +79,27 @@ class ClusterContentControlTest {
         assertEquals(1, noticed)
     }
 
+    @Test fun anOldTrialPreferenceCannotChangeTheLiveNativeUrl() {
+        val placement = ClusterLayoutTuning.Placement(90, 622, 80, 450, 45)
+        ClusterLayoutTuning.save(app, ClusterLayoutTuning.Target.ETE, placement)
+        val paired = app.getSharedPreferences("diplay", 0)
+        paired.edit().putString("phone_address", "00:00:00:00:00:01").commit()
+        for (oldChoice in listOf("TOP_ALIGNED", "LEFT_ALIGNED", "RIGHT_ALIGNED")) {
+            app.getSharedPreferences("xcertplay_airplay", 0).edit()
+                .putString("cluster_maneuver_layout", oldChoice).commit()
+            val complete = connect(Content.INSTRUMENTS)
+            var result: Boolean? = null
+            ClusterContentControl.select(app, Content.INSTRUMENTS) { result = it }
+            assertNull(result)
+            complete()(true)
+            assertEquals(true, result)
+            assertEquals(Content.INSTRUMENTS, AirPlayPersistence.loadClusterContent(app))
+            assertEquals(placement, ClusterLayoutTuning.load(app, ClusterLayoutTuning.Target.ETE))
+            assertEquals("00:00:00:00:00:01", paired.getString("phone_address", null))
+            CarPlayBackgroundSession.clear()
+        }
+    }
+
     @Test fun lateLiveReplyCannotOverwriteASelectionSavedAfterDisconnect() {
         val complete = connect(Content.INSTRUMENTS)
         var liveResult: Boolean? = null

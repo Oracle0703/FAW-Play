@@ -53,7 +53,7 @@ class HomeActivity : ComponentActivity() {
             addView(LinearLayout(context).apply {
                 addView(pill("Apps") { showApps(true) }, weighted())
                 addView(pill("CarPlay") { mapPanel.openCarPlay() }, weighted())
-                addView(pill("BYD home") { openFawHome() }, weighted())
+                addView(pill("BYD home") { openAutunnHome() }, weighted())
             }, LinearLayout.LayoutParams(-1, dp(72)).apply { topMargin = dp(16) })
         }
         editButton = pill("Edit") { setEditing(!board.editing) }
@@ -128,9 +128,9 @@ class HomeActivity : ComponentActivity() {
         editButton.text = if (editing) "Done" else "Edit"
     }
 
-    private fun openFawHome() {
-        val faw = Intent().setClassName(FAW_HOME_PACKAGE, FAW_HOME_ACTIVITY).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        if (runCatching { startActivity(faw) }.isFailure) {
+    private fun openAutunnHome() {
+        val autunn = Intent().setClassName(AUTUNN_HOME_PACKAGE, AUTUNN_HOME_ACTIVITY).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        if (runCatching { startActivity(autunn) }.isFailure) {
             Toast.makeText(this, "BYD home is not available", Toast.LENGTH_LONG).show()
         }
     }
@@ -204,8 +204,8 @@ class HomeActivity : ComponentActivity() {
     private companion object {
         val BACKGROUND = Color.rgb(14, 19, 26)
         val MUTED = Color.rgb(150, 162, 178)
-        const val FAW_HOME_PACKAGE = "com.android.launcher3"
-        const val FAW_HOME_ACTIVITY = "com.android.launcher3.home.MainActivity"
+        const val AUTUNN_HOME_PACKAGE = "com.android.launcher3"
+        const val AUTUNN_HOME_ACTIVITY = "com.android.launcher3.home.MainActivity"
     }
 }
 

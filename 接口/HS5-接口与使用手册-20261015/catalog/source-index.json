@@ -1,0 +1,977 @@
+[
+  {
+    "path": "work/update-package-20261009/format-audit/QisiAdapterService/QisiAdapterService_classes.cdex",
+    "sha256": "55cf23df4c5613e425d9ca09a433eea939da61f69d430d84fe2631810e7bedb1",
+    "bytes": 7637224
+  },
+  {
+    "path": "work/update-package-20261009/format-audit/QisiAdapterService/QisiAdapterService_classes2.cdex",
+    "sha256": "23c19ce8b31f19fadaf875ac09ed29fe79ef0a0375388e6ef60ce0070609233e",
+    "bytes": 13912008
+  },
+  {
+    "path": "work/update-package-20261009/format-audit/QisiAdapterService/QisiAdapterService_classes3.cdex",
+    "sha256": "ad5f962591490411b5638d40eb8a1a01a4cf62808d4fb3f744e78469cbfd45d2",
+    "bytes": 12848944
+  },
+  {
+    "path": "work/update-package-20261009/format-audit/faw-framework/boot_classes.cdex",
+    "sha256": "3c8d683e099b125d6a86cf6de09432fb53f58e60c9cc8ff7fe1e070af086ae94",
+    "bytes": 554040
+  },
+  {
+    "path": "work/system-analysis-20261008/vdex-recovered/framework/boot-alfusos-framework/boot-alfusos-framework_classes.cdex",
+    "sha256": "74db8486167b2cbaf125d2163d067278fafcb9d1221f6ce903f72d0c05de2688",
+    "bytes": 221024
+  },
+  {
+    "path": "work/system-analysis-20261008/vdex-recovered/framework/boot-alfusos.hardware.deviceadapter-V1.0-java/boot-alfusos.hardware.deviceadapter-V1.0-java_classes.cdex",
+    "sha256": "02f661f4673155108af3ef225b366602bbb92935da7409401ded4930bc2d2a41",
+    "bytes": 39592
+  },
+  {
+    "path": "work/system-analysis-20261008/vdex-recovered/framework/boot-alfusos.hardware.fm1388-V1.0-java/boot-alfusos.hardware.fm1388-V1.0-java_classes.cdex",
+    "sha256": "76ba41522e865a4d068e2867244399239cba36ef777189aed99ef19687da32fe",
+    "bytes": 33064
+  },
+  {
+    "path": "work/system-analysis-20261008/vdex-recovered/framework/boot-alfusos.hardware.infrared-V1.0-java/boot-alfusos.hardware.infrared-V1.0-java_classes.cdex",
+    "sha256": "2ac9e1b94c5cefc7e5d5a0b093a539327bc65dd03994bdec50a2b55a7b5c628a",
+    "bytes": 37752
+  },
+  {
+    "path": "work/system-analysis-20261008/vdex-recovered/framework/boot-alfusos.hardware.project-V1.0-java/boot-alfusos.hardware.project-V1.0-java_classes.cdex",
+    "sha256": "25c7280b3bdf3026573753627331c6ea84c6c1af4279b796aef8e46589eabd9e",
+    "bytes": 38256
+  },
+  {
+    "path": "work/system-analysis-20261008/vdex-recovered/framework/boot-alfusos.hardware.rpc-V1.0-java/boot-alfusos.hardware.rpc-V1.0-java_classes.cdex",
+    "sha256": "4ab99e8e57276859b23c1f12866e82bb09c8b46fb813c0bc03ba82bef3256201",
+    "bytes": 39344
+  },
+  {
+    "path": "work/system-analysis-20261008/vdex-recovered/framework/boot-alfusos.hardware.smartantenna-V1.0-java/boot-alfusos.hardware.smartantenna-V1.0-java_classes.cdex",
+    "sha256": "226872af42ae9ab223c02b4a943bc76c25ee4ba7cc7daaca7b1133df2caac240",
+    "bytes": 106240
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/-$$Lambda$QisiSystemManager$1$yVmw9r4896vyLPYrcbz0732YSSY.smali",
+    "sha256": "de5e27f1f18a8a919411881458c8342066911542486fca5542d6cfa03425c095",
+    "bytes": 1194
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/-$$Lambda$QisiSystemManager$IViewFocusChangedListenerImpl$ixCS04Jj-54bjWuaxrG97a9iQzY.smali",
+    "sha256": "040059d17390d2c420e1a828525f9a521fbf6b12dd31b36f09deb353cc3a07e2",
+    "bytes": 1928
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/BaseInterface.smali",
+    "sha256": "de054e58f11a7589ebc0c28aae53635a1468eda168d0aafe827df354ce916aef",
+    "bytes": 381
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/BaseListener$CommandReceiveListener.smali",
+    "sha256": "b6997f13e0af51dd0513dec938b5ae592460254fe12a37e8e36710108798becc",
+    "bytes": 505
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/BaseListener$CommonListener.smali",
+    "sha256": "ea6f4ef09ed560ce96fe3ce04439af905354275b7c067e8530c90cef857495f6",
+    "bytes": 597
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/BaseListener$ViewFocusChangedListener.smali",
+    "sha256": "e2cc666b200561b4300dba69d930c6f79a069beb83574c67256747be8fd153b4",
+    "bytes": 495
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/BaseListener.smali",
+    "sha256": "82e2224c0160ee8493105b4d0bef794a4aacbb99266db378f053ca4bf22e4a07",
+    "bytes": 433
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/CommandInterface.smali",
+    "sha256": "3dfc4843d82a76695efc0f735eecae8094744cb0fb21013b57771869909f4900",
+    "bytes": 1202
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/IBridge$Default.smali",
+    "sha256": "fa7e25635ae20e423aa205b748cdf15d141df9fd99986a7625ffac1d39c1794b",
+    "bytes": 1230
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/IBridge$Stub$Proxy.smali",
+    "sha256": "04ab2044346d669f27ddba54c90d0b559cc82a8255352f458c4eb70473fa4f7f",
+    "bytes": 5933
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/IBridge$Stub.smali",
+    "sha256": "d2cc5878abd46ab8dcf68aa397f3dbaa4147d8de1288daa188bbc11c15e6eed0",
+    "bytes": 4566
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/IBridge.smali",
+    "sha256": "c29b1b44fbf8bb5af6827fd4d711d63e8258dedee10697b3419e36375bafccb8",
+    "bytes": 809
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/IHardKeyListener$Default.smali",
+    "sha256": "55425e22f002ec42ff80e0e8f2f925868f97a1e7d3795e5ae39fe12200f14489",
+    "bytes": 969
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/IHardKeyListener$Stub$Proxy.smali",
+    "sha256": "d866d4fbf149ff5e2f8082398c6cd991c871579fd1e7115ce06cb6457c240acf",
+    "bytes": 3140
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/IHardKeyListener$Stub.smali",
+    "sha256": "d9771914d5e06c04fe0b93d70e25f7d7d8c200bf658e8279beec4366b5995680",
+    "bytes": 4095
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/IHardKeyListener.smali",
+    "sha256": "2f1dfb097fa4ac72a921b2dd135d31e92b798bb942433630b3a2ee3ebce588bb",
+    "bytes": 617
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/IPrivateCallback$Default.smali",
+    "sha256": "cff04684405c7c26124d5d47739c484430683a4073be78a99805684b61711522",
+    "bytes": 961
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/IPrivateCallback$Stub$Proxy.smali",
+    "sha256": "d7f5dd2e5be666a337a1235c89702f933268d3fff1ba2479107f1c0bf5860736",
+    "bytes": 2956
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/IPrivateCallback$Stub.smali",
+    "sha256": "32a2cb817c9939d49575d0f8756498b1f797257a7106e35b370d3ffbe4b1ed7e",
+    "bytes": 3893
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/IPrivateCallback.smali",
+    "sha256": "ddd67780e03d6520d521486848369b280f505ab3404a5ba8264ac129af14fb05",
+    "bytes": 610
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/ISystemServiceCallback$Default.smali",
+    "sha256": "c081011748eae19f5d3ede5de643c8b132ebe96d5455b546370df9338f1d27ad",
+    "bytes": 1011
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/ISystemServiceCallback$Stub$Proxy.smali",
+    "sha256": "4bb523f338c1135f28fd40265f0790a387a73d92461f3c2ea55996da6d380af7",
+    "bytes": 3200
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/ISystemServiceCallback$Stub.smali",
+    "sha256": "58c574c14e378ae17e64f64b252e04e2ac010b945b35461bc8e4ee617f7c68aa",
+    "bytes": 4193
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/ISystemServiceCallback.smali",
+    "sha256": "3971f835d820c0443757f2b379e7ffb5a33b88d033ce63df3e00058f1e8897ce",
+    "bytes": 660
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/ISystemServiceInterface$Default.smali",
+    "sha256": "b00584cbc33ce3d7de66612cc0670408c09b6d95bc9a4a795f408b41f2d965c1",
+    "bytes": 4857
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/ISystemServiceInterface$Stub$Proxy.smali",
+    "sha256": "0c6af609ce4cbddcba43d90f93dcf10ed925586d7c3b95ea04d72e77cec71420",
+    "bytes": 40810
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/ISystemServiceInterface$Stub.smali",
+    "sha256": "0197832c84d9c6c776a24d4ff787a3ba8b029f4a6789db5a68385f745f87ab09",
+    "bytes": 16316
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/ISystemServiceInterface.smali",
+    "sha256": "485230c287944ae4ca7e66134f77cb639c1dbd7cf25b130b740daf239d735630",
+    "bytes": 4005
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/IViewFocus$Default.smali",
+    "sha256": "a9b490abdd634d5ff58f93c393044052a8124ca12bdb0c105440b65e50a55edb",
+    "bytes": 2036
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/IViewFocus$Stub$Proxy.smali",
+    "sha256": "8f176260f5dc67bdd4b3e5c35a2b285bae3eec00a9e1ac290cb12075250c5639",
+    "bytes": 13498
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/IViewFocus$Stub.smali",
+    "sha256": "31065d7bd6b19070af8cfa7f4b052d09dba83fd7a6c14d0c655f1d0a91643ec6",
+    "bytes": 6853
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/IViewFocus.smali",
+    "sha256": "8b597d952ca95ba5a252bb54af8732c5a0c33621568620d961c18306ce452c6c",
+    "bytes": 1521
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/IViewFocusChangedListener$Default.smali",
+    "sha256": "c27dd5c38b9adc3c40e687d6bcb37aa6546a8b1ba3b1ac08691005abc77dadd4",
+    "bytes": 1008
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/IViewFocusChangedListener$Stub$Proxy.smali",
+    "sha256": "313f92b9ec26988ddaf44be16d052270b30028e62e13f8bcdda59ffd247caccf",
+    "bytes": 3276
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/IViewFocusChangedListener$Stub.smali",
+    "sha256": "fd29a2363e5ab553bf969c3c409b363c216c3b19644a464f1e841682ba9b764e",
+    "bytes": 4319
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/IViewFocusChangedListener.smali",
+    "sha256": "ea65e28bee68bf496e4bf2126d9ca58de81779b530a16f047ad6488ead9c025a",
+    "bytes": 657
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/IViewFocusOwnershipCallback$Default.smali",
+    "sha256": "20938eb36ffd2e0a908c2b29593087635c4ab1c3b8c3486b8389c8ffd7c74a0a",
+    "bytes": 1254
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/IViewFocusOwnershipCallback$Stub$Proxy.smali",
+    "sha256": "92ed3f8f98a1d65ee91f69a8cbfabd009472484a66daffad5f2f34b95e07a633",
+    "bytes": 5107
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/IViewFocusOwnershipCallback$Stub.smali",
+    "sha256": "c55d8ab68518e94dad76a32411e336485ad2efa82bc370edafdf7cfb124960e0",
+    "bytes": 4758
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/IViewFocusOwnershipCallback.smali",
+    "sha256": "46c43a5ffe02b60c342bf527f09fb77f48f681527dec3bc6fac38a419ae01c0b",
+    "bytes": 878
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/QisiSystemManager$1.smali",
+    "sha256": "e8300a085b094907b753c9eb64979784b66a5c377a72ae37cccaa10eba3449c9",
+    "bytes": 3744
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/QisiSystemManager$2.smali",
+    "sha256": "fedc65df2c9899b5b8310ae4a1494b9a0235324bdf923955446791e4b49b53d7",
+    "bytes": 14860
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/QisiSystemManager$3.smali",
+    "sha256": "10f78c58b4cfea919f244d594cc88ac449ec91bddf3fb4cbddf49e964f4ac7cd",
+    "bytes": 4129
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/QisiSystemManager$IViewFocusChangedListenerImpl.smali",
+    "sha256": "b83d23a63985dbddcdbb70a66154bd33bb25e55a2bc7c842c61d52b822281f02",
+    "bytes": 13230
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/QisiSystemManager.smali",
+    "sha256": "34725176ed64accd9b18744471581c333133ed4b2dbc0b767cc07045a5dbc899",
+    "bytes": 91322
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes2/ltd/qisi/systemmanager/SystemServiceConst.smali",
+    "sha256": "e4b630305d050eba9ceb8597814d45ab452a557cb6012a437324bf1c666acc65",
+    "bytes": 36054
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/AlfusSystemServer/smali/classes/faw/car/link/-$$Lambda$CarlinkManager$AeJJnsdNto1KKXs4oYMrh5kzw1A.smali",
+    "sha256": "72a5ed1b38afca756c00ebf65ac15bc831e52957d11e71df8159a60c208a734f",
+    "bytes": 1154
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/AlfusSystemServer/smali/classes/faw/car/link/-$$Lambda$CarlinkManager$HnI_4D5vwz8UEBT46BAKH1CRkt8.smali",
+    "sha256": "13e5141e1fc0c3f58cb3093a62e0ad9e4da291125270d5a4f1daf0800b584321",
+    "bytes": 1154
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/AlfusSystemServer/smali/classes/faw/car/link/-$$Lambda$CarlinkManager$MyCarLinkCallback$lRsHXxwenddFAOLrQuEy2l8uczY.smali",
+    "sha256": "0379883ef396d34b723fe0e4716f481aa8a9be693fd7cb5f0b4d2b1b45112823",
+    "bytes": 1543
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/AlfusSystemServer/smali/classes/faw/car/link/-$$Lambda$CarlinkManager$MyCarLinkCallback$o4w87xyRUN7HPFScFyxInmVftDE.smali",
+    "sha256": "e5f59f47842d3a70cc6614d51cb48ace11d477988a3ce8fab43715c43e35a487",
+    "bytes": 1169
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/AlfusSystemServer/smali/classes/faw/car/link/-$$Lambda$CarlinkManager$UTjzqz0_EKOCglJ_YF9KHJOydMA.smali",
+    "sha256": "ea5363934bf050b2add3763712c96ebdb8cf5e395907b8f74eb366c25ff61106",
+    "bytes": 1154
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/AlfusSystemServer/smali/classes/faw/car/link/-$$Lambda$CarlinkManager$_BO8F7ymdYKlxAYgDxZxRNjJowM.smali",
+    "sha256": "f5a4fcc8bfc907d151f5c3e2adcc4e6b31106910469bcf0a19bd8186d808d281",
+    "bytes": 1154
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/AlfusSystemServer/smali/classes/faw/car/link/-$$Lambda$CarlinkManager$uZQApbnSGMepSx5LUt7iF-l5o8E.smali",
+    "sha256": "c1bbb4b429c56da382844f640a210992e8cf008fa0c232f0f231a5d195e2e037",
+    "bytes": 1154
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/AlfusSystemServer/smali/classes/faw/car/link/-$$Lambda$HicarManager$-G1nUv0WEtA5739m3pvT4dMLIDw.smali",
+    "sha256": "64cd3799fac373a518ac307ff7a46b9a00f4d292020545547bcd5f78c8adb74c",
+    "bytes": 1128
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/AlfusSystemServer/smali/classes/faw/car/link/-$$Lambda$HicarManager$6ciQ6bvm4J9ulKxSI85uTqTV3rY.smali",
+    "sha256": "931501e367ec3fc45cfacfba77d07cdf87476f0cc601984acbaa246686f01460",
+    "bytes": 1128
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/AlfusSystemServer/smali/classes/faw/car/link/-$$Lambda$HicarManager$GJo8FWWx_l9W_nF_FPBDDJo8Z2w.smali",
+    "sha256": "cef104da7c04b33acd96c4debd4658831337dcc32a8e8cd4c0901aa4b0803a53",
+    "bytes": 1128
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/AlfusSystemServer/smali/classes/faw/car/link/-$$Lambda$HicarManager$MyHiCarCallback$BXAl93CK5ove_nVcpKmOON3kBf0.smali",
+    "sha256": "70bb74915961a29181e114e0879d4e0156ea6d5263c8c80f8de47d4d088f1015",
+    "bytes": 1413
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/AlfusSystemServer/smali/classes/faw/car/link/-$$Lambda$HicarManager$MyHiCarCallback$zTNpBuHd_PwrpYIdM1A8MeYHbP4.smali",
+    "sha256": "ff99666bd1f1cdb4e798dfd4d9a3f5076fc31497b09b00aefea68cc91fa8ef61",
+    "bytes": 1146
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/AlfusSystemServer/smali/classes/faw/car/link/-$$Lambda$HicarManager$N9QD6wxL0D5xakfdvLOLRNUY8Gc.smali",
+    "sha256": "fb6463454d5b407c712275c262b2b3ad1faf6fdd128d020db2e621a0d7e031f3",
+    "bytes": 1128
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/AlfusSystemServer/smali/classes/faw/car/link/-$$Lambda$HicarManager$Wl5sn2locOglRB3W4g9Z--2Xm9o.smali",
+    "sha256": "73904719bc6cfcd8c7332e41959410c1c1e5d7c90b66b9552c34b7b1636f1c4b",
+    "bytes": 1128
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/AlfusSystemServer/smali/classes/faw/car/link/-$$Lambda$HicarManager$qQ0UKV-2t6AnCdpZD-ffuWNGDVE.smali",
+    "sha256": "8d6442224c81b7a4b1b2a9c731587d8a165d4ea5273a0ddd61e10335371c5896",
+    "bytes": 1128
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/AlfusSystemServer/smali/classes/faw/car/link/-$$Lambda$LinkMutexManager$MyLinkResultCallback$pMja24ixAnUS6UsN-vg-O9re8c0.smali",
+    "sha256": "8305903c5be1066e91b83d29ad8e501dde3038619de991c09aa4ad78fd2f105e",
+    "bytes": 1480
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/AlfusSystemServer/smali/classes/faw/car/link/CarlinkManager$1.smali",
+    "sha256": "f6f7716ed98fea1de9afecc5074b63fbc95610e695ae6eb6c7d9846eb22267c3",
+    "bytes": 5745
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/AlfusSystemServer/smali/classes/faw/car/link/CarlinkManager$CarLinkCallback.smali",
+    "sha256": "d253c782dae8c68da291a13d8f0594b8d9f7062c984c1fb3da631d139774c1a7",
+    "bytes": 789
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/AlfusSystemServer/smali/classes/faw/car/link/CarlinkManager$MyCarLinkCallback.smali",
+    "sha256": "e7d7d2bc74dfacfed4b8b8a8e754752119cdc1b4746caa1d025e15ed9432e649",
+    "bytes": 4887
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/AlfusSystemServer/smali/classes/faw/car/link/CarlinkManager$ServiceDeathRecipient.smali",
+    "sha256": "5d81087b2b7e45d0ee238cd2b71efaebaa3895b3e2ce99ac1bae0b8575e9e46d",
+    "bytes": 3493
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/AlfusSystemServer/smali/classes/faw/car/link/CarlinkManager.smali",
+    "sha256": "dc776b888c355ee43a106a9f0e0ddce183bb41768f3d5432da5f8d0edc36f885",
+    "bytes": 36142
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/AlfusSystemServer/smali/classes/faw/car/link/HicarManager$1.smali",
+    "sha256": "36d07a63216e60060c59d61461cb65426ef207d163743bb8fde1ac081422d61c",
+    "bytes": 5736
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/AlfusSystemServer/smali/classes/faw/car/link/HicarManager$HiCarCallback.smali",
+    "sha256": "53f58484c1803d40f6d0719a6c64e6005bc05d8800fe59ae871e308df47f964b",
+    "bytes": 767
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/AlfusSystemServer/smali/classes/faw/car/link/HicarManager$MyHiCarCallback.smali",
+    "sha256": "7845a731357811f8e44b52cd70a643844a70e13c7ede355d344b404700576f91",
+    "bytes": 4721
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/AlfusSystemServer/smali/classes/faw/car/link/HicarManager$ServiceDeathRecipient.smali",
+    "sha256": "eb1fd4b1f2c9c02ea675d78c72403ff7a2015f3c3649df29b26550254d0efd21",
+    "bytes": 3477
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/AlfusSystemServer/smali/classes/faw/car/link/HicarManager.smali",
+    "sha256": "06c91ac9d03786a3a00cbde506c9285cab0cc0fe9553183aaecc4601d8142a53",
+    "bytes": 34428
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/AlfusSystemServer/smali/classes/faw/car/link/ICarLinkMutexService$Stub$Proxy.smali",
+    "sha256": "546f66cf2bbd86054c7655473da5f1da279977e9d8ac2b62ad58302911aa12b4",
+    "bytes": 10519
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/AlfusSystemServer/smali/classes/faw/car/link/ICarLinkMutexService$Stub.smali",
+    "sha256": "36ffb22b07478226fba8afc962875f23a836e42930184917a27bc23ab19e8995",
+    "bytes": 7052
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/AlfusSystemServer/smali/classes/faw/car/link/ICarLinkMutexService.smali",
+    "sha256": "cb2392222254cec50e8cda00d485187aa49b73e1632990fe7f3d031dfe80e089",
+    "bytes": 1464
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/AlfusSystemServer/smali/classes/faw/car/link/IOnResultLinkCallback$Stub$Proxy.smali",
+    "sha256": "984a0adf4f3559dd0037e3a53633fc3bd3fefec4b395f1eec02e6be54117095c",
+    "bytes": 2669
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/AlfusSystemServer/smali/classes/faw/car/link/IOnResultLinkCallback$Stub.smali",
+    "sha256": "38578620e1f397b4d0775b32061ad200f493b7372024c94f24dc178bb107d596",
+    "bytes": 3738
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/AlfusSystemServer/smali/classes/faw/car/link/IOnResultLinkCallback.smali",
+    "sha256": "c7a39006863bb58adf3b400739c1661cc3f283179e896644f1440aeb5e489947",
+    "bytes": 564
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/AlfusSystemServer/smali/classes/faw/car/link/LinkMutexManager$1.smali",
+    "sha256": "700a11d49633b046236ce8cb0d70fab01939200c6fe9e7d3dd8f56e60b9b5501",
+    "bytes": 347
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/AlfusSystemServer/smali/classes/faw/car/link/LinkMutexManager$MyLinkResultCallback.smali",
+    "sha256": "30af6e5d4f77c07f5c7c836e996ce777ed92f64c83c61347182512d77309195b",
+    "bytes": 4391
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/AlfusSystemServer/smali/classes/faw/car/link/LinkMutexManager$OnLinkResultListener.smali",
+    "sha256": "67e07a13ecd279ff317d1f696e9aec86233af6434c385b240cdf847a43b99c79",
+    "bytes": 486
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/AlfusSystemServer/smali/classes/faw/car/link/LinkMutexManager$ServiceDeathRecipient.smali",
+    "sha256": "a47ceaef72caeaf67b4d0c94314f957c2a989a41ef520faf51c0cc0ff4dd21e4",
+    "bytes": 3406
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/AlfusSystemServer/smali/classes/faw/car/link/LinkMutexManager.smali",
+    "sha256": "b12a83f13add198cd613a32ad5cbe82035cdbf016be8e6133012f9bd15736b7c",
+    "bytes": 26438
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/AlfusController/smali/classes/com/alfus/controller/power/PowerController$1.smali",
+    "sha256": "1f3f72e4e0585f4ea5c73f116d3f62309bc795e939f097a38dd0fcfe9e5ebeb8",
+    "bytes": 26463
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/AlfusController/smali/classes/com/alfus/controller/power/PowerController.smali",
+    "sha256": "fc65e0c7a0974d0fa13d4ca353d3f6803571e59334b106086676170c307d71e9",
+    "bytes": 3066
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/media/CarAudioAttribute.smali",
+    "sha256": "9198dc58fd4e9dd1b38c53c0b9913f799f5079fa049ff36cc2a14a517ea35d1a",
+    "bytes": 34918
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/media/CarAudioManager.smali",
+    "sha256": "8db235b26f4bd769302a7f66088c00a1f8b6ff035bb1f2ed50f0f548a2ee329c",
+    "bytes": 70294
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/media/CarAudioParameter.smali",
+    "sha256": "5cd1f9a8710b79e2bfdab2ada6aa5496ad5e60abdd4547939ad3272856a043ed",
+    "bytes": 3462
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/media/CarAudioPatchHandle$1.smali",
+    "sha256": "edd537741f1ce716ba455044f84c389878051d9c71f1aee5a0437102395845d8",
+    "bytes": 2008
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/media/CarAudioPatchHandle.smali",
+    "sha256": "a7082dacd4c8898509b73791b98691b72d423bc87c6aa903a79ca564be2fa0dc",
+    "bytes": 8138
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/ICar$Stub$Proxy.smali",
+    "sha256": "9c7a84cf3b038b21a241a99cbfa6b10a533089cfc06cfc22a22bbd3400f40858",
+    "bytes": 8028
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/ICar$Stub.smali",
+    "sha256": "78d8688cd557a8d026f106b080ea9221e7b829ac1c1887288349326ac73e0335",
+    "bytes": 4905
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/ICar.smali",
+    "sha256": "c488954c1cdb6b289ce1925d3d7eb34738b700f0ce70eaab0a45f45df8409c9a",
+    "bytes": 1350
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/ICarBluetooth$Stub$Proxy.smali",
+    "sha256": "a8bba5ec69867855f385ff9f90679cab684aaaf4fd6ec2ce87304a0fb46b976e",
+    "bytes": 8022
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/ICarBluetooth$Stub.smali",
+    "sha256": "3b33fb4a2752c2456d4b75d1c91754415f8291870d2d2350515ea2d7646fad94",
+    "bytes": 5858
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/ICarBluetooth.smali",
+    "sha256": "71b415ba8c97efef42424d14d7cc99a00fa15c417792ee47f08944f9936f3aec",
+    "bytes": 1233
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/ICarBluetoothUserService$Stub$Proxy.smali",
+    "sha256": "fad2357f68e15c923bc525adc95ab45478c840748bd550a0566e2bbc5ce34e2e",
+    "bytes": 9556
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/ICarBluetoothUserService$Stub.smali",
+    "sha256": "8a4c882d441e58240a0ae03945182b2add752ecb385390c75b0d0711f9bc3940",
+    "bytes": 6461
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/ICarBluetoothUserService.smali",
+    "sha256": "25ce8c4c331f82a298cd4ba081fb548a1d9929903a557a33b41a862f108b7c0b",
+    "bytes": 1474
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/ICarConnectionListener$Stub$Proxy.smali",
+    "sha256": "23c6d03c6a5a06a05be372c5201d4538477aeb25a1af5baf6de03f30b135d15c",
+    "bytes": 3302
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/ICarConnectionListener$Stub.smali",
+    "sha256": "1879ac5601bb31154ba9fae35fef26f68c5526ad0def7c73ce6906665102339f",
+    "bytes": 3358
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/ICarConnectionListener.smali",
+    "sha256": "702a4dd980b329ce14d6a05cdd80c1dbbdffd3633c38299b55d44176a818ad07",
+    "bytes": 743
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/ICarInfo$Stub$Proxy.smali",
+    "sha256": "044243625448dc5cbe7f54be5e059584bfde373d6516be306d3746748fc4b97d",
+    "bytes": 4575
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/ICarInfo$Stub.smali",
+    "sha256": "d5258d5bf0088cf349bc568097699c1507efef4ea17ff4dd6839dab0ca11a42f",
+    "bytes": 3956
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/ICarInfo.smali",
+    "sha256": "f86ae828b0fe1d7f96f3e3f168556605501fd5948ae0a50518dc125ab04757d6",
+    "bytes": 754
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/ICarProjection$Stub$Proxy.smali",
+    "sha256": "bdaa7cf4eea3a82186ffba3a524689842a0738dd5695e1b49faac3abcc8e4103",
+    "bytes": 8250
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/ICarProjection$Stub.smali",
+    "sha256": "1fba753f026b867696ac3eac864ee0ba940fcdce2aebe9e9697e58b6379f5ff2",
+    "bytes": 6026
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/ICarProjection.smali",
+    "sha256": "2c5632a88855a42e5e195cc947c52845631d678e0872ed44c0c50751594f20d7",
+    "bytes": 1279
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/ICarProjectionCallback$Stub$Proxy.smali",
+    "sha256": "25336f23f13f9dfd217a1aa99889213e9959ae8cdf5af5ed90d7ff132b00862e",
+    "bytes": 2430
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/ICarProjectionCallback$Stub.smali",
+    "sha256": "4c83be68d32fac45ebeb1762558414e635dc72775b092b938d56f70edc1c158f",
+    "bytes": 3249
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/ICarProjectionCallback.smali",
+    "sha256": "0df99ef1cc8b368cc3e4043004173cbfdae86e59b372bcd46868e753ee9a233d",
+    "bytes": 562
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/ICarUserService$Stub$Proxy.smali",
+    "sha256": "997f5d3667840a2f8193933aa8ac4974a8a31dbbbf5bf1e9f1240efd2932d939",
+    "bytes": 2866
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/ICarUserService$Stub.smali",
+    "sha256": "3c0b916549c70eea60feb247a9d8ebadb356961e25dad7104bd71e6614790255",
+    "bytes": 3399
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/ICarUserService.smali",
+    "sha256": "dbbb5e6a739b7aafad243f4555178c5831fde15ec203aa269478c80aae95826a",
+    "bytes": 577
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/Car.smali",
+    "sha256": "0beed907b9debccdd21f4b1fe4afd1e85b1cf11d08430c947d4d112155920c9d",
+    "bytes": 48896
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/property/CarPropertyEvent$1.smali",
+    "sha256": "2d181b985675afe3b56cf6e02ef95cda39b04de30fc9a0b0fb31837a114d0364",
+    "bytes": 2120
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/property/CarPropertyEvent.smali",
+    "sha256": "2eac1c63c7d486a2d4ca98b727e9a8dd187985ef38c8665d3c3b36c9545ecc63",
+    "bytes": 5654
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/property/CarPropertyManager$1.smali",
+    "sha256": "c0d5fafebed00c45c632200096131bcd46100abcb13026213f82455be3f91ec0",
+    "bytes": 4280
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/property/CarPropertyManager$CarPropertyEventListener.smali",
+    "sha256": "cd3ada8aa449603f0c6de90930f1b6cd819dca89b427674f916209205376490b",
+    "bytes": 614
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/property/CarPropertyManager$CarPropertyEventListenerToService.smali",
+    "sha256": "e0758baee67b992dd97bb9774619f4b13b60362a775b593347f89ef9073b4a81",
+    "bytes": 2785
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/property/CarPropertyManager$CarPropertyListeners$1.smali",
+    "sha256": "c34e88bf4d57917e75788e93e1a51b8dc305fe5feafe4ff1b8d7b581da7f0400",
+    "bytes": 2701
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/property/CarPropertyManager$CarPropertyListeners$2.smali",
+    "sha256": "a170d4656ae1efb5762e1a6aacf72d31728ac5f096583a47dda07e0db89c1fdf",
+    "bytes": 2816
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/property/CarPropertyManager$CarPropertyListeners.smali",
+    "sha256": "5bd109a126472038aa91afd0707b25761e89ef7050233383187ede0117629c2f",
+    "bytes": 5964
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/property/CarPropertyManager.smali",
+    "sha256": "b47e1bc8fca047d921cbb023ebae14c63c2346201e9321d983799f57894562cf",
+    "bytes": 38363
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/property/ICarProperty$Stub$Proxy.smali",
+    "sha256": "ebebd328ed83e906c2e9c1544c6bc7300a48a7649737c411d7729bface54c480",
+    "bytes": 10974
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/property/ICarProperty$Stub.smali",
+    "sha256": "190c24c5a98ca8eef365917f507bccc1626fe5423abfc4a6cd1ac6234352dfe7",
+    "bytes": 7312
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/property/ICarProperty.smali",
+    "sha256": "f6c8179bda2fd0193ba4630a2dc6db4925bacec18a54b1efbc6c50e2870d37c4",
+    "bytes": 1771
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/property/ICarPropertyEventListener$Stub$Proxy.smali",
+    "sha256": "be07e44f5939825fb2be6d8206971b4ccdfd95bf39aaba03bfc543967e9c6700",
+    "bytes": 2751
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/property/ICarPropertyEventListener$Stub.smali",
+    "sha256": "1be5f036c1211b4038f33201b5d29b8906770c27050209ce94ee048a10ac1fc5",
+    "bytes": 3628
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/property/ICarPropertyEventListener.smali",
+    "sha256": "a991caa7498905be1abce494903fc0c413d1f428aab1565c44c801bbd04ab57c",
+    "bytes": 840
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/power/-$$Lambda$CarPowerManager$_iH7a-OsxCpoghKhQpyZSzwobrQ.smali",
+    "sha256": "9810a148385c6de209e529615241ed0bf9b374305f94d3357d74d96fd3d7b0d1",
+    "bytes": 1553
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/power/CarPowerManager$1.smali",
+    "sha256": "63491ad1d5871d65fdab9da15eb3be1c5fba825f3ac5f132b63a629e9e202979",
+    "bytes": 1573
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/power/CarPowerManager$BootReason.smali",
+    "sha256": "2398d4080a59c6f4874037dfa9f442e564c65366a6d0e2b23a2e4325f4fad5d2",
+    "bytes": 650
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/power/CarPowerManager$CarPowerStateListener.smali",
+    "sha256": "8a70b090bd4167045ec8a8b7b571621590567331e9d56632ff1ebbcf90321edb",
+    "bytes": 1258
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/power/CarPowerManager.smali",
+    "sha256": "66c61d0bb3ef8afa19a2fe19f8a76ebf68155adc917e0f1d3d3148037693ad1c",
+    "bytes": 14960
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/power/ICarPower$Stub$Proxy.smali",
+    "sha256": "7169ad1a45655f09a402cb32fdf8fd1e33a85028fca53fdadb6033d64fd3f5a7",
+    "bytes": 11043
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/power/ICarPower$Stub.smali",
+    "sha256": "f2981bfb9047fab90f3d652e9c799585334e657816394c3b64ea031d8ee305c9",
+    "bytes": 6643
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/power/ICarPower.smali",
+    "sha256": "eb3bdddb4e44cf56cdaa21483ae827cab7515a4a2bd9686931b6538206fab5dd",
+    "bytes": 1687
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/power/ICarPowerStateListener$Stub$Proxy.smali",
+    "sha256": "6bbdde92ec73456a6480f44ec0e1e115243f144a2a64fd41d7e72d8008ce09c3",
+    "bytes": 2515
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/power/ICarPowerStateListener$Stub.smali",
+    "sha256": "6e4127954fa00faa5f60ca20ad7166744aba6d6e35cca40ad598d1bce643e0bf",
+    "bytes": 3444
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/power/ICarPowerStateListener.smali",
+    "sha256": "cf1cf2f1b8d203b3d58e476d6430c66d38e736868e6e1cf6db8fa6f4717e9008",
+    "bytes": 584
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/CarPropertyConfig$1.smali",
+    "sha256": "90adb67c24be771b4274718445cc06396ffaa72f989611c10fde8724a2a75aae",
+    "bytes": 2022
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/CarPropertyConfig$AreaConfig$1.smali",
+    "sha256": "eb7d85879e0dfd1ca89325df6a801aec7ba3fa4dfe5bb6c0e87732c941066d51",
+    "bytes": 3121
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/CarPropertyConfig$AreaConfig.smali",
+    "sha256": "18059376c6782a3abc18d06ebe4a6d45ee80911b4eec770b04544ae7e1415c1c",
+    "bytes": 7400
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/CarPropertyConfig$Builder.smali",
+    "sha256": "d8286bf008497430f4d437e81c29f9af83ad115a4998fb5ccf091cc0df2840ec",
+    "bytes": 10542
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/CarPropertyConfig.smali",
+    "sha256": "c8e520d562a06bd4704e9e5817aea03ee6af0bda307a913deb785d5a05cd160e",
+    "bytes": 27604
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/CarPropertyValue$1.smali",
+    "sha256": "93319b29498a2237571868717f6713a92756e2f9a3e15bf7bc3f26855fd505bb",
+    "bytes": 1942
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/CarPropertyValue$PropertyStatus.smali",
+    "sha256": "de50e227dc0096a19c667e852edf31d8dc56596efc97ac7110e372c69e8faa8b",
+    "bytes": 649
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/CarPropertyValue.smali",
+    "sha256": "a41584f2e6df32548d42cf72418b6586a3c0838bebb5f47c388f21b0858036f0",
+    "bytes": 12911
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/CarSensorConfig$1.smali",
+    "sha256": "83993f1d934c548bf2d2511aba95aa426005f2cade2547e3947e84bc36ed71b1",
+    "bytes": 1924
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/CarSensorConfig.smali",
+    "sha256": "01ff7fd27f68d8d9feef1ca0e48eb15e0d0172f18a9cf667cbd0069a5aaa96b4",
+    "bytes": 9084
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/CarSensorEvent$1.smali",
+    "sha256": "38a59503e30242bbdb7b1790682fff56fcc90c58ed1aab4cba68304ed1994d22",
+    "bytes": 1916
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/CarSensorEvent$CarAbsActiveData.smali",
+    "sha256": "30c930082988acf20491912dc705461a721bc60c91e3c33d2e81a608eeaec815",
+    "bytes": 858
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/CarSensorEvent$CarEngineOilLevelData.smali",
+    "sha256": "9d638badc089636eed2be8016d644b46710f6cc4c5a97395e0de4b79882d337f",
+    "bytes": 876
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/CarSensorEvent$CarEvBatteryChargeRateData.smali",
+    "sha256": "7695a940ed240c43fc6c9db802769123971487b5ea516f6213262a229f35dad3",
+    "bytes": 889
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/CarSensorEvent$CarEvBatteryLevelData.smali",
+    "sha256": "d6de8caee362c025c64017f65c3e652e9580de38defed6a06aa1bd16d34d3a93",
+    "bytes": 876
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/CarSensorEvent$CarEvChargePortConnectedData.smali",
+    "sha256": "79716da1526d0b15bdf98fdf0df16e82df302cf179126c2971b037359764b351",
+    "bytes": 906
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/CarSensorEvent$CarEvChargePortOpenData.smali",
+    "sha256": "d5cf07ba5054d29e05a0f9fc962f0af342705e4b16a50f5a5a7c4657306d49a4",
+    "bytes": 886
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/CarSensorEvent$CarFuelDoorOpenData.smali",
+    "sha256": "25143645aef594502d161557e88f71fc7413d01938f4af1d71de45dfaad002eb",
+    "bytes": 870
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/CarSensorEvent$CarSpeedData.smali",
+    "sha256": "8c57bc37dd9830a38bb86a3fee624a6d9ab6679b8bf27600b390443b3c256295",
+    "bytes": 843
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/CarSensorEvent$CarTractionControlActiveData.smali",
+    "sha256": "d0836ce8117d283f5b06faf9446ce6995b9829304f04352254ef7d85be4d5619",
+    "bytes": 906
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/CarSensorEvent$CarWheelTickDistanceData.smali",
+    "sha256": "c7fd073fa33e22c4a689666d56b4cae0a53ee342a7843f2c25a679cc834c6d58",
+    "bytes": 1055
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/CarSensorEvent$EnvironmentData.smali",
+    "sha256": "214ad0644d1e83176f49ad898f61399576dce2e58cabecaf86f120b2b15acac2",
+    "bytes": 881
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/CarSensorEvent$FuelLevelData.smali",
+    "sha256": "5bebb144ba54b3cb8893c2b5a9fd1ab6c71f6692f25a1ced1afd20a48eb19132",
+    "bytes": 843
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/CarSensorEvent$GearData.smali",
+    "sha256": "2f2d1ddb758269513da84b6e03bed0493401747cb9bd7b6ea6b58611ff257b4f",
+    "bytes": 827
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/CarSensorEvent$NightData.smali",
+    "sha256": "8ce16607c107852093fe50a1545a51dc01d6f9225a5e307a2c605ef67eab89c5",
+    "bytes": 837
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/CarSensorEvent$OdometerData.smali",
+    "sha256": "db02c369a247bfef68e8ee20763e12e2c5a46bb0643a6924ebcf710291011a3c",
+    "bytes": 838
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/CarSensorEvent$ParkingBrakeData.smali",
+    "sha256": "c85f172ccfa4dfcd09f480008bee5394a03d84bf256a2b7466dda2a265cbe31e",
+    "bytes": 856
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/CarSensorEvent$RpmData.smali",
+    "sha256": "e191f529f137c5dd7d7db9570c28c964fdef0ed74fc5742f9dc8d6b49211840f",
+    "bytes": 823
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/CarSensorEvent.smali",
+    "sha256": "8cd982a476f7806468bede34b10d41df4868bf4155a752eff09096d82cdb0c19",
+    "bytes": 34824
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/CarSensorManager$CarPropertyEventListenerToBase.smali",
+    "sha256": "7800d393593c29ad8bbb0cfbe89aab8009f39e5c7502b39f9548c239427201f1",
+    "bytes": 2821
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/CarSensorManager$OnSensorChangedListener.smali",
+    "sha256": "8fa65f86ebdccecd096af59d918a68964b7ceaefd161081d5b39f06833b38d87",
+    "bytes": 533
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/CarSensorManager$SensorRate.smali",
+    "sha256": "be932cf77aa6a3e4e07e1a8e2b702e7f5fe11b6a93f8161c3eb23bebd731a8af",
+    "bytes": 641
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/CarSensorManager$SensorType.smali",
+    "sha256": "745ac7f5dfa7a31f6af3b33cec944e14783f57ed1ceed72eb761fe801382bc90",
+    "bytes": 641
+  },
+  {
+    "path": "work/system-analysis-20261008/oem-apps/Carlink/smali/classes/android/car/hardware/CarSensorManager.smali",
+    "sha256": "4a2afe762687d39778110763c736bb6bcead4ef016c60801092fde192937acf3",
+    "bytes": 33516
+  },
+  {
+    "path": "work/update-package-20261009/format-audit/QisiAdapterService/bytecode.dis.txt",
+    "sha256": "80059a85e4a3d68b3f186249369dac9f276ec79514a9237f94f4dffa8ec38310",
+    "bytes": 245724951
+  },
+  {
+    "path": "work/update-package-20261009/format-audit/faw-framework/bytecode.dis.txt",
+    "sha256": "5971d9fe57506d27135b5c483ce63c51b0ea5579cb93302f0dc97ef4cab2ba8b",
+    "bytes": 6188861
+  },
+  {
+    "path": "work/system-analysis-20261008/vdex-recovered/framework/boot-alfusos-framework/bytecode.dis.txt",
+    "sha256": "9c85180df91505482d5d794be9330fe6bbab962e9ef84b3f91a551d903692797",
+    "bytes": 2686076
+  },
+  {
+    "path": "work/system-analysis-20261008/vdex-recovered/framework/boot-alfusos.hardware.deviceadapter-V1.0-java/bytecode.dis.txt",
+    "sha256": "57df8bb6c1f1582e18ec3c55b7dc30ebba691048dbda4317ec3016834642ef9b",
+    "bytes": 402656
+  },
+  {
+    "path": "work/system-analysis-20261008/vdex-recovered/framework/boot-alfusos.hardware.fm1388-V1.0-java/bytecode.dis.txt",
+    "sha256": "2ced6df28d76c716374f54f1598b8b883728b510f9f7a8ba74a522cdca1d8e07",
+    "bytes": 289600
+  },
+  {
+    "path": "work/system-analysis-20261008/vdex-recovered/framework/boot-alfusos.hardware.infrared-V1.0-java/bytecode.dis.txt",
+    "sha256": "1b775b25879fc8d2d79348415920f3e8ec23cf1a642281cb088f1784f22ffe4a",
+    "bytes": 367189
+  },
+  {
+    "path": "work/system-analysis-20261008/vdex-recovered/framework/boot-alfusos.hardware.project-V1.0-java/bytecode.dis.txt",
+    "sha256": "0c9357523157fe45468e9c77535427c0714092635b84cf838fd38148573d2d4b",
+    "bytes": 377993
+  },
+  {
+    "path": "work/system-analysis-20261008/vdex-recovered/framework/boot-alfusos.hardware.rpc-V1.0-java/bytecode.dis.txt",
+    "sha256": "644e557a579f89d3c1b816bd1a31720ec611d3ae98ac8179054aadf4e96cf858",
+    "bytes": 357138
+  },
+  {
+    "path": "work/system-analysis-20261008/vdex-recovered/framework/boot-alfusos.hardware.smartantenna-V1.0-java/bytecode.dis.txt",
+    "sha256": "759db34ebb6c4e685e2dee6bebfa0650ec1aa0e6704d4ae6f0c5205e8297d986",
+    "bytes": 1559040
+  }
+]

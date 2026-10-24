@@ -21,7 +21,7 @@ class PreparationLayoutTest {
         try {
             val root = CarPlayHostActivity::class.java.getDeclaredMethod("buildContentView")
                 .apply { isAccessible = true }.invoke(activity) as FrameLayout
-            val viewport = descendants(root).single { it.tag == "faw_connection_preparation" }
+            val viewport = descendants(root).single { it.tag == "autunn_connection_preparation" }
             val width = 1920
             val height = 720
             repeat(3) {

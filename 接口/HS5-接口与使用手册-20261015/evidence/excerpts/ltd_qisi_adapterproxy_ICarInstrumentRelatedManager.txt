@@ -1,0 +1,36 @@
+# Source: work/update-package-20261009/format-audit/QisiAdapterService/bytecode.dis.txt
+# Original LF start: 1367492
+  class #1747: ICarInstrumentRelatedManager ('Lltd/qisi/adapterproxy/ICarInstrumentRelatedManager;')
+   access=0601 (PUBLIC INTERFACE ABSTRACT)
+   source_file=ICarInstrumentRelatedManager.java, class_data_off=a01bfc (10492924)
+   static_fields=0, instance_fields=0, direct_methods=0, virtual_methods=10
+   virtual_method #50554: sendCallInfoToCluster (Lltd/qisi/adapterproxy/data/QisiCallInfo;)I
+    access=0401 (PUBLIC ABSTRACT)
+    codeOff=0 (0)
+   virtual_method #50555: sendFullMapInfoToCluster (Lltd/qisi/adapterproxy/data/QisiFullMapInfo;)I
+    access=0401 (PUBLIC ABSTRACT)
+    codeOff=0 (0)
+   virtual_method #50556: sendMusicInfoToCluster (Lltd/qisi/adapterproxy/data/QisiMusicInfo;)I
+    access=0401 (PUBLIC ABSTRACT)
+    codeOff=0 (0)
+   virtual_method #50557: sendNAVIStatusToCluster (I)I
+    access=0401 (PUBLIC ABSTRACT)
+    codeOff=0 (0)
+   virtual_method #50558: sendNaviInfoToCluster (Lltd/qisi/adapterproxy/data/QisiNaviInfo;)I
+    access=0401 (PUBLIC ABSTRACT)
+    codeOff=0 (0)
+   virtual_method #50559: sendNewsInfoToCluster (Lltd/qisi/adapterproxy/data/QisiNewsInfo;)I
+    access=0401 (PUBLIC ABSTRACT)
+    codeOff=0 (0)
+   virtual_method #50560: sendRadioInfoToCluster (Lltd/qisi/adapterproxy/data/QisiRadioInfo;)I
+    access=0401 (PUBLIC ABSTRACT)
+    codeOff=0 (0)
+   virtual_method #50561: sendVideoInfoToCluster (Lltd/qisi/adapterproxy/data/QisiVideoInfo;)I
+    access=0401 (PUBLIC ABSTRACT)
+    codeOff=0 (0)
+   virtual_method #50562: setCurrentSourceToCluster (II)I
+    access=0401 (PUBLIC ABSTRACT)
+    codeOff=0 (0)
+   virtual_method #50563: setCurrentSourceWithPlanB (II)I
+    access=0401 (PUBLIC ABSTRACT)
+    codeOff=0 (0)

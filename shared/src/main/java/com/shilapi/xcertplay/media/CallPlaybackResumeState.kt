@@ -10,6 +10,8 @@ internal class CallPlaybackResumeState {
     private var pending: Int? = null
     private var generation = 0
 
+    fun cancel() { generation++; pending = null; interrupted = false }
+
     fun playback(update: CarPlayNowPlaying) {
         playing = update.playing
         source = update.sourceApp

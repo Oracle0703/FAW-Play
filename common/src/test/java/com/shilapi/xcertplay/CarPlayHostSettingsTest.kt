@@ -4,10 +4,15 @@ import android.content.Intent
 import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
 import android.os.Handler
+import android.view.Surface
+import com.shilapi.xcertplay.media.AndroidMediaSink
 import android.view.MotionEvent
 import android.view.View
-import android.view.ViewGroup
+import android.widget.Button
+import android.widget.EditText
+import android.widget.Switch
 import com.shilapi.xcertplay.airplay.AirPlayIdentity
+import com.shilapi.xcertplay.network.WirelessStartupFailure
 import com.shilapi.xcertplay.orchestration.*
 import com.shilapi.xcertplay.transport.UsbDeviceId
 import org.junit.After
@@ -29,15 +34,17 @@ import java.util.concurrent.atomic.AtomicBoolean
 @LooperMode(LooperMode.Mode.PAUSED)
 class CarPlayHostSettingsTest {
     private lateinit var activity: CarPlayHostActivity
+    private lateinit var root: View
 
     @Before fun setUp() {
         activity = Robolectric.buildActivity(CarPlayHostActivity::class.java).get()
         setField("airPlayIdentity", AirPlayIdentity.generate())
         CarPlayBackgroundSession.clear()
+        CarPlayBackgroundSession.requestConnection(activity)
         CarPlayBackgroundSession::class.java.getDeclaredField("owner").apply { isAccessible = true }
             .set(CarPlayBackgroundSession, activity)
         invoke("loadPersistedSettings")
-        invoke("buildContentView")
+        root = invoke("buildContentView") as View
     }
 
     @After fun tearDown() {
@@ -50,25 +57,34 @@ class CarPlayHostSettingsTest {
 
     @Test fun settingsEntryOpensTheRegularPageAndPreservesTheLiveController() {
         val controller = attachController()
-        invoke("openSettingsMenu")
+        settingsButton().performClick()
         val intent = shadowOf(activity).nextStartedActivity
-        assertEquals(DiPlayActivity::class.java.name, intent.component?.className)
+        assertEquals(DiPlaySettingsActivity::class.java.name, intent.component?.className)
         assertEquals("settings", intent.getStringExtra("page"))
+        assertTrue(intent.flags and Intent.FLAG_ACTIVITY_NEW_TASK != 0)
         assertTrue(intent.flags and Intent.FLAG_ACTIVITY_REORDER_TO_FRONT != 0)
         assertSame(controller, field("controller"))
         assertEquals(0, field("restartGeneration"))
-        assertFalse(field("menuOpen") as Boolean)
         verify(controller).sendTouch(emptyList())
         verify(controller, never()).close()
     }
 
     @Test fun noInlineSettingsControlsOrMultiFingerSettingsShortcutRemain() {
-        assertEquals(0, (invoke("buildSettingsMenu") as ViewGroup).childCount)
+        assertTrue(descendants(root).none { it is EditText || it is Switch })
         for (fingers in 2..4) {
             gesture(fingers)
-            assertFalse(field("menuOpen") as Boolean)
             assertNull(shadowOf(activity).nextStartedActivity)
         }
+    }
+
+    @Test fun openingTheRegularSettingsPageKeepsConnectionRecoveryActive() {
+        val controller = attachController()
+        settingsButton().performClick()
+        report(CarPlayStatus.Failed("timeout", startupFailure = WirelessStartupFailure.FIRST_TCP_TIMEOUT))
+        assertTrue(field("reconnectScheduled") as Boolean)
+        assertEquals(1, CarPlayBackgroundSession.startupRetryBudget().retries)
+        assertFalse(CarPlayBackgroundSession.retryStopped())
+        verify(controller, never()).start()
     }
 
     @Test fun staleFailureCannotRestartTheCurrentSession() {
@@ -107,23 +123,25 @@ class CarPlayHostSettingsTest {
     }
 
     @Test fun neitherIphoneNorCh341AttachmentSelectsWiredTransport() {
-        val method = activity.javaClass.getDeclaredMethod("isIphoneUsbAttachment", Intent::class.java)
-            .apply { isAccessible = true }
         val controller = attachController()
         for (vendor in listOf(0x05ac, 0x1a86)) {
             val device = mock(UsbDevice::class.java)
             `when`(device.vendorId).thenReturn(vendor)
             `when`(device.productId).thenReturn(0x5512)
             val intent = Intent(UsbManager.ACTION_USB_DEVICE_ATTACHED).putExtra(UsbManager.EXTRA_DEVICE, device)
-            assertEquals(false, method.invoke(activity, intent))
             activity.javaClass.getDeclaredMethod("onNewIntent", Intent::class.java)
                 .apply { isAccessible = true }.invoke(activity, intent)
+            assertSame(intent, activity.intent)
             assertTrue(AirPlayPersistence.loadWirelessEnabled(activity))
             assertSame(controller, field("controller"))
             assertFalse(activity.isFinishing)
             assertNull(shadowOf(activity).nextStartedActivity)
         }
+        verify(controller, never()).close()
     }
+
+    private fun settingsButton(): Button = descendants(root).filterIsInstance<Button>()
+        .single { it.text.toString() == "设置" }
 
     private fun gesture(fingers: Int) {
         touch(MotionEvent.ACTION_DOWN, 1, 100f)
@@ -148,7 +166,15 @@ class CarPlayHostSettingsTest {
         } finally { event.recycle() }
     }
 
-    private fun attachController() = mock(CarPlayController::class.java).also { setField("controller", it) }
+    private fun attachController() = mock(CarPlayController::class.java).also { controller ->
+        doAnswer { call ->
+            call.getArgument<(CarPlayController.CloseResult) -> Unit>(0)(CarPlayController.CloseResult(true))
+            null
+        }.`when`(controller).whenClosed(any<(CarPlayController.CloseResult) -> Unit>() ?: {})
+        setField("controller", controller)
+        CarPlayBackgroundSession.store(controller, mock(AndroidMediaSink::class.java), 800, 480, activity,
+            CarPlaySessionDisplay(800, 480, Surface.ROTATION_0, true, true, 800, 480)) { it() }
+    }
 
     @Suppress("UNCHECKED_CAST")
     private fun report(status: CarPlayStatus, generation: Int = 0) {

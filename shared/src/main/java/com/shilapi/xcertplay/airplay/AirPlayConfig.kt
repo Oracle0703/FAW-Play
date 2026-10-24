@@ -51,4 +51,10 @@ data class AirPlayConfig(
     val icons: List<AirPlayIcon> = emptyList(),
     /** iOS 27 video in car (see [VideoInCar]); video plays only while [VideoInCar.allowed]. */
     val videoInCar: Boolean = false,
+    /** Wireless peer health policy; wired virtual TCP retains its existing timing. */
+    val fastPeerDetection: Boolean = false,
+    /** Receiver UI-context negotiation; false keeps the cluster's declared initial URL. */
+    val receiverManagedClusterUi: Boolean = true,
+    /** Explicit, per-session Ultra provisioning; absent until the vehicle contracts are ready. */
+    val ultra: AirPlayUltraConfig? = null,
 )

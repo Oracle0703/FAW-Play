@@ -18,14 +18,15 @@ internal class P2pConfigurationMemory(context: Context) {
             "frequency" -> P2pStartupRecovery.rememberedFrequency(requested) ?: return null
             else -> return null
         }
-        if (wifiFrequencyMhzToChannel(fields[2].toInt()) == null) return null
+        val actual = fields[2].toInt()
+        if (actual != 0 && wifiFrequencyMhzToChannel(actual) == null) return null
         UUID.fromString(fields[4])
         Record(encoded, request, fields[3].toInt().takeIf { it > 0 })
     }.getOrNull()
 
-    fun remember(request: P2pCreationRequest, actualMHz: Int, stationMHz: Int?): Boolean {
+    fun remember(request: P2pCreationRequest, actualMHz: Int?, stationMHz: Int?): Boolean {
         val kind = if (request.mode == P2pCreationMode.SYSTEM_DEFAULT) "system" else "frequency"
-        val encoded = "$kind|${request.frequencyMHz ?: 0}|$actualMHz|${stationMHz ?: 0}|${UUID.randomUUID()}"
+        val encoded = "$kind|${request.frequencyMHz ?: 0}|${actualMHz ?: 0}|${stationMHz ?: 0}|${UUID.randomUUID()}"
         return synchronized(prefs) { prefs.edit().putString("confirmed", encoded).commit() }
     }
 

@@ -1,0 +1,47 @@
+{
+  "component": "server",
+  "independentCopy": true,
+  "productionCredentialsUsed": false,
+  "accessoryIdentityBundled": false,
+  "commands": [
+    {
+      "command": [
+        "gradlew",
+        "-p",
+        "authorization-server",
+        "test",
+        "bootJar",
+        "--offline",
+        "--no-configuration-cache",
+        "--console=plain"
+      ],
+      "exitCode": 0,
+      "elapsedSeconds": 12.1
+    },
+    {
+      "command": [
+        "node",
+        "--test",
+        "authorization-server/scripts/test_admin_web.cjs",
+        "authorization-server/scripts/test_web_api.cjs"
+      ],
+      "exitCode": 0,
+      "elapsedSeconds": 0.2
+    },
+    {
+      "command": [
+        "python3",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "authorization-server/scripts",
+        "-p",
+        "test_admin.py"
+      ],
+      "exitCode": 0,
+      "elapsedSeconds": 0.6
+    }
+  ],
+  "success": true
+}

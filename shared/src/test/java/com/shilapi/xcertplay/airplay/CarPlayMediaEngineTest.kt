@@ -67,6 +67,35 @@ class CarPlayMediaEngineTest {
     }
 
     @Test
+    fun retiringAnOldSessionCannotStopItsSuccessorsScreens() {
+        val events = mutableListOf<Pair<Int, Boolean>>()
+        val engine = CarPlayMediaEngine(object : MediaSink {
+            override fun onScreenStreamActive(type: Int, active: Boolean) { events += type to active }
+        })
+        val old = testSession()
+        val current = testSession()
+        @Suppress("UNCHECKED_CAST")
+        val streams = CarPlayMediaEngine::class.java.getDeclaredField("streams").apply { isAccessible = true }
+            .get(engine) as MutableMap<CarPlayMediaEngine.StreamKey, Closeable>
+        var oldClosed = 0
+        var currentClosed = 0
+        for (type in listOf(110, 111)) {
+            streams[CarPlayMediaEngine.StreamKey(old, type)] = Closeable { oldClosed++ }
+            streams[CarPlayMediaEngine.StreamKey(current, type)] = Closeable { currentClosed++ }
+        }
+        try {
+            engine.onTeardown(old, 110)
+            engine.onSessionClosed(old)
+            assertEquals(2, oldClosed)
+            assertEquals(0, currentClosed)
+            assertTrue(events.isEmpty())
+            engine.onSessionClosed(current)
+            assertEquals(2, currentClosed)
+            assertEquals(setOf(110 to false, 111 to false), events.toSet())
+        } finally { old.close(); current.close() }
+    }
+
+    @Test
     fun videoRemoteControlSessionsAreAcceptedOnlyWithVideoInCar() {
         val stream = mapOf("type" to 130L, "clientTypeUUID" to "A6B27562-B43A-4F2D-B75F-82391E250194", "controlType" to 1L)
         val engine = CarPlayMediaEngine(object : MediaSink {})

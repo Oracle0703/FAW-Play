@@ -59,7 +59,7 @@ class ClusterNavigationPreviewActivity : Activity() {
             setPadding(24, 12, 24, 12)
             setBackgroundColor(Color.rgb(17, 25, 34))
             addView(TextView(this@ClusterNavigationPreviewActivity).apply {
-                text = "FAW Play · 仪表通道测试（模拟数据）"
+                text = "Autunn Play · 仪表通道测试（模拟数据）"
                 textSize = 22f; setTextColor(Color.WHITE)
             })
         }

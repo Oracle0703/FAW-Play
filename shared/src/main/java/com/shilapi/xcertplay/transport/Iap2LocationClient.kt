@@ -2,7 +2,7 @@ package com.shilapi.xcertplay.transport
 
 import com.shilapi.xcertplay.iap2.message.Iap2ControlMessages
 import com.shilapi.xcertplay.iap2.wire.Iap2Frame
-import java.util.Locale
+import com.shilapi.xcertplay.transport.NmeaSentence.format
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -85,7 +85,7 @@ object NmeaLocationEncoder {
         val rmcBody = "GPRMC,$time,A,${latitude.value},${latitude.hemisphere}," +
             "${longitude.value},${longitude.hemisphere},$speedKnots,$course,$date,,"
 
-        return "$${ggaBody}*${checksum(ggaBody)}\r\n$${rmcBody}*${checksum(rmcBody)}\r\n"
+        return NmeaSentence.encode(ggaBody) + NmeaSentence.encode(rmcBody)
     }
 
     private fun degreesToNmea(value: Double, latitude: Boolean): NmeaCoordinate {
@@ -105,16 +105,7 @@ object NmeaLocationEncoder {
         return NmeaCoordinate("$degreeText${format("%07.4f", minutes)}", hemisphere)
     }
 
-    private fun checksum(body: String): String {
-        var value = 0
-        for (character in body) value = value xor character.code
-        return format("%02X", value)
-    }
-
     private fun ofEpochMilli(millis: Long): Timestamp = Timestamp(millis)
-
-    private fun format(format: String, vararg arguments: Any): String =
-        String.format(Locale.US, format, *arguments)
 
     private data class NmeaCoordinate(val value: String, val hemisphere: String)
 

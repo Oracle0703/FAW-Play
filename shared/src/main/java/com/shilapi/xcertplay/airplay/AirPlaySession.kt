@@ -1,6 +1,7 @@
 package com.shilapi.xcertplay.airplay
 
 import android.util.Log
+import com.shilapi.xcertplay.media.CarPlayNowPlaying
 import com.shilapi.xcertplay.mfi.MfiAuthenticator
 import com.shilapi.xcertplay.transport.BlockingDuplexByteStream
 import java.io.BufferedInputStream
@@ -14,7 +15,12 @@ import java.net.InetSocketAddress
 import java.net.ServerSocket
 import java.net.Socket
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.ScheduledThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 
 data class AirPlayDeviceInfo(
     val name: String,
@@ -25,10 +31,30 @@ data class AirPlayDeviceInfo(
 
 /** Session lifecycle and command callbacks for the driver/UI layer. */
 interface AirPlaySessionListener {
+    /** Admission for a new session, checked before allocating SETUP media or accepting RECORD. */
+    fun authorizeSession(session: AirPlaySession): Boolean = true
     fun onTcpAccepted(event: AirPlayTcpAccepted) {}
     fun onSessionActive(session: AirPlaySession) {}
+    /** The primary video stream was accepted; no display Surface or rendered frame is required. */
+    fun onMainScreenReady(session: AirPlaySession) {}
+    /** First decrypted picture from the current primary producer, including background reception. */
+    fun onMainScreenVideoReceived(session: AirPlaySession) {}
+    /** Input is invalid and the peer is gone; invoked before potentially slow media cleanup. */
+    fun onSessionDisconnected(session: AirPlaySession) {}
+    /** Session resources have been released. */
     fun onSessionEnded(session: AirPlaySession) {}
+    /** Legacy primary-screen callback. Alternate-screen frames must not complete startup. */
     fun onVideoFrameRendered(session: AirPlaySession) {}
+    fun onVideoFrameRendered(session: AirPlaySession, screenType: Int) {
+        if (screenType == 110) onVideoFrameRendered(session)
+    }
+    /** Authenticated runtime iAP2 is independent of video readiness. */
+    fun onWirelessRuntimeReady(session: AirPlaySession) {}
+    fun onWirelessRuntimeUnavailable(session: AirPlaySession) {}
+    /** An authenticated current navigation source delivered data; not a claim of visible guidance. */
+    fun onNavigationDataReceived(session: AirPlaySession) {}
+    /** Receiver progress, never confirmation of the OEM display's actual pixels. */
+    fun onClusterContentProgress(session: AirPlaySession, progress: ClusterContentProgress) {}
     fun onTransportError(message: String) {}
     fun onDeviceInfo(session: AirPlaySession, info: AirPlayDeviceInfo) {}
     fun onHostUiRequested(session: AirPlaySession) {}
@@ -44,13 +70,20 @@ interface AirPlaySessionListener {
 interface AirPlayMediaHandler {
     fun setWirelessDiagnosticSource(source: () -> String) {}
     fun onSessionActive(session: AirPlaySession) {}
+    fun onPlaybackContext(session: AirPlaySession, playback: CarPlayNowPlaying, phone: Boolean?, speech: Boolean?) {}
+    fun onSiriRequested(session: AirPlaySession) {}
+    fun onResourceModes(session: AirPlaySession, state: AirPlayResourceModes.State) {}
     fun onScreen(session: AirPlaySession, type: Int, stream: Map<String, Any?>): Int? = null
     fun onAudio(session: AirPlaySession, type: Int, stream: Map<String, Any?>): Map<String, Any?>? = null
     fun onDataStream(session: AirPlaySession, stream: Map<String, Any?>): Map<String, Any?>? = null
     fun onFeedback(session: AirPlaySession): Map<String, Any?>? = null
     fun onTeardown(session: AirPlaySession, type: Int) {}
+    /** null ends the whole session, including any audio tail whose receiver has already ended. */
+    fun onTeardown(session: AirPlaySession, types: List<Int>?) {
+        (types ?: session.activeStreams.toList()).forEach { onTeardown(session, it) }
+    }
     fun onSessionClosed(session: AirPlaySession) {}
-    fun setIapTunnelHandler(handler: ((BlockingDuplexByteStream) -> Boolean)?) {}
+    fun setIapTunnelHandler(handler: ((AirPlaySession, BlockingDuplexByteStream) -> Boolean)?) {}
     fun onSetupResponseSent(session: AirPlaySession) {}
 }
 
@@ -68,6 +101,7 @@ class AirPlaySession(
     private val mfi: MfiAuthenticator?,
     private val listener: AirPlaySessionListener,
     private val media: AirPlayMediaHandler,
+    private val partialMessageTimeoutMillis: Long = IncompleteMessageDeadline.DEFAULT_TIMEOUT_MILLIS,
 ) : Closeable {
     internal val pairSetup = PairSetup(identity, pairings)
     internal val pairVerify = PairVerify(identity, pairings)
@@ -75,21 +109,44 @@ class AirPlaySession(
     internal var encBuf = ByteArray(0)
     internal var deviceBtMac = ""
     internal val activeStreams = linkedSetOf<Int>()
+    private val nextDataStreamId = AtomicLong(3L) // iAP=1 and video settings=2 remain reserved.
+    private val dataSeedLock = Any()
+    private val dataSeeds = mutableSetOf<String>()
+    private val ultraDataSeeds = mutableSetOf<String>()
+    @Volatile private var negotiatedFeatures = emptySet<String>()
+    private val ultraStreams = AirPlayUltraStreams(
+        config, { sharedSecret }, { localAddress }, { remoteAddress }, ::allocateDataStreamId,
+        { debugLog(it, false) },
+        reserveSeed = ::reserveUltraDataSeed,
+    )
+
+    internal fun allocateDataStreamId(): Long = nextDataStreamId.getAndIncrement()
+
+    private fun reserveUltraDataSeed(seed: String): Boolean = synchronized(dataSeedLock) {
+        if (!dataSeeds.add(seed)) false else { ultraDataSeeds.add(seed); true }
+    }
 
     /** Counts the iPhone's cluster stream setups; 0 while no cluster stream is up. */
     @Volatile var clusterStream = 0
         private set
     private var clusterStreamSetups = 0
     @Volatile private var mainScreenToken: Any? = null
+    @Volatile private var renderedMainScreenToken: Any? = null
+    @Volatile private var mainVideoSource: Any? = null
+    @Volatile private var receivedMainVideoSource: Any? = null
+    @Volatile private var retiringMainVideoSource: Any? = null
+    @Volatile private var lastMediaProgressNanos = 0L
 
     val diagnosticId: Long = connectionIds.incrementAndGet()
     private val controlTimeline = TransportTimeline { debugLog("session=$diagnosticId control $it") }
     private val eventTimeline = TransportTimeline { debugLog("session=$diagnosticId event $it") }
+    private val commandTracker = AirPlayCommandTracker { debugLog("session=$diagnosticId $it") }
     private val closed = AtomicBoolean(false)
     private val notified = AtomicBoolean(false)
-    private var eventServer: ServerSocket? = null
-    private var eventSocket: Socket? = null
-    private var eventCipher: ControlCipher? = null
+    private val cleanupComplete = CountDownLatch(1)
+    @Volatile private var eventServer: ServerSocket? = null
+    @Volatile private var eventSocket: Socket? = null
+    @Volatile private var eventCipher: ControlCipher? = null
     private var eventCseq = 0
     private var pendingNightMode: Boolean? = null
     private val firstTouchSendLogged = AtomicBoolean(false)
@@ -98,6 +155,15 @@ class AirPlaySession(
     private var keepAliveSocket: DatagramSocket? = null
     private var keepAliveThread: Thread? = null
     private val eventWriteLock = Any()
+    // Serializes event replacement and ready publication. Never hold the write lock while
+    // entering VideoPlaybackAvailability: its sender acquires eventWriteLock in the reverse path.
+    private val eventLifecycleLock = Any()
+    private val viewAreaControl = AirPlayViewAreaControl(config, ::sendCommand).apply {
+        preferredAlternate = { synchronized(clusterContentLock) { requestedClusterUrl } }
+        selectAlternate = ::applyDisplayClusterSelection
+        onDiagnostic = { debugLog(it) }
+    }
+    val resourceModes = AirPlayResourceModes(::sendCommand)
     private val eventThreads = CopyOnWriteArrayList<Thread>()
 
     val host: String = socket.inetAddress?.hostAddress ?: ""
@@ -108,6 +174,8 @@ class AirPlaySession(
     val controllerId: String? get() = pairVerify.verifiedControllerId
     val sharedSecret: ByteArray? get() = pairVerify.shared?.copyOf()
     val videoInCar: Boolean get() = config.videoInCar
+    internal val fastPeerDetection: Boolean get() = config.fastPeerDetection
+    fun isClosed(): Boolean = closed.get()
     private val videoPlaybackAvailability = VideoPlaybackAvailability { allowed ->
         sendCommand(
             linkedMapOf(
@@ -121,9 +189,75 @@ class AirPlaySession(
 
     internal fun logDebug(message: String) = debugLog(message)
 
-    internal fun videoFrameRendered() {
-        if (!closed.get()) listener.onVideoFrameRendered(this)
+    internal fun videoFrameRendered(screenType: Int = STREAM_TYPE_MAIN_SCREEN, source: Any? = null) {
+        if (closed.get()) return
+        if (screenType == STREAM_TYPE_MAIN_SCREEN) renderedMainScreenToken = mainScreenToken
+        else if (screenType == STREAM_TYPE_ALT_SCREEN && source != null) {
+            clusterProgress.rendered(source)?.let { publishClusterProgress(it); cancelClusterProgressCheck(it) }
+        }
+        listener.onVideoFrameRendered(this, screenType)
     }
+
+    internal fun videoSourceStarted(screenType: Int, source: Any) {
+        if (screenType == STREAM_TYPE_ALT_SCREEN && !closed.get()) clusterVideoSource = source
+        else if (screenType == STREAM_TYPE_MAIN_SCREEN && !closed.get()) {
+            receivedMainVideoSource = null
+            retiringMainVideoSource = null
+            mainVideoSource = source
+        }
+    }
+
+    /** Capture the producer before requesting HOME; EOF can precede modesChanged/TEARDOWN. */
+    internal fun expectMainScreenEnd() {
+        if (!closed.get()) retiringMainVideoSource = mainVideoSource
+    }
+
+    internal fun mainScreenEndExpected(source: Any): Boolean = !closed.get() && mainVideoSource === source &&
+        (retiringMainVideoSource === source || resourceModes.state.screen == AirPlayResourceModes.Entity.VEHICLE)
+
+    /** The engine holds ownership of this producer; a late EOF cannot revoke its replacement. */
+    internal fun mainScreenSourceEnded(source: Any) {
+        if (mainVideoSource !== source) return
+        mainScreenToken = null
+        renderedMainScreenToken = null
+        mainVideoSource = null
+        receivedMainVideoSource = null
+        retiringMainVideoSource = null
+    }
+
+    /** Called only for a decrypted picture access unit from the currently owned producer. */
+    internal fun videoFrameReceived(screenType: Int, source: Any) {
+        if (closed.get()) return
+        if (screenType == STREAM_TYPE_MAIN_SCREEN) {
+            if (mainVideoSource !== source || receivedMainVideoSource === source) return
+            receivedMainVideoSource = source
+            listener.onMainScreenVideoReceived(this)
+            return
+        }
+        if (screenType != STREAM_TYPE_ALT_SCREEN) return
+        clusterProgress.received(source)?.let { publishClusterProgress(it); cancelClusterProgressCheck(it) }
+    }
+
+    internal fun mediaProgress() {
+        if (!closed.get()) lastMediaProgressNanos = System.nanoTime()
+    }
+
+    /** Actual decrypted media reception, independent of whether a display is in the foreground. */
+    fun hasRecentMediaProgress(maxAgeMillis: Long): Boolean {
+        val latest = lastMediaProgressNanos
+        val age = System.nanoTime() - latest
+        return !closed.get() && latest != 0L && maxAgeMillis > 0L && age >= 0L &&
+            age <= TimeUnit.MILLISECONDS.toNanos(maxAgeMillis)
+    }
+
+    /** A frame belongs to the currently accepted primary stream, never a previous SETUP. */
+    fun hasRenderedMainScreen(): Boolean {
+        val token = mainScreenSessionToken() ?: return false
+        return renderedMainScreenToken === token
+    }
+
+    fun hasReceivedMainScreenVideo(): Boolean = !closed.get() && mainScreenToken != null && mainVideoSource != null &&
+        mainVideoSource === receivedMainVideoSource
 
     internal fun logTrace(message: String) = trace(message)
 
@@ -136,19 +270,49 @@ class AirPlaySession(
 
     override fun close() {
         if (!closed.compareAndSet(false, true)) return
+        finishClose()
+    }
+
+    private fun finishClose() {
         controlTimeline.event("close initiator=session")
         eventTimeline.event("close initiator=session")
         mainScreenToken = null
+        renderedMainScreenToken = null
+        mainVideoSource = null
+        receivedMainVideoSource = null
+        retiringMainVideoSource = null
         clearClusterContent()
+        ultraStreams.close()
         safeClose(socket)
+        safeClose(eventServer)
+        safeClose(eventSocket)
+        // Close the socket before taking a resource-state lock held by a blocked writer.
+        resourceModes.close()
+        commandTracker.close()
+        if (clusterProgressWorker.isInitialized()) clusterProgressWorker.value.shutdownNow()
         try {
-            media.onSessionClosed(this)
-        } catch (error: Exception) {
-            Log.w(TAG, "airplay media stream teardown failed", error)
+            try { listener.onSessionDisconnected(this) }
+            catch (error: Exception) { Log.w(TAG, "airplay disconnect notification failed", error) }
+            try {
+                media.onSessionClosed(this)
+            } catch (error: Exception) {
+                Log.w(TAG, "airplay media stream teardown failed", error)
+            } finally {
+                try { teardown() }
+                catch (error: Exception) { Log.w(TAG, "airplay transport teardown failed", error) }
+            }
+            if (notified.compareAndSet(false, true)) {
+                try { listener.onSessionEnded(this) }
+                catch (error: Exception) { Log.w(TAG, "airplay end notification failed", error) }
+            }
+        } finally {
+            cleanupComplete.countDown()
         }
-        teardown()
-        if (notified.compareAndSet(false, true)) listener.onSessionEnded(this)
     }
+
+    /** Transport teardown workers may wait; the UI uses the early notification instead. */
+    internal fun awaitClosed(timeoutMillis: Long): Boolean =
+        cleanupComplete.await(timeoutMillis, TimeUnit.MILLISECONDS)
 
     /** Stable identity of the usable primary screen; replaced on SETUP, absent after teardown/close. */
     internal fun mainScreenSessionToken(): Any? = if (closed.get()) null else mainScreenToken
@@ -158,20 +322,39 @@ class AirPlaySession(
      * then a keyframe) or to stop drawing it (stopUI). The stream stays up either way; CarKit handles
      * both as car-initiated commands for a screen UUID.
      */
-    fun setClusterUiShown(shown: Boolean): Boolean {
+    fun setClusterUiShown(shown: Boolean): Boolean = setClusterUiShown(shown, expectedStream = null)
+
+    /** A queued controller request may target only the stream admitted with that request. */
+    internal fun setClusterUiShown(shown: Boolean, expectedStream: Int?): Boolean {
         synchronized(clusterCommandLock) {
-            if (closed.get() || clusterStream <= 0) return false
-            val content = synchronized(clusterContentLock) { clusterContent } ?: return false
+            if (closed.get() || config.cluster == null) return false
+            val content = synchronized(clusterContentLock) {
+                if (expectedStream != null && clusterStream != expectedStream) return false
+                requestedClusterShown = shown
+                clusterContent?.let { current ->
+                    current.copy(shown = shown, visibilityDelivered = false, token = Any())
+                        .also { clusterContent = it }
+                }
+            } ?: return false
+            if (clusterStream <= 0) return false
             if (!shown) {
-                val sent = sendCommand(mapOf("type" to "stopUI",
+                clusterProgress.request(content.stream, false)
+                cancelClusterProgressCheck()
+                val sent = sendClusterCommand(content, mapOf("type" to "stopUI",
                     "params" to mapOf("uuid" to AirPlayInfoPlist.ALT_UUID)))
                 return synchronized(clusterContentLock) {
                     val current = clusterContent ?: return false
                     if (closed.get() || current.stream != content.stream) {
-                        if (sent) clusterContent = current.copy(displayed = null, shown = false, token = Any())
+                        if (sent) clusterContent = current.copy(displayed = null, shown = false,
+                            visibilityDelivered = false, token = Any())
                         return false
                     }
-                    if (sent) clusterContent = current.copy(shown = false)
+                    if (sent) {
+                        clusterContent = current.copy(shown = false, visibilityDelivered = true)
+                        clusterProgress.snapshot()?.let { clusterProgress.written(it.stream, it.revision, System.nanoTime()) }
+                    }
+                    clusterProgress.snapshot()?.let(::publishClusterProgress)
+                    debugLog("Cluster content stream=${content.stream} requested=hidden written=$sent effect=unmeasured")
                     sent
                 }
             }
@@ -179,21 +362,85 @@ class AirPlaySession(
         }
     }
 
+    /** SETUP admission can retain vehicle intent without writing to the previous stream. */
+    internal fun retainClusterUiShown(shown: Boolean) = synchronized(clusterContentLock) {
+        requestedClusterShown = shown
+    }
+
     private data class ClusterContent(val stream: Int, val requested: String?, val displayed: String?,
-        val shown: Boolean = true, val token: Any = Any())
+        val shown: Boolean = true, val visibilityDelivered: Boolean = false,
+        val setupAnswered: Boolean = false, val token: Any = Any())
     private val clusterContentLock = Any()
     private val clusterCommandLock = Any()
     @Volatile private var clusterContent: ClusterContent? = null
     private var requestedClusterUrl = config.cluster?.initialUrl // guarded by clusterContentLock
+    private var requestedClusterShown = true // guarded by clusterContentLock
+    @Volatile private var clusterVideoSource: Any? = null
+    private val clusterProgress = ClusterContentMonitor()
+    private var clusterProgressCheck: ScheduledFuture<*>? = null // guarded by clusterContentLock
+    private var clusterProgressCheckOwner: Pair<Int, Long>? = null // stream and request revision
+    private val clusterProgressWorker = lazy {
+        ScheduledThreadPoolExecutor(1) { task ->
+            Thread(task, "airplay-cluster-content").apply { isDaemon = true }
+        }.apply { removeOnCancelPolicy = true; setExecuteExistingDelayedTasksAfterShutdownPolicy(false) }
+    }
 
-    /** Last delivered content for this stream. Pending selections never grant wheel zoom eligibility. */
-    fun clusterUrl(): String? = clusterContentRoute()?.second
+    fun clusterContentProgress(): ClusterContentProgress? = if (closed.get()) null else clusterProgress.snapshot()
+
+    private fun publishClusterProgress(progress: ClusterContentProgress) {
+        if (closed.get()) return
+        debugLog("Cluster progress stream=${progress.stream} revision=${progress.revision} shown=${progress.shown} " +
+            "written=${progress.requestWritten} video=${progress.validVideoReceived} rendered=${progress.frameRendered} " +
+            "attempts=${progress.attempts} failure=${progress.failure ?: "none"} effect=unmeasured")
+        runCatching { listener.onClusterContentProgress(this, progress) }
+            .onFailure { Log.w(TAG, "cluster progress listener failed", it) }
+    }
+
+    private fun cancelClusterProgressCheck(expected: ClusterContentProgress? = null) = synchronized(clusterContentLock) {
+        if (expected != null && clusterProgressCheckOwner != (expected.stream to expected.revision)) return@synchronized
+        clusterProgressCheck?.cancel(false)
+        clusterProgressCheck = null
+        clusterProgressCheckOwner = null
+    }
+
+    private fun scheduleClusterProgressCheck(progress: ClusterContentProgress): Unit = synchronized(clusterContentLock) {
+        val current = clusterProgress.snapshot() ?: return@synchronized
+        if (current.stream != progress.stream || current.revision != progress.revision) return@synchronized
+        clusterProgressCheck?.cancel(false)
+        clusterProgressCheck = null
+        clusterProgressCheckOwner = null
+        if (closed.get() || !current.shown || !current.requestWritten || current.validVideoReceived || current.frameRendered || current.failure != null) return@synchronized
+        clusterProgressCheckOwner = current.stream to current.revision
+        clusterProgressCheck = clusterProgressWorker.value.schedule({
+            synchronized(clusterCommandLock) check@{
+                if (closed.get()) return@check
+                val content = clusterContent ?: return@check
+                if (!content.shown || content.stream != progress.stream || clusterStream != progress.stream) return@check
+                when (clusterProgress.check(progress.stream, progress.revision, System.nanoTime())) {
+                    ClusterContentMonitor.Action.RETRY -> {
+                        // Only an entirely missing first access unit is retried. A static map
+                        // that has supplied valid video is never judged by its frame rate.
+                        showClusterUrl(content, content.requested ?: return@check, progress.revision)
+                        return@check // A successful write schedules exactly one next check.
+                    }
+                    ClusterContentMonitor.Action.REPORT -> clusterProgress.snapshot()?.let(::publishClusterProgress)
+                    ClusterContentMonitor.Action.NONE -> Unit
+                }
+                val latest = clusterProgress.snapshot() ?: return@check
+                if (latest.stream == progress.stream && latest.revision == progress.revision && latest.failure == null)
+                    scheduleClusterProgressCheck(latest)
+            }
+        }, ClusterContentMonitor.RETRY_WAIT_NS, TimeUnit.NANOSECONDS)
+    }
+
+    /** Last content whose commands were written for this stream; this is not proof of its pixels. */
+    fun clusterUrl(): String? = clusterContent?.takeIf { !closed.get() && it.stream == clusterStream }?.displayed
 
     /** One immutable snapshot keeps content and generation checks consistent without locking keys. */
     internal fun clusterContentRoute(): Triple<Int, String?, Any>? {
         val content = clusterContent ?: return null
         if (closed.get() || content.stream != clusterStream) return null
-        return Triple(content.stream, content.displayed, content.token)
+        return Triple(content.stream, content.displayed.takeIf { content.shown && content.visibilityDelivered }, content.token)
     }
 
     /**
@@ -220,48 +467,94 @@ class AirPlaySession(
             requestedClusterUrl = url
             clusterContent?.copy(requested = url)?.also { clusterContent = it }
         }
-        if (content == null || !send || (content.shown && content.displayed == url)) true
+        if (content == null || !send || (content.shown && content.visibilityDelivered && content.displayed == url)) true
         else showClusterUrl(content, url)
     }
 
-    private fun showClusterUrl(content: ClusterContent, url: String): Boolean {
-        if (closed.get() || clusterStream != content.stream) return false
+    private fun showClusterUrl(content: ClusterContent, url: String, retryRevision: Long? = null): Boolean {
+        val progress = if (retryRevision == null) clusterProgress.request(content.stream, true)
+            else clusterProgress.snapshot()?.takeIf { it.stream == content.stream && it.revision == retryRevision && it.shown &&
+                !it.validVideoReceived && !it.frameRendered && it.failure == null }
+        if (progress == null) return false
+        cancelClusterProgressCheck()
+        synchronized(clusterContentLock) {
+            val current = clusterContent ?: return false
+            if (closed.get() || clusterStream != content.stream || current.stream != content.stream) return false
+            requestedClusterShown = true
+            // A request made while SETUP is being answered must still replace a retained hide.
+            clusterContent = current.copy(shown = true, visibilityDelivered = false, token = Any())
+        }
         val uuid = AirPlayInfoPlist.ALT_UUID
-        val uiSent = sendCommand(mapOf("type" to "showUI", "params" to mapOf("uuid" to uuid, "url" to url)))
+        val uiSent = sendClusterCommand(content, mapOf("type" to "showUI", "params" to mapOf("uuid" to uuid, "url" to url)))
         val sent = uiSent && clusterStream == content.stream && !closed.get() &&
-            sendCommand(mapOf("type" to "forceKeyFrame", "params" to mapOf("uuid" to uuid)))
+            sendClusterCommand(content, mapOf("type" to "forceKeyFrame", "params" to mapOf("uuid" to uuid)))
         return synchronized(clusterContentLock) {
             val current = clusterContent ?: return false
             if (closed.get() || current.stream != content.stream || clusterStream != content.stream) {
                 // A command already in flight can outlast re-SETUP. Its displayed result is unknown.
-                if (uiSent) clusterContent = current.copy(displayed = null, token = Any())
+                if (uiSent) clusterContent = current.copy(displayed = null, visibilityDelivered = false, token = Any())
                 return false
             }
             if (uiSent) clusterContent = current.copy(displayed = if (sent) url else null,
-                shown = true, token = Any())
+                shown = true, visibilityDelivered = sent, token = Any())
+            if (sent) clusterProgress.written(progress.stream, progress.revision, System.nanoTime())?.let {
+                publishClusterProgress(it)
+                scheduleClusterProgressCheck(it)
+            }
+            debugLog("Cluster content stream=${content.stream} requested=shown showWritten=$uiSent " +
+                "keyFrameWritten=$sent effect=unmeasured")
             sent
         }
     }
 
-    private fun beginClusterContent() = synchronized(clusterContentLock) {
-        val stream = ++clusterStreamSetups
-        val initial = config.cluster?.initialUrl
-        clusterContent = ClusterContent(stream, requestedClusterUrl, initial)
-        clusterStream = stream
+    /** All content entry points wait for this generation's SETUP response to reach the phone. */
+    private fun sendClusterCommand(content: ClusterContent, command: Map<String, Any?>): Boolean =
+        synchronized(eventWriteLock) {
+            val current = clusterContent ?: return false
+            if (current.stream != content.stream || clusterStream != content.stream || !current.setupAnswered) return false
+            sendCommandLocked(command)
+        }
+
+    private fun beginClusterContent() {
+        val initial = viewAreaControl.initialAlternateUrl()
+        synchronized(clusterContentLock) {
+            val stream = ++clusterStreamSetups
+            // initialURL is an offered starting page, not evidence that this stream drew it.
+            clusterContent = ClusterContent(stream, requestedClusterUrl ?: initial,
+                displayed = null, shown = requestedClusterShown)
+            clusterStream = stream
+            clusterProgress.begin(stream, clusterVideoSource, requestedClusterShown)
+            cancelClusterProgressCheck()
+        }
+        clusterProgress.snapshot()?.let(::publishClusterProgress)
+    }
+
+    private fun applyDisplayClusterSelection(url: String): Boolean = synchronized(clusterCommandLock) {
+        val content = clusterContent ?: return false
+        if (closed.get() || content.stream != clusterStream) return false
+        // Context suggestions cannot undo the vehicle's paused instrument display.
+        if (!restoreClusterUrl(url, send = false)) return false
+        if (!content.shown) true else showClusterUrl(clusterContent ?: return false, url)
     }
 
     private fun clearClusterContent() = synchronized(clusterContentLock) {
         clusterStream = 0
         clusterContent = null
+        clusterVideoSource = null
+        clusterProgress.clear()
+        cancelClusterProgressCheck()
     }
 
-    // Re-SETUP starts at initialURL. Reapply the saved live selection only after SETUP was answered,
-    // or the event channel becomes ready, without claiming it was displayed before delivery.
+    // Explicitly request each stream's first page after SETUP was answered and the event channel
+    // is usable. Retain a failed hide/show for the ready-channel retry without undoing a pause.
     private fun reapplyClusterContent() {
         synchronized(clusterCommandLock) {
             val content = clusterContent ?: return
+            if (!content.setupAnswered) return
             val requested = content.requested ?: return
-            if (content.shown && requested != content.displayed) showClusterUrl(content, requested)
+            if (content.shown && (!content.visibilityDelivered || requested != content.displayed)) {
+                showClusterUrl(content, requested)
+            } else if (!content.shown && !content.visibilityDelivered) setClusterUiShown(false)
         }
     }
 
@@ -303,6 +596,7 @@ class AirPlaySession(
         videoPlaybackAvailability.setDesired(allowed)
 
     private fun sendCommandLocked(command: Map<String, Any?>, extraHeaders: String = ""): Boolean {
+        if (closed.get()) return false
         val socket = eventSocket ?: return false
         val cipher = eventCipher ?: return false
         eventCseq++
@@ -311,7 +605,8 @@ class AirPlaySession(
             "Content-Type: $PLIST_CONTENT_TYPE\r\n" +
             "Content-Length: ${body.size}\r\n" +
             "CSeq: $eventCseq\r\n\r\n"
-        trace("airplay event tx headers=$head bodyHex=${body.toHex()}")
+        trace("airplay event tx method=POST route=command cseq=$eventCseq contentBytes=${body.size}")
+        commandTracker.queued(eventCseq, command)
         return try {
             val bytes = cipher.encrypt(head.toByteArray(Charsets.US_ASCII) + body)
             val output = socket.getOutputStream()
@@ -319,11 +614,16 @@ class AirPlaySession(
             output.write(bytes)
             output.flush()
             eventTimeline.written()
+            commandTracker.written(eventCseq)
             true
         } catch (error: Exception) {
+            commandTracker.failed(eventCseq)
             eventTimeline.failure("write", error.javaClass.simpleName)
             Log.w(TAG, "airplay event command failed type=${command["type"]}", error)
-            close()
+            // The owned reader performs session/media teardown after its read is unblocked.
+            // Never run that teardown while holding eventWriteLock: availability senders
+            // acquire this lock while holding their own state monitor.
+            safeClose(socket)
             false
         }
     }
@@ -368,9 +668,12 @@ class AirPlaySession(
         sendHidReport(AirPlayHid.TELEPHONY_HID_UID, AirPlayHid.telephonyReport(0))
     }
 
+    fun sendSiriButton(down: Boolean): Boolean =
+        sendCommand(linkedMapOf("type" to "requestSiri", "params" to linkedMapOf("siriAction" to if (down) 2 else 3)))
+
     fun invokeSiri() {
-        val pressed = sendCommand(linkedMapOf("type" to "requestSiri", "params" to linkedMapOf("siriAction" to 2)))
-        val released = sendCommand(linkedMapOf("type" to "requestSiri", "params" to linkedMapOf("siriAction" to 3)))
+        val pressed = sendSiriButton(true)
+        val released = sendSiriButton(false)
         Log.i(TAG, "airplay Siri pressed=$pressed released=$released")
     }
 
@@ -433,26 +736,37 @@ class AirPlaySession(
         )
 
     private fun runControl() {
-        com.shilapi.xcertplay.network.TcpLiveness.configure(socket) { debugLog(it) }
+        com.shilapi.xcertplay.network.TcpLiveness.configure(socket, config.fastPeerDetection) {
+            debugLog("session=$diagnosticId control $it")
+        }
         val input = BufferedInputStream(socket.getInputStream())
         val output = BufferedOutputStream(socket.getOutputStream())
         var accumulated = ByteArray(0)
         val buffer = ByteArray(READ_CHUNK_BYTES)
+        val cipherTimes = MessageByteTimes()
+        val messageTimes = MessageByteTimes()
+        val frameDeadline = IncompleteMessageDeadline("control encrypted frame", partialMessageTimeoutMillis) { safeClose(socket) }
+        val messageDeadline = IncompleteMessageDeadline("control RTSP message", partialMessageTimeoutMillis) { safeClose(socket) }
         var closeReason = "session closed"
         try {
             while (!closed.get()) {
                 controlTimeline.beginRead()
                 val count = input.read(buffer)
+                val receivedAt = System.nanoTime()
                 controlTimeline.read()
+                frameDeadline.check()
+                messageDeadline.check()
                 if (count < 0) {
                     controlTimeline.failure("read", "EOF")
                     closeReason = "peer EOF"
                     break
                 }
+                if (count == 0) continue
                 var plaintext = buffer.copyOf(count)
                 val activeCipher = cipher
                 if (activeCipher != null) {
                     encBuf += plaintext
+                    cipherTimes.append(count, receivedAt)
                     val decrypted = try {
                         activeCipher.decrypt(encBuf)
                     } catch (error: Exception) {
@@ -461,12 +775,17 @@ class AirPlaySession(
                         Log.e(TAG, "airplay $closeReason encrypted=${encBuf.size}", error)
                         break
                     }
+                    cipherTimes.transferAuthenticatedFrames(encBuf, encBuf.size - decrypted.rest.size, messageTimes)
                     encBuf = decrypted.rest
+                    frameDeadline.update(cipherTimes.firstNanos)
                     plaintext = decrypted.data
-                }
+                } else messageTimes.append(count, receivedAt)
                 accumulated += plaintext
                 val parsed = RtspMessage.parseMessages(accumulated)
+                messageTimes.consume(accumulated.size - parsed.rest.size)
                 accumulated = parsed.rest
+                messageDeadline.update(messageTimes.firstNanos)
+                if (parsed.messages.isNotEmpty()) viewAreaControl.responseStarted()
                 for (request in parsed.messages) {
                     val cseq = request.headers["cseq"] ?: "-"
                     val path = request.path.lowercase()
@@ -480,10 +799,6 @@ class AirPlaySession(
                     if (showInDebugOverlay) debugLog(
                         AirPlayControlDiagnostics.request(request.method, request.path, request.body.size),
                         false,
-                    )
-                    trace(
-                        "airplay control rx headers=${request.headers} " +
-                            "bodyHex=${request.body.toHex()}",
                     )
                     val response = try {
                         handle(request)
@@ -504,7 +819,10 @@ class AirPlaySession(
                         false,
                     )
                     val wire = RtspMessage.buildResponse(request, response)
-                    trace("airplay control tx wireHex=${wire.toHex()}")
+                    // Never format the payload before writing: /info can be tens of KB on a
+                    // slow head unit. Byte counts retain diagnostics without per-byte allocations.
+                    trace("airplay control tx status=${response.status ?: 200} cseq=$cseq " +
+                        "contentBytes=${response.body.size} wireBytes=${wire.size}")
                     controlTimeline.beginWrite()
                     output.write(cipher?.encrypt(wire) ?: wire)
                     if (cipher == null && pairVerify.controlKeys != null) {
@@ -515,19 +833,26 @@ class AirPlaySession(
                 }
                 output.flush()
                 controlTimeline.written()
+                if (parsed.messages.isNotEmpty()) viewAreaControl.responseSent()
                 notifySetupResponseSent()
             }
         } catch (error: Exception) {
-            if (!closed.get()) controlTimeline.failure("io", error.javaClass.simpleName)
-            closeReason = "control I/O failed: ${error.message ?: error.javaClass.simpleName}"
-            if (!closed.get()) Log.e(TAG, "airplay $closeReason", error)
+            val failure = messageDeadline.failureOr(frameDeadline.failureOr(error))
+            if (!closed.get()) controlTimeline.failure("io", failure.javaClass.simpleName)
+            closeReason = "control I/O failed: ${failure.message ?: failure.javaClass.simpleName}"
+            if (!closed.get()) Log.e(TAG, "airplay $closeReason", failure)
         } finally {
+            frameDeadline.close()
+            messageDeadline.close()
             debugLog("airplay control closing reason=$closeReason activeStreams=$activeStreams")
             close()
         }
     }
 
     private fun handle(request: RtspMessage.Request): RtspMessage.Response {
+        if (request.method in setOf("SETUP", "RECORD") && !listener.authorizeSession(this)) {
+            return RtspMessage.Response(status = 403)
+        }
         when (request.method) {
             "SETUP" -> return handleSetup(request)
             "RECORD" -> {
@@ -553,15 +878,9 @@ class AirPlaySession(
                 else RtspMessage.Response(headers = mapOf("Content-Type" to OCTET_CONTENT_TYPE), body = body)
             }
             path.endsWith("/info") -> {
-                val info = AirPlayInfoPlist.build(config)
-                if (request.body.isNotEmpty()) {
-                    val requestInfo = try {
-                        BplistCodec.decode(request.body).toString()
-                    } catch (_: Exception) {
-                        "<unparseable ${request.body.size} bytes>"
-                    }
-                    debugLog("airplay /info request=$requestInfo")
-                }
+                val requestInfo = if (request.body.isEmpty()) emptyMap() else
+                    runCatching { asMap(BplistCodec.decode(request.body)) }.getOrNull() ?: emptyMap()
+                val info = viewAreaControl.info(requestInfo)
                 Log.i(
                     TAG,
                     "airplay /info features=${info["features"]} " +
@@ -595,10 +914,15 @@ class AirPlaySession(
     }
 
     private fun notifySetupResponseSent() {
+        val stream = clusterStream
+        ultraStreams.responseSent()
         try {
             media.onSetupResponseSent(this)
         } catch (error: Exception) {
             Log.w(TAG, "airplay SETUP response callback failed", error)
+        }
+        synchronized(clusterContentLock) {
+            clusterContent?.takeIf { it.stream == stream }?.let { clusterContent = it.copy(setupAnswered = true) }
         }
         reapplyClusterContent()
     }
@@ -634,7 +958,7 @@ class AirPlaySession(
             val responseStreams = handleStreams(streams)
             debugLog("airplay SETUP response streams=$responseStreams")
             val body = BplistCodec.encode(linkedMapOf("streams" to responseStreams))
-            trace("airplay SETUP response bplistHex=${body.toHex()}")
+            trace("airplay SETUP response contentBytes=${body.size}")
             return RtspMessage.Response(headers = mapOf("Content-Type" to PLIST_CONTENT_TYPE), body = body)
         }
 
@@ -656,7 +980,9 @@ class AirPlaySession(
         if (dict["keepAliveLowPower"] == true || dict["keepAliveLowPower"] == 1L) {
             response["keepAlivePort"] = openKeepAlive()
         }
-        val features = setupEnabledFeatures(config, dict["features"] as? List<*>)
+        val features = viewAreaControl.negotiate(dict["features"] as? List<*>, (response["eventPort"] as? Number)?.toInt() != 0)
+        negotiatedFeatures = features.toSet()
+        debugLog("airplay SETUP acceptedFeatures=$features explicitProposal=${dict["features"] is List<*>}")
         val videoPlaybackEnabled = VideoInCar.FEATURE in features
         val videoDelivery = videoPlaybackAvailability.setFeatureEnabled(videoPlaybackEnabled)
         debugLog("airplay video playback negotiated=$videoPlaybackEnabled availability=$videoDelivery")
@@ -672,15 +998,23 @@ class AirPlaySession(
         for (entry in streams) {
             val stream = asMap(entry) ?: continue
             val type = long(stream["type"])?.toInt() ?: continue
-            debugLog("airplay SETUP stream type=$type payload=$stream")
+            debugLog("airplay SETUP stream type=$type keys=${stream.keys.sorted()}")
             when (type) {
                 STREAM_TYPE_MAIN_SCREEN, STREAM_TYPE_ALT_SCREEN -> {
+                    if (type == STREAM_TYPE_ALT_SCREEN && !viewAreaControl.acceptsAlternate()) {
+                        debugLog("airplay alternate stream rejected: feature not enabled")
+                        continue
+                    }
                     val port = media.onScreen(this, type, stream)
                     debugLog("airplay screen stream type=$type dataPort=${port ?: "rejected"}")
                     if (port != null) {
                         activeStreams.add(type)
                         if (type == STREAM_TYPE_ALT_SCREEN) beginClusterContent()
-                        else mainScreenToken = Any()
+                        else {
+                            mainScreenToken = Any()
+                            listener.onMainScreenReady(this)
+                        }
+                        viewAreaControl.screenReady(type)
                         result.add(linkedMapOf("type" to type, "dataPort" to port))
                     }
                 }
@@ -697,13 +1031,22 @@ class AirPlaySession(
                     }
                 }
                 STREAM_TYPE_DATA -> {
-                    val streamResponse = media.onDataStream(this, stream)
+                    val uuid = stream["clientTypeUUID"] as? String
+                    val extra = uuid?.let(com.shilapi.xcertplay.airplay.rcs.catalog.RcsClientTypes::findByUuid)
+                        ?.takeIf { it != com.shilapi.xcertplay.airplay.rcs.catalog.RcsClientTypes.IAP_CHANNEL }
+                    val seed = unsignedPlistDecimal(stream["seed"])
+                    val clashesWithUltra = seed != null && synchronized(dataSeedLock) { seed in ultraDataSeeds }
+                    val streamResponse = if (extra != null) ultraStreams.setup(stream, negotiatedFeatures)
+                        else if (clashesWithUltra) null else media.onDataStream(this, stream)
                     debugLog(
                         "airplay data stream type=$type accepted=${streamResponse != null} " +
                             "dataPort=${streamResponse?.get("dataPort") ?: "none"}",
                     )
                     if (streamResponse != null) {
-                        activeStreams.add(type)
+                        if (extra == null && seed != null && config.ultra?.negotiationAllowed == true) {
+                            synchronized(dataSeedLock) { dataSeeds.add(seed) }
+                        }
+                        if (extra == null) activeStreams.add(type)
                         result.add(streamResponse)
                     }
                 }
@@ -721,6 +1064,12 @@ class AirPlaySession(
         }
         val type = string(body["type"])
         val params = asMap(body["params"]) ?: emptyMap()
+        try {
+            viewAreaControl.receive(type, params)
+        } catch (error: IllegalArgumentException) {
+            debugLog("airplay view-area command rejected type=$type reason=${error.message}")
+            return RtspMessage.Response(status = 400)
+        }
         debugLog("airplay command type=$type keys=${params.keys.sorted()}")
         val streamId = request.headers["x-apple-streamid"]?.toLongOrNull()
         val data = params["data"] as? ByteArray
@@ -732,8 +1081,10 @@ class AirPlaySession(
         if (type == "requestUI" && string(params["url"]) == VideoInCar.UI_URL) {
             listener.onVideoPlaybackUiRequested(this)
         } else if (type == "requestUI") {
+            expectMainScreenEnd()
             listener.onHostUiRequested(this)
         }
+        resourceModes.observe(type, params)
         AirPlayPhoneState.observe(this, type, params)
         AirPlaySpeechState.observe(this, type, params)
         listener.onCommand(this, type, params)
@@ -747,22 +1098,34 @@ class AirPlaySession(
             null
         }
         val types = teardownStreamTypes(decodedBody)
+        ultraStreams.teardown(decodedBody)
 
         debugLog(
             "airplay TEARDOWN types=${types ?: "all"} activeBefore=$activeStreams " +
-                "body=${request.body.size} bytes payload=$decodedBody",
+                "body=${request.body.size} bytes",
         )
-        trace("airplay TEARDOWN raw${request.body.size}Hex=${request.body.toHex()}")
 
-        // Restore wheel input before releasing media resources, which may take time to close.
-        if (types == null || STREAM_TYPE_MAIN_SCREEN in types) mainScreenToken = null
-        if (types == null || STREAM_TYPE_ALT_SCREEN in types) clearClusterContent()
+        val endingMainSource = if (types == null || STREAM_TYPE_MAIN_SCREEN in types) mainVideoSource else null
+        // Revoke input first, but retain the producer's handoff until media cleanup claims it.
+        // Its TCP EOF can arrive while onTeardown is waiting for the media lifecycle lock.
+        if (types == null || STREAM_TYPE_MAIN_SCREEN in types) {
+            expectMainScreenEnd()
+            mainScreenToken = null
+            renderedMainScreenToken = null
+            receivedMainVideoSource = null
+        }
+        if (types == null || STREAM_TYPE_ALT_SCREEN in types) {
+            viewAreaControl.screenClosed(STREAM_TYPE_ALT_SCREEN)
+            clearClusterContent()
+        }
         if (types == null) {
-            activeStreams.toList().forEach { media.onTeardown(this, it) }
+            media.onTeardown(this, types = null)
             activeStreams.clear()
         } else {
-            types.forEach { type -> if (activeStreams.remove(type)) media.onTeardown(this, type) }
+            val ending = types.filter { activeStreams.remove(it) }
+            media.onTeardown(this, ending)
         }
+        endingMainSource?.let(::mainScreenSourceEnded)
         if (STREAM_TYPE_ALT_SCREEN !in activeStreams) clearClusterContent()
         return RtspMessage.Response(status = 200)
     }
@@ -798,12 +1161,30 @@ class AirPlaySession(
 
     private fun openEvent(): Int {
         val server = ServerSocket(0, 50, InetAddress.getByName("::"))
-        eventServer = server
+        synchronized(eventLifecycleLock) {
+            synchronized(eventWriteLock) {
+                if (closed.get()) { safeClose(server); return 0 }
+                val oldServer = eventServer
+                val oldSocket = eventSocket
+                eventServer = server
+                eventSocket = null
+                eventCipher = null
+                safeClose(oldServer)
+                safeClose(oldSocket)
+                commandTracker.reset("event-replaced")
+                synchronized(clusterContentLock) {
+                    clusterContent = clusterContent?.copy(displayed = null, visibilityDelivered = false, token = Any())
+                }
+            }
+            videoPlaybackAvailability.setEventReady(false)
+            cancelClusterProgressCheck()
+        }
         spawnEvent("airplay-event-accept") { acceptEvent(server) }
         return server.localPort
     }
 
     private fun teardown() {
+        ultraStreams.close()
         videoPlaybackAvailability.setEventReady(false)
         videoPlaybackAvailability.setFeatureEnabled(false)
         ntp.close()
@@ -821,16 +1202,29 @@ class AirPlaySession(
     }
 
     private fun acceptEvent(server: ServerSocket) {
+        var accepted: Socket? = null
         try {
             val socket = server.accept()
+            accepted = socket
             socket.setSoLinger(true, 0)
+            com.shilapi.xcertplay.network.TcpLiveness.configure(socket, config.fastPeerDetection) {
+                debugLog("session=$diagnosticId event $it")
+            }
             debugLog("airplay event connection accepted from ${socket.remoteSocketAddress}")
-            eventSocket = socket
+            synchronized(eventWriteLock) {
+                if (closed.get() || eventServer !== server) { safeClose(socket); return }
+                eventSocket = socket
+                eventServer = null
+                safeClose(server)
+            }
             val shared = pairVerify.shared
             if (shared == null) {
                 Log.e(TAG, "airplay event rejected: pair-verify shared secret unavailable")
                 safeClose(socket)
-                close()
+                val closeOwner = synchronized(eventLifecycleLock) {
+                    eventSocket === socket && closed.compareAndSet(false, true)
+                }
+                if (closeOwner) finishClose()
                 return
             }
             val writeKey = AirPlayCrypto.hkdfSha512(
@@ -845,36 +1239,64 @@ class AirPlaySession(
                 "Events-Read-Encryption-Key".asciiBytes(),
                 32,
             )
-            eventCipher = ControlCipher(readKey, writeKey)
-            synchronized(eventWriteLock) {
-                sendPendingNightModeLocked()
+            synchronized(eventLifecycleLock) {
+                synchronized(eventWriteLock) {
+                    if (closed.get() || eventSocket !== socket) { safeClose(socket); return }
+                    eventCipher = ControlCipher(readKey, writeKey)
+                    sendPendingNightModeLocked()
+                }
+                val videoDelivery = videoPlaybackAvailability.setEventReady(true)
+                debugLog("airplay video event ready availability=$videoDelivery")
             }
-            val videoDelivery = videoPlaybackAvailability.setEventReady(true)
-            debugLog("airplay video event ready availability=$videoDelivery")
+            if (eventSocket !== socket || closed.get()) return
+            resourceModes.flush()
+            viewAreaControl.flush()
             reapplyClusterContent()
             runEventRead(socket)
         } catch (error: Exception) {
-            if (!closed.get()) {
-                Log.e(TAG, "airplay event accept failed", error)
-                close()
+            val closeOwner = synchronized(eventLifecycleLock) {
+                val current = eventServer === server || (accepted != null && eventSocket === accepted)
+                current && closed.compareAndSet(false, true)
             }
+            if (closeOwner) {
+                Log.e(TAG, "airplay event accept failed", error)
+                finishClose()
+            }
+        } finally {
+            safeClose(server)
+            if (accepted != null && eventSocket !== accepted) safeClose(accepted)
         }
     }
 
     private fun runEventRead(socket: Socket) {
+        // Capture this peer's cipher. A superseded reader cannot consume the replacement's
+        // encryption counters or revoke its readiness during a late EOF/finally callback.
+        val cipher = synchronized(eventWriteLock) {
+            if (eventSocket !== socket) return
+            eventCipher ?: return
+        }
+        val cipherTimes = MessageByteTimes()
+        val messageTimes = MessageByteTimes()
+        val frameDeadline = IncompleteMessageDeadline("event encrypted frame", partialMessageTimeoutMillis) { safeClose(socket) }
+        val messageDeadline = IncompleteMessageDeadline("event RTSP message", partialMessageTimeoutMillis) { safeClose(socket) }
         try {
             val input = BufferedInputStream(socket.getInputStream())
             val output = BufferedOutputStream(socket.getOutputStream())
             var encrypted = ByteArray(0)
             var plaintext = ByteArray(0)
             val buffer = ByteArray(READ_CHUNK_BYTES)
-            while (!closed.get()) {
+            while (!closed.get() && eventSocket === socket) {
                 eventTimeline.beginRead()
                 val count = input.read(buffer)
+                val receivedAt = System.nanoTime()
                 eventTimeline.read()
+                frameDeadline.check()
+                messageDeadline.check()
                 if (count < 0) { if (!closed.get()) eventTimeline.failure("read", "EOF"); break }
-                val cipher = eventCipher ?: break
+                if (count == 0) continue
+                if (eventSocket !== socket) break
                 encrypted += buffer.copyOf(count)
+                cipherTimes.append(count, receivedAt)
                 val decrypted = try {
                     cipher.decrypt(encrypted)
                 } catch (error: Exception) {
@@ -882,46 +1304,85 @@ class AirPlaySession(
                     Log.e(TAG, "airplay event decrypt failed encrypted=${encrypted.size}", error)
                     break
                 }
+                cipherTimes.transferAuthenticatedFrames(encrypted, encrypted.size - decrypted.rest.size, messageTimes)
                 encrypted = decrypted.rest
+                frameDeadline.update(cipherTimes.firstNanos)
                 plaintext += decrypted.data
                 val parsed = RtspMessage.parseMessages(plaintext)
+                messageTimes.consume(plaintext.size - parsed.rest.size)
                 plaintext = parsed.rest
+                messageDeadline.update(messageTimes.firstNanos)
                 for (message in parsed.messages) {
+                    if (eventSocket !== socket || closed.get()) return
                     AirPlayCommandDiagnostics.response(message)
-                    if (message.method.startsWith("RTSP/") || message.method.startsWith("HTTP/")) continue
+                    if (message.method.startsWith("RTSP/") || message.method.startsWith("HTTP/")) {
+                        commandTracker.response(message)
+                        continue
+                    }
                     debugLog(
                         "airplay event rx ${message.method} ${message.path} cseq=${message.headers["cseq"] ?: "-"} body=${message.body.size}",
                     )
-                    val response = RtspMessage.buildResponse(message, RtspMessage.Response(status = 200))
-                    trace(
-                        "airplay event rx headers=${message.headers} " +
-                            "bodyHex=${message.body.toHex()}",
-                    )
-                    trace("airplay event tx wireHex=${response.toHex()}")
-                    synchronized(eventWriteLock) {
-                        eventTimeline.beginWrite()
-                        output.write(cipher.encrypt(response))
-                        output.flush()
-                        eventTimeline.written()
+                    viewAreaControl.responseStarted()
+                    var responseWritten = false
+                    try {
+                        val result = try {
+                            if (message.method == "POST" && message.path.lowercase().endsWith("/command")) {
+                                handleCommand(message)
+                            } else RtspMessage.Response(status = 200)
+                        } catch (error: Exception) {
+                            Log.e(TAG, "airplay event handler failed ${message.method} ${message.path}", error)
+                            RtspMessage.Response(status = 500)
+                        }
+                        val response = RtspMessage.buildResponse(message, result)
+                        trace("airplay event tx status=${result.status ?: 200} " +
+                            "contentBytes=${result.body.size} wireBytes=${response.size}")
+                        synchronized(eventWriteLock) {
+                            if (eventSocket !== socket || eventCipher !== cipher || closed.get()) return
+                            eventTimeline.beginWrite()
+                            output.write(cipher.encrypt(response))
+                            output.flush()
+                            eventTimeline.written()
+                            responseWritten = true
+                        }
+                    } finally {
+                        if (responseWritten) viewAreaControl.responseSent() else viewAreaControl.responseAborted()
                     }
                 }
             }
         } catch (error: Exception) {
-            if (!closed.get()) eventTimeline.failure("io", error.javaClass.simpleName)
-            if (!closed.get()) Log.e(TAG, "airplay event read failed", error)
+            val failure = messageDeadline.failureOr(frameDeadline.failureOr(error))
+            if (!closed.get()) eventTimeline.failure("io", failure.javaClass.simpleName)
+            if (!closed.get()) Log.e(TAG, "airplay event read failed", failure)
         } finally {
-            eventTimeline.event("close initiator=event_reader")
-            debugLog("airplay event connection closed")
-            videoPlaybackAvailability.setEventReady(false)
-            if (eventSocket === socket) eventSocket = null
-            eventCipher = null
+            frameDeadline.close()
+            messageDeadline.close()
+            var closeOwner = false
+            val current = synchronized(eventLifecycleLock) {
+                val ownsEvent = synchronized(eventWriteLock) {
+                    if (eventSocket !== socket) false else {
+                        eventSocket = null
+                        eventCipher = null
+                        commandTracker.reset("event-closed")
+                        true
+                    }
+                }
+                if (ownsEvent) {
+                    videoPlaybackAvailability.setEventReady(false)
+                    closeOwner = closed.compareAndSet(false, true)
+                }
+                ownsEvent
+            }
+            if (current) {
+                eventTimeline.event("close initiator=event_reader")
+                debugLog("airplay event connection closed")
+            }
             safeClose(socket)
-            if (!closed.get()) close()
+            if (closeOwner) finishClose()
         }
     }
 
     private fun spawnEvent(name: String, body: () -> Unit) {
-        val thread = Thread(body, name).apply { isDaemon = true }
+        val thread = Thread({ try { body() } finally { eventThreads.remove(Thread.currentThread()) } }, name).apply { isDaemon = true }
         eventThreads.add(thread)
         thread.start()
     }
@@ -948,15 +1409,34 @@ class AirPlaySession(
     }
 }
 
-/** The features SETUP enables; video in car only when configured and the iPhone [proposed] it. */
-internal fun setupEnabledFeatures(config: AirPlayConfig, proposed: List<*>?): List<String> {
-    val features = mutableListOf<String>()
-    if (config.hevc) features.add("hevc")
-    features.add("iAPChannel")
-    features.add("viewAreas")
-    if (config.cluster != null) features.add("altScreen")
-    if (config.videoInCar && proposed.orEmpty().contains(VideoInCar.FEATURE)) features.add(VideoInCar.FEATURE)
-    return features
+/** Optional features use an intersection; iAPChannel declares the receiver's event-backed transport. */
+internal fun setupEnabledFeatures(config: AirPlayConfig, proposed: List<*>?, eventAvailable: Boolean = true): List<String> {
+    val supported = linkedSetOf("viewAreas")
+    if (config.hevc) supported += "hevc"
+    if (eventAvailable) {
+        supported += "iAPChannel"
+        if (config.cluster != null) {
+            supported += "altScreen"
+            if (config.receiverManagedClusterUi) supported += "uiContext"
+        }
+        if (config.videoInCar) supported += VideoInCar.FEATURE
+        AirPlayFeatureNegotiation.capabilities(config, eventPortAvailable = true)
+            .supportedFeatureSet.filter { it in ULTRA_PROTOCOL_FEATURES }
+            .forEach { supported += it.wireName }
+    }
+    if (proposed == null) return supported.filter {
+        it != "uiContext" && it != VideoInCar.FEATURE &&
+            AirPlayFeatureCatalog.find(it) !in ULTRA_PROTOCOL_FEATURES
+    }
+    val accepted = proposed.filterIsInstance<String>().filterTo(linkedSetOf()) { it in supported }
+    if (config.receiverManagedClusterUi && ("altScreen" in accepted) != ("uiContext" in accepted)) {
+        accepted.removeAll(setOf("altScreen", "uiContext"))
+    }
+    // Peers may omit iAPChannel from their proposal. Retain the receiver capability, as
+    // in the upstream handshake, so they can request type 130. This declaration is not
+    // proof of a ready/authenticated runtime tunnel.
+    if (eventAvailable) accepted += "iAPChannel"
+    return accepted.toList()
 }
 
 /**
@@ -981,9 +1461,6 @@ internal fun safeClose(closeable: Closeable?) {
         // Best-effort close.
     }
 }
-
-private fun ByteArray.toHex(): String =
-    joinToString(separator = "") { byte -> "%02x".format(byte.toInt() and 0xff) }
 
 private fun asMap(value: Any?): Map<String, Any?>? {
     val map = value as? Map<*, *> ?: return null

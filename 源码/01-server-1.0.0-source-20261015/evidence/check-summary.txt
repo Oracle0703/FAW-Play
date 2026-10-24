@@ -1,0 +1,6 @@
+BUILD SUCCESSFUL in 11s
+ℹ tests 20
+ℹ pass 20
+ℹ fail 0
+Ran 3 tests in 0.522s
+OK

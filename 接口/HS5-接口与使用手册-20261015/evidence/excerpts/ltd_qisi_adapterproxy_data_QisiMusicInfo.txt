@@ -1,0 +1,280 @@
+# Source: work/update-package-20261009/format-audit/QisiAdapterService/bytecode.dis.txt
+# Original LF start: 1417324
+  class #2117: QisiMusicInfo ('Lltd/qisi/adapterproxy/data/QisiMusicInfo;')
+   access=0001 (PUBLIC)
+   source_file=QisiMusicInfo.java, class_data_off=a0924b (10523211)
+   static_fields=7, instance_fields=6, direct_methods=4, virtual_methods=16
+   direct_method #56607: <clinit> ()V
+    access=10009 (PUBLIC STATIC CONSTRUCTOR)
+    codeOff=85862e (8750638)
+    quickening_size=1 (1)
+      858632: 2200 5919                              |0000: new-instance v0, Lltd/qisi/adapterproxy/data/QisiMusicInfo$1; // type@1959
+      858636: 7010 19dd 0000                         |0002: invoke-direct {v0}, Lltd/qisi/adapterproxy/data/QisiMusicInfo$1;.<init>:()V // method@dd19
+      85863c: 6900 6e58                              |0005: sput-object v0, Lltd/qisi/adapterproxy/data/QisiMusicInfo;.CREATOR:Landroid/os/Parcelable$Creator; // field@586e
+      858640: 7300                                   |0007: return-void-no-barrier
+[new] 858640: 0e00                                   |0007: return-void
+   direct_method #56608: <init> ()V
+    access=10001 (PUBLIC CONSTRUCTOR)
+    codeOff=5d53c0 (6116288)
+      5d53c4: 7010 b699 0000                         |0000: invoke-direct {v0}, Ljava/lang/Object;.<init>:()V // method@99b6
+      5d53ca: 0e00                                   |0003: return-void
+   direct_method #56609: <init> (Landroid/os/Parcel;)V
+    access=10001 (PUBLIC CONSTRUCTOR)
+    codeOff=858642 (8750658)
+    quickening_size=19 (25)
+      858646: 7010 b699 0100                         |0000: invoke-direct {v1}, Ljava/lang/Object;.<init>:()V // method@99b6
+      85864c: e910 5c00 0200                         |0003: invoke-virtual-quick {v2}, [005c] // vtable #005c
+[new] 85864c: 6e10 9b01 0200                         |0003: invoke-virtual {v2}, Landroid/os/Parcel;.readString:()Ljava/lang/String; // method@019b
+      858652: 0c00                                   |0006: move-result-object v0
+      858654: e810 0800                              |0007: iput-object-quick v0, v1, [obj+0008]
+[new] 858654: 5b10 7558                              |0007: iput-object v0, v1, Lltd/qisi/adapterproxy/data/QisiMusicInfo;.album:Ljava/lang/String; // field@5875
+      858658: e910 5c00 0200                         |0009: invoke-virtual-quick {v2}, [005c] // vtable #005c
+[new] 858658: 6e10 9b01 0200                         |0009: invoke-virtual {v2}, Landroid/os/Parcel;.readString:()Ljava/lang/String; // method@019b
+      85865e: 0c00                                   |000c: move-result-object v0
+      858660: e810 0c00                              |000d: iput-object-quick v0, v1, [obj+000c]
+[new] 858660: 5b10 7658                              |000d: iput-object v0, v1, Lltd/qisi/adapterproxy/data/QisiMusicInfo;.artist:Ljava/lang/String; // field@5876
+      858664: e910 5c00 0200                         |000f: invoke-virtual-quick {v2}, [005c] // vtable #005c
+[new] 858664: 6e10 9b01 0200                         |000f: invoke-virtual {v2}, Landroid/os/Parcel;.readString:()Ljava/lang/String; // method@019b
+      85866a: 0c00                                   |0012: move-result-object v0
+      85866c: e810 1000                              |0013: iput-object-quick v0, v1, [obj+0010]
+[new] 85866c: 5b10 7758                              |0013: iput-object v0, v1, Lltd/qisi/adapterproxy/data/QisiMusicInfo;.path:Ljava/lang/String; // field@5877
+      858670: e910 4600 0200                         |0015: invoke-virtual-quick {v2}, [0046] // vtable #0046
+[new] 858670: 6e10 9601 0200                         |0015: invoke-virtual {v2}, Landroid/os/Parcel;.readInt:()I // method@0196
+      858676: 0a00                                   |0018: move-result v0
+      858678: e610 1800                              |0019: iput-quick v0, v1, [obj+0018]
+[new] 858678: 5910 7858                              |0019: iput v0, v1, Lltd/qisi/adapterproxy/data/QisiMusicInfo;.status:I // field@5878
+      85867c: e910 5c00 0200                         |001b: invoke-virtual-quick {v2}, [005c] // vtable #005c
+[new] 85867c: 6e10 9b01 0200                         |001b: invoke-virtual {v2}, Landroid/os/Parcel;.readString:()Ljava/lang/String; // method@019b
+      858682: 0c00                                   |001e: move-result-object v0
+      858684: e810 1400                              |001f: iput-object-quick v0, v1, [obj+0014]
+[new] 858684: 5b10 7958                              |001f: iput-object v0, v1, Lltd/qisi/adapterproxy/data/QisiMusicInfo;.title:Ljava/lang/String; // field@5879
+      858688: e910 4600 0200                         |0021: invoke-virtual-quick {v2}, [0046] // vtable #0046
+[new] 858688: 6e10 9601 0200                         |0021: invoke-virtual {v2}, Landroid/os/Parcel;.readInt:()I // method@0196
+      85868e: 0a02                                   |0024: move-result v2
+      858690: e612 1c00                              |0025: iput-quick v2, v1, [obj+001c]
+[new] 858690: 5912 7a58                              |0025: iput v2, v1, Lltd/qisi/adapterproxy/data/QisiMusicInfo;.type:I // field@587a
+      858694: 7300                                   |0027: return-void-no-barrier
+[new] 858694: 0e00                                   |0027: return-void
+   direct_method #56610: <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;I)V
+    access=10001 (PUBLIC CONSTRUCTOR)
+    codeOff=858696 (8750742)
+    quickening_size=d (13)
+      85869a: 7010 b699 0000                         |0000: invoke-direct {v0}, Ljava/lang/Object;.<init>:()V // method@99b6
+      8586a0: e801 1400                              |0003: iput-object-quick v1, v0, [obj+0014]
+[new] 8586a0: 5b01 7958                              |0003: iput-object v1, v0, Lltd/qisi/adapterproxy/data/QisiMusicInfo;.title:Ljava/lang/String; // field@5879
+      8586a4: e802 0800                              |0005: iput-object-quick v2, v0, [obj+0008]
+[new] 8586a4: 5b02 7558                              |0005: iput-object v2, v0, Lltd/qisi/adapterproxy/data/QisiMusicInfo;.album:Ljava/lang/String; // field@5875
+      8586a8: e803 0c00                              |0007: iput-object-quick v3, v0, [obj+000c]
+[new] 8586a8: 5b03 7658                              |0007: iput-object v3, v0, Lltd/qisi/adapterproxy/data/QisiMusicInfo;.artist:Ljava/lang/String; // field@5876
+      8586ac: e604 1800                              |0009: iput-quick v4, v0, [obj+0018]
+[new] 8586ac: 5904 7858                              |0009: iput v4, v0, Lltd/qisi/adapterproxy/data/QisiMusicInfo;.status:I // field@5878
+      8586b0: e805 1000                              |000b: iput-object-quick v5, v0, [obj+0010]
+[new] 8586b0: 5b05 7758                              |000b: iput-object v5, v0, Lltd/qisi/adapterproxy/data/QisiMusicInfo;.path:Ljava/lang/String; // field@5877
+      8586b4: e606 1c00                              |000d: iput-quick v6, v0, [obj+001c]
+[new] 8586b4: 5906 7a58                              |000d: iput v6, v0, Lltd/qisi/adapterproxy/data/QisiMusicInfo;.type:I // field@587a
+      8586b8: 7300                                   |000f: return-void-no-barrier
+[new] 8586b8: 0e00                                   |000f: return-void
+   virtual_method #56611: describeContents ()I
+    access=0001 (PUBLIC)
+    codeOff=5d9bd6 (6134742)
+      5d9bda: 1200                                   |0000: const/4 v0, #int 0 // #0
+      5d9bdc: 0f00                                   |0001: return v0
+   virtual_method #56612: getAlbum ()Ljava/lang/String;
+    access=0001 (PUBLIC)
+    codeOff=858528 (8750376)
+    quickening_size=3 (3)
+      85852c: e510 0800                              |0000: iget-object-quick v0, v1, [obj+0008]
+[new] 85852c: 5410 7558                              |0000: iget-object v0, v1, Lltd/qisi/adapterproxy/data/QisiMusicInfo;.album:Ljava/lang/String; // field@5875
+      858530: 1100                                   |0002: return-object v0
+   virtual_method #56613: getArtist ()Ljava/lang/String;
+    access=0001 (PUBLIC)
+    codeOff=858532 (8750386)
+    quickening_size=3 (3)
+      858536: e510 0c00                              |0000: iget-object-quick v0, v1, [obj+000c]
+[new] 858536: 5410 7658                              |0000: iget-object v0, v1, Lltd/qisi/adapterproxy/data/QisiMusicInfo;.artist:Ljava/lang/String; // field@5876
+      85853a: 1100                                   |0002: return-object v0
+   virtual_method #56614: getPath ()Ljava/lang/String;
+    access=0001 (PUBLIC)
+    codeOff=85853c (8750396)
+    quickening_size=3 (3)
+      858540: e510 1000                              |0000: iget-object-quick v0, v1, [obj+0010]
+[new] 858540: 5410 7758                              |0000: iget-object v0, v1, Lltd/qisi/adapterproxy/data/QisiMusicInfo;.path:Ljava/lang/String; // field@5877
+      858544: 1100                                   |0002: return-object v0
+   virtual_method #56615: getStatus ()I
+    access=0001 (PUBLIC)
+    codeOff=858514 (8750356)
+    quickening_size=3 (3)
+      858518: e310 1800                              |0000: iget-quick v0, v1, [obj+0018]
+[new] 858518: 5210 7858                              |0000: iget v0, v1, Lltd/qisi/adapterproxy/data/QisiMusicInfo;.status:I // field@5878
+      85851c: 0f00                                   |0002: return v0
+   virtual_method #56616: getTitle ()Ljava/lang/String;
+    access=0001 (PUBLIC)
+    codeOff=858546 (8750406)
+    quickening_size=3 (3)
+      85854a: e510 1400                              |0000: iget-object-quick v0, v1, [obj+0014]
+[new] 85854a: 5410 7958                              |0000: iget-object v0, v1, Lltd/qisi/adapterproxy/data/QisiMusicInfo;.title:Ljava/lang/String; // field@5879
+      85854e: 1100                                   |0002: return-object v0
+   virtual_method #56617: getType ()I
+    access=0001 (PUBLIC)
+    codeOff=85851e (8750366)
+    quickening_size=3 (3)
+      858522: e310 1c00                              |0000: iget-quick v0, v1, [obj+001c]
+[new] 858522: 5210 7a58                              |0000: iget v0, v1, Lltd/qisi/adapterproxy/data/QisiMusicInfo;.type:I // field@587a
+      858526: 0f00                                   |0002: return v0
+   virtual_method #56618: setAlbum (Ljava/lang/String;)V
+    access=0001 (PUBLIC)
+    codeOff=8586ba (8750778)
+    quickening_size=3 (3)
+      8586be: e801 0800                              |0000: iput-object-quick v1, v0, [obj+0008]
+[new] 8586be: 5b01 7558                              |0000: iput-object v1, v0, Lltd/qisi/adapterproxy/data/QisiMusicInfo;.album:Ljava/lang/String; // field@5875
+      8586c2: 7300                                   |0002: return-void-no-barrier
+[new] 8586c2: 0e00                                   |0002: return-void
+   virtual_method #56619: setArtist (Ljava/lang/String;)V
+    access=0001 (PUBLIC)
+    codeOff=8586c4 (8750788)
+    quickening_size=3 (3)
+      8586c8: e801 0c00                              |0000: iput-object-quick v1, v0, [obj+000c]
+[new] 8586c8: 5b01 7658                              |0000: iput-object v1, v0, Lltd/qisi/adapterproxy/data/QisiMusicInfo;.artist:Ljava/lang/String; // field@5876
+      8586cc: 7300                                   |0002: return-void-no-barrier
+[new] 8586cc: 0e00                                   |0002: return-void
+   virtual_method #56620: setPath (Ljava/lang/String;)V
+    access=0001 (PUBLIC)
+    codeOff=8586ce (8750798)
+    quickening_size=3 (3)
+      8586d2: e801 1000                              |0000: iput-object-quick v1, v0, [obj+0010]
+[new] 8586d2: 5b01 7758                              |0000: iput-object v1, v0, Lltd/qisi/adapterproxy/data/QisiMusicInfo;.path:Ljava/lang/String; // field@5877
+      8586d6: 7300                                   |0002: return-void-no-barrier
+[new] 8586d6: 0e00                                   |0002: return-void
+   virtual_method #56621: setStatus (I)V
+    access=0001 (PUBLIC)
+    codeOff=8586d8 (8750808)
+    quickening_size=3 (3)
+      8586dc: e601 1800                              |0000: iput-quick v1, v0, [obj+0018]
+[new] 8586dc: 5901 7858                              |0000: iput v1, v0, Lltd/qisi/adapterproxy/data/QisiMusicInfo;.status:I // field@5878
+      8586e0: 7300                                   |0002: return-void-no-barrier
+[new] 8586e0: 0e00                                   |0002: return-void
+   virtual_method #56622: setTitle (Ljava/lang/String;)V
+    access=0001 (PUBLIC)
+    codeOff=8586e2 (8750818)
+    quickening_size=3 (3)
+      8586e6: e801 1400                              |0000: iput-object-quick v1, v0, [obj+0014]
+[new] 8586e6: 5b01 7958                              |0000: iput-object v1, v0, Lltd/qisi/adapterproxy/data/QisiMusicInfo;.title:Ljava/lang/String; // field@5879
+      8586ea: 7300                                   |0002: return-void-no-barrier
+[new] 8586ea: 0e00                                   |0002: return-void
+   virtual_method #56623: setType (I)V
+    access=0001 (PUBLIC)
+    codeOff=8586ec (8750828)
+    quickening_size=3 (3)
+      8586f0: e601 1c00                              |0000: iput-quick v1, v0, [obj+001c]
+[new] 8586f0: 5901 7a58                              |0000: iput v1, v0, Lltd/qisi/adapterproxy/data/QisiMusicInfo;.type:I // field@587a
+      8586f4: 7300                                   |0002: return-void-no-barrier
+[new] 8586f4: 0e00                                   |0002: return-void
+   virtual_method #56624: toJson ()Ljava/lang/String;
+    access=0001 (PUBLIC)
+    codeOff=858550 (8750416)
+    quickening_size=13 (19)
+      858554: 2200 cf07                              |0000: new-instance v0, Lcom/google/gson/Gson; // type@07cf
+      858558: 7010 1127 0000                         |0002: invoke-direct {v0}, Lcom/google/gson/Gson;.<init>:()V // method@2711
+      85855e: 220c 5a19                              |0005: new-instance v12, Lltd/qisi/adapterproxy/data/QisiMusicInfo$MQisiMusicInfo; // type@195a
+      858562: 7100 35dd 0000                         |0007: invoke-static {}, Lltd/qisi/adapterproxy/data/QisiNaviConnectInfo;.getInstance:()Lltd/qisi/adapterproxy/data/QisiNaviConnectInfo; // method@dd35
+      858568: 0c01                                   |000a: move-result-object v1
+      85856a: e910 0b00 0100                         |000b: invoke-virtual-quick {v1}, [000b] // vtable #000b
+[new] 85856a: 6e10 36dd 0100                         |000b: invoke-virtual {v1}, Lltd/qisi/adapterproxy/data/QisiNaviConnectInfo;.getNaviInfoStatus:()I // method@dd36
+      858570: 0a04                                   |000e: move-result v4
+      858572: 7100 8bdd 0000                         |000f: invoke-static {}, Lltd/qisi/adapterproxy/data/QisiSourceInfo;.getInstance:()Lltd/qisi/adapterproxy/data/QisiSourceInfo; // method@dd8b
+      858578: 0c01                                   |0012: move-result-object v1
+      85857a: e910 0b00 0100                         |0013: invoke-virtual-quick {v1}, [000b] // vtable #000b
+[new] 85857a: 6e10 8cdd 0100                         |0013: invoke-virtual {v1}, Lltd/qisi/adapterproxy/data/QisiSourceInfo;.getSourceStatusConnect:()I // method@dd8c
+      858580: 0a05                                   |0016: move-result v5
+      858582: e5d6 1400                              |0017: iget-object-quick v6, v13, [obj+0014]
+[new] 858582: 54d6 7958                              |0017: iget-object v6, v13, Lltd/qisi/adapterproxy/data/QisiMusicInfo;.title:Ljava/lang/String; // field@5879
+      858586: e5d7 0800                              |0019: iget-object-quick v7, v13, [obj+0008]
+[new] 858586: 54d7 7558                              |0019: iget-object v7, v13, Lltd/qisi/adapterproxy/data/QisiMusicInfo;.album:Ljava/lang/String; // field@5875
+      85858a: e5d8 0c00                              |001b: iget-object-quick v8, v13, [obj+000c]
+[new] 85858a: 54d8 7658                              |001b: iget-object v8, v13, Lltd/qisi/adapterproxy/data/QisiMusicInfo;.artist:Ljava/lang/String; // field@5876
+      85858e: e3d9 1800                              |001d: iget-quick v9, v13, [obj+0018]
+[new] 85858e: 52d9 7858                              |001d: iget v9, v13, Lltd/qisi/adapterproxy/data/QisiMusicInfo;.status:I // field@5878
+      858592: e5da 1000                              |001f: iget-object-quick v10, v13, [obj+0010]
+[new] 858592: 54da 7758                              |001f: iget-object v10, v13, Lltd/qisi/adapterproxy/data/QisiMusicInfo;.path:Ljava/lang/String; // field@5877
+      858596: e3db 1c00                              |0021: iget-quick v11, v13, [obj+001c]
+[new] 858596: 52db 7a58                              |0021: iget v11, v13, Lltd/qisi/adapterproxy/data/QisiMusicInfo;.type:I // field@587a
+      85859a: 1213                                   |0023: const/4 v3, #int 1 // #1
+      85859c: 07c1                                   |0024: move-object v1, v12
+      85859e: 07d2                                   |0025: move-object v2, v13
+      8585a0: 760b 1edd 0100                         |0026: invoke-direct/range {v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11}, Lltd/qisi/adapterproxy/data/QisiMusicInfo$MQisiMusicInfo;.<init>:(Lltd/qisi/adapterproxy/data/QisiMusicInfo;IIILjava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;I)V // method@dd1e
+      8585a6: e920 1d00 c000                         |0029: invoke-virtual-quick {v0, v12}, [001d] // vtable #001d
+[new] 8585a6: 6e20 2c27 c000                         |0029: invoke-virtual {v0, v12}, Lcom/google/gson/Gson;.toJson:(Ljava/lang/Object;)Ljava/lang/String; // method@272c
+      8585ac: 0c00                                   |002c: move-result-object v0
+      8585ae: 1100                                   |002d: return-object v0
+   virtual_method #56625: toString ()Ljava/lang/String;
+    access=0001 (PUBLIC)
+    codeOff=8585b0 (8750512)
+    quickening_size=17 (23)
+      8585b4: 1a00 c050                              |0000: const-string v0, "QisiMusicInfo{album='" // string@50c0
+      8585b8: 7110 7502 0000                         |0002: invoke-static {v0}, Lc/a/a/a/a;.y:(Ljava/lang/String;)Ljava/lang/StringBuilder; // method@0275
+      8585be: 0c00                                   |0005: move-result-object v0
+      8585c0: e541 0800                              |0006: iget-object-quick v1, v4, [obj+0008]
+[new] 8585c0: 5441 7558                              |0006: iget-object v1, v4, Lltd/qisi/adapterproxy/data/QisiMusicInfo;.album:Ljava/lang/String; // field@5875
+      8585c4: 1302 2700                              |0008: const/16 v2, #int 39 // #27
+      8585c8: 1a03 1104                              |000a: const-string v3, ", artist='" // string@0411
+      8585cc: 7140 6302 1032                         |000c: invoke-static {v0, v1, v2, v3}, Lc/a/a/a/a;.V:(Ljava/lang/StringBuilder;Ljava/lang/String;CLjava/lang/String;)V // method@0263
+      8585d2: e541 0c00                              |000f: iget-object-quick v1, v4, [obj+000c]
+[new] 8585d2: 5441 7658                              |000f: iget-object v1, v4, Lltd/qisi/adapterproxy/data/QisiMusicInfo;.artist:Ljava/lang/String; // field@5876
+      8585d6: 1a03 af04                              |0011: const-string v3, ", path='" // string@04af
+      8585da: 7140 6302 1032                         |0013: invoke-static {v0, v1, v2, v3}, Lc/a/a/a/a;.V:(Ljava/lang/StringBuilder;Ljava/lang/String;CLjava/lang/String;)V // method@0263
+      8585e0: e541 1000                              |0016: iget-object-quick v1, v4, [obj+0010]
+[new] 8585e0: 5441 7758                              |0016: iget-object v1, v4, Lltd/qisi/adapterproxy/data/QisiMusicInfo;.path:Ljava/lang/String; // field@5877
+      8585e4: 1a03 e304                              |0018: const-string v3, ", status=" // string@04e3
+      8585e8: 7140 6302 1032                         |001a: invoke-static {v0, v1, v2, v3}, Lc/a/a/a/a;.V:(Ljava/lang/StringBuilder;Ljava/lang/String;CLjava/lang/String;)V // method@0263
+      8585ee: e341 1800                              |001d: iget-quick v1, v4, [obj+0018]
+[new] 8585ee: 5241 7858                              |001d: iget v1, v4, Lltd/qisi/adapterproxy/data/QisiMusicInfo;.status:I // field@5878
+      8585f2: e920 4600 1000                         |001f: invoke-virtual-quick {v0, v1}, [0046] // vtable #0046
+[new] 8585f2: 6e20 2d9a 1000                         |001f: invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;.append:(I)Ljava/lang/StringBuilder; // method@9a2d
+      8585f8: 1a01 ec04                              |0022: const-string v1, ", title='" // string@04ec
+      8585fc: e920 4b00 1000                         |0024: invoke-virtual-quick {v0, v1}, [004b] // vtable #004b
+[new] 8585fc: 6e20 329a 1000                         |0024: invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;.append:(Ljava/lang/String;)Ljava/lang/StringBuilder; // method@9a32
+      858602: e541 1400                              |0027: iget-object-quick v1, v4, [obj+0014]
+[new] 858602: 5441 7958                              |0027: iget-object v1, v4, Lltd/qisi/adapterproxy/data/QisiMusicInfo;.title:Ljava/lang/String; // field@5879
+      858606: 1a03 f604                              |0029: const-string v3, ", type=" // string@04f6
+      85860a: 7140 6302 1032                         |002b: invoke-static {v0, v1, v2, v3}, Lc/a/a/a/a;.V:(Ljava/lang/StringBuilder;Ljava/lang/String;CLjava/lang/String;)V // method@0263
+      858610: e341 1c00                              |002e: iget-quick v1, v4, [obj+001c]
+[new] 858610: 5241 7a58                              |002e: iget v1, v4, Lltd/qisi/adapterproxy/data/QisiMusicInfo;.type:I // field@587a
+      858614: e920 4600 1000                         |0030: invoke-virtual-quick {v0, v1}, [0046] // vtable #0046
+[new] 858614: 6e20 2d9a 1000                         |0030: invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;.append:(I)Ljava/lang/StringBuilder; // method@9a2d
+      85861a: 1301 7d00                              |0033: const/16 v1, #int 125 // #7d
+      85861e: e920 4300 1000                         |0035: invoke-virtual-quick {v0, v1}, [0043] // vtable #0043
+[new] 85861e: 6e20 2a9a 1000                         |0035: invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;.append:(C)Ljava/lang/StringBuilder; // method@9a2a
+      858624: e910 0700 0000                         |0038: invoke-virtual-quick {v0}, [0007] // vtable #0007
+[new] 858624: 6e10 3c9a 0000                         |0038: invoke-virtual {v0}, Ljava/lang/StringBuilder;.toString:()Ljava/lang/String; // method@9a3c
+      85862a: 0c00                                   |003b: move-result-object v0
+      85862c: 1100                                   |003c: return-object v0
+   virtual_method #56626: writeToParcel (Landroid/os/Parcel;I)V
+    access=0001 (PUBLIC)
+    codeOff=8586f6 (8750838)
+    quickening_size=19 (25)
+      8586fa: e502 0800                              |0000: iget-object-quick v2, v0, [obj+0008]
+[new] 8586fa: 5402 7558                              |0000: iget-object v2, v0, Lltd/qisi/adapterproxy/data/QisiMusicInfo;.album:Ljava/lang/String; // field@5875
+      8586fe: e920 9d00 2100                         |0002: invoke-virtual-quick {v1, v2}, [009d] // vtable #009d
+[new] 8586fe: 6e20 aa01 2100                         |0002: invoke-virtual {v1, v2}, Landroid/os/Parcel;.writeString:(Ljava/lang/String;)V // method@01aa
+      858704: e502 0c00                              |0005: iget-object-quick v2, v0, [obj+000c]
+[new] 858704: 5402 7658                              |0005: iget-object v2, v0, Lltd/qisi/adapterproxy/data/QisiMusicInfo;.artist:Ljava/lang/String; // field@5876
+      858708: e920 9d00 2100                         |0007: invoke-virtual-quick {v1, v2}, [009d] // vtable #009d
+[new] 858708: 6e20 aa01 2100                         |0007: invoke-virtual {v1, v2}, Landroid/os/Parcel;.writeString:(Ljava/lang/String;)V // method@01aa
+      85870e: e502 1000                              |000a: iget-object-quick v2, v0, [obj+0010]
+[new] 85870e: 5402 7758                              |000a: iget-object v2, v0, Lltd/qisi/adapterproxy/data/QisiMusicInfo;.path:Ljava/lang/String; // field@5877
+      858712: e920 9d00 2100                         |000c: invoke-virtual-quick {v1, v2}, [009d] // vtable #009d
+[new] 858712: 6e20 aa01 2100                         |000c: invoke-virtual {v1, v2}, Landroid/os/Parcel;.writeString:(Ljava/lang/String;)V // method@01aa
+      858718: e302 1800                              |000f: iget-quick v2, v0, [obj+0018]
+[new] 858718: 5202 7858                              |000f: iget v2, v0, Lltd/qisi/adapterproxy/data/QisiMusicInfo;.status:I // field@5878
+      85871c: e920 8700 2100                         |0011: invoke-virtual-quick {v1, v2}, [0087] // vtable #0087
+[new] 85871c: 6e20 a201 2100                         |0011: invoke-virtual {v1, v2}, Landroid/os/Parcel;.writeInt:(I)V // method@01a2
+      858722: e502 1400                              |0014: iget-object-quick v2, v0, [obj+0014]
+[new] 858722: 5402 7958                              |0014: iget-object v2, v0, Lltd/qisi/adapterproxy/data/QisiMusicInfo;.title:Ljava/lang/String; // field@5879
+      858726: e920 9d00 2100                         |0016: invoke-virtual-quick {v1, v2}, [009d] // vtable #009d
+[new] 858726: 6e20 aa01 2100                         |0016: invoke-virtual {v1, v2}, Landroid/os/Parcel;.writeString:(Ljava/lang/String;)V // method@01aa
+      85872c: e302 1c00                              |0019: iget-quick v2, v0, [obj+001c]
+[new] 85872c: 5202 7a58                              |0019: iget v2, v0, Lltd/qisi/adapterproxy/data/QisiMusicInfo;.type:I // field@587a
+      858730: e920 8700 2100                         |001b: invoke-virtual-quick {v1, v2}, [0087] // vtable #0087
+[new] 858730: 6e20 a201 2100                         |001b: invoke-virtual {v1, v2}, Landroid/os/Parcel;.writeInt:(I)V // method@01a2
+      858736: 7300                                   |001e: return-void-no-barrier
+[new] 858736: 0e00                                   |001e: return-void

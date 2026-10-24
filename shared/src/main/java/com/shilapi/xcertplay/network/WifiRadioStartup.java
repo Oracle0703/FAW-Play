@@ -9,7 +9,7 @@ import android.util.Log;
 /** Bring up the Wi-Fi radio before Wi-Fi Direct; never controls tethering. */
 public final class WifiRadioStartup {
     public static final int READY = 0, ENABLING = 1, USER_ACTION = 2, UNAVAILABLE = 3;
-    private static final String TAG = "FAW-WifiStartup";
+    private static final String TAG = "Autunn-WifiStartup";
     private WifiRadioStartup() {}
 
     /** setWifiEnabled accepts a request; the connection worker must still await readiness. */

@@ -5,7 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 
-/** Starts the CarPlay host after boot when the user has enabled the startup option. */
+/** Starts an enabled automatic connection in the background; boot never opens a page. */
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != Intent.ACTION_BOOT_COMPLETED) return
@@ -13,19 +13,20 @@ class BootReceiver : BroadcastReceiver() {
         StartupDiagnosticSnapshot.received(context, launchEnabled)
         if (!launchEnabled) return
 
-        val launch = Intent(context, DiPlayActivity::class.java).apply {
-            addFlags(
-                Intent.FLAG_ACTIVITY_NEW_TASK or
-                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
-                    Intent.FLAG_ACTIVITY_SINGLE_TOP,
-            )
+        if (!DiPlayPreferences.autoConnect(context)) {
+            StartupDiagnosticSnapshot.manualEntryOnly(context)
+            return
         }
         try {
-            context.startActivity(launch)
-            StartupDiagnosticSnapshot.launchResult(context)
+            checkNotNull(context.startForegroundService(Intent(context, DiPlaySessionService::class.java))) {
+                "Boot connection service was not resolved"
+            }
+            StartupDiagnosticSnapshot.backgroundServiceResult(context)
         } catch (error: RuntimeException) {
-            StartupDiagnosticSnapshot.launchResult(context, error)
-            Log.w(TAG, "Boot auto-start could not launch DiPlayActivity", error)
+            StartupDiagnosticSnapshot.backgroundServiceResult(context, error)
+            // Exception messages can contain platform or device details. The user can still
+            // open the launcher manually; failure must not force the home page to the front.
+            Log.w(TAG, "Boot connection service could not start (${error.javaClass.simpleName})")
         }
     }
 

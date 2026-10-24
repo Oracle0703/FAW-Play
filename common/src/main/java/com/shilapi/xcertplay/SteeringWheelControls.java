@@ -75,6 +75,7 @@ public final class SteeringWheelControls {
     private static final class Press {
         final long downTime;
         final boolean consumed;
+        SiriPress siri;
         Press(KeyEvent event, boolean consumed) { downTime = event.getDownTime(); this.consumed = consumed; }
     }
 
@@ -118,19 +119,22 @@ public final class SteeringWheelControls {
 
     /** Called first from WheelKeyService.onKeyEvent. Unbound and disconnected keys pass through. */
     public static boolean dispatch(Context context, KeyEvent event) {
-        if (!com.shilapi.xcertplay.shared.BuildConfig.FAW_WHEEL_CONTROL_ENABLED) return false;
+        if (!com.shilapi.xcertplay.shared.BuildConfig.AUTUNN_WHEEL_CONTROL_ENABLED) return false;
         if (event == null || (event.getAction() != KeyEvent.ACTION_DOWN && event.getAction() != KeyEvent.ACTION_UP)) return false;
         synchronized (LOCK) {
             PhysicalKey physical = new PhysicalKey(event);
             Press previous = PRESSES.get(physical);
             if (event.getAction() == KeyEvent.ACTION_UP) {
+                if (previous != null && previous.downTime != event.getDownTime()) return previous.consumed;
                 PRESSES.remove(physical);
+                if (previous != null && previous.siri != null) previous.siri.release();
                 return previous != null && previous.consumed;
             }
             if (previous != null && (event.getRepeatCount() > 0 || previous.downTime == event.getDownTime())) return previous.consumed;
             // A repeat with no matching initial DOWN cannot start a command or learning operation.
             if (event.getRepeatCount() != 0 || event.isCanceled()) return false;
             PRESSES.remove(physical); // A new press replaces an old sequence whose UP was lost.
+            if (previous != null && previous.siri != null) previous.siri.release();
             // Remember pass decisions too: changing settings while held must not capture half a press.
             PRESSES.put(physical, new Press(event, false));
 
@@ -161,14 +165,46 @@ public final class SteeringWheelControls {
             int role = roleOf(prefs, Binding.from(event));
             if (role < 0) return false;
             Object controller = currentController();
-            boolean sent = ready(controller) && send(controller, role);
-            PRESSES.put(physical, new Press(event, sent));
+            SiriPress siri = role == SIRI ? beginSiriPress(controller) : null;
+            boolean sent = role == SIRI ? siri != null : ready(controller) && send(controller, role);
+            Press press = new Press(event, sent);
+            press.siri = siri;
+            PRESSES.put(physical, press);
             Log.i(TAG, "role=" + ROLES[role] + " code=" + event.getKeyCode() + " scan=" + event.getScanCode() + " sent=" + sent);
             return sent;
         }
     }
 
+    /** A physical DOWN/UP pair remains attached to the phone that received DOWN. */
+    static final class SiriPress {
+        private final Object controller;
+        private final Object token;
+        private boolean released;
+        SiriPress(Object controller, Object token) { this.controller = controller; this.token = token; }
+        synchronized void release() {
+            if (released) return;
+            released = true;
+            try {
+                // Finishing an accepted press must not depend on a changed license or setting.
+                if (activeToken(controller) == token)
+                    controller.getClass().getMethod("sendSiriButton", boolean.class, Object.class).invoke(controller, false, token);
+            } catch (ReflectiveOperationException | RuntimeException failure) { logFailure(SIRI, failure); }
+        }
+    }
+
+    static SiriPress beginSiriPress(Object controller) {
+        if (!ready(controller)) return null;
+        try {
+            Object token = activeToken(controller);
+            if (token != null && Boolean.TRUE.equals(controller.getClass()
+                    .getMethod("sendSiriButton", boolean.class, Object.class).invoke(controller, true, token)))
+                return new SiriPress(controller, token);
+        } catch (ReflectiveOperationException | RuntimeException failure) { logFailure(SIRI, failure); }
+        return null;
+    }
+
     static boolean send(Object controller, int role) {
+        if (com.shilapi.xcertplay.licensing.ProductLicense.isRequired() && !ready(controller)) return false;
         try {
             if (role == PHONE) {
                 return requestPhoneUI(controller);
@@ -273,9 +309,26 @@ public final class SteeringWheelControls {
     }
 
     static boolean ready(Object controller) {
+        if (!connectionReady(controller)) return false;
+        try {
+            if (com.shilapi.xcertplay.licensing.ProductLicense.isRequired()) {
+                Object app = field(controller, "appContext").get(controller);
+                if (!(app instanceof Context) || !com.shilapi.xcertplay.licensing.ProductLicense.featureAllowed((Context) app,
+                        com.shilapi.xcertplay.licensing.LicenseFeatures.STEERING_WHEEL)) return false;
+            }
+            return true;
+        }
+        catch (ReflectiveOperationException | RuntimeException failure) { logFailure(PHONE, failure); return false; }
+    }
+    static boolean connectionReady(Object controller) {
         if (closed(controller)) return false;
         try { return activeToken(controller) != null && field(controller, "activeSession").get(controller) != null; }
         catch (ReflectiveOperationException | RuntimeException failure) { logFailure(PHONE, failure); return false; }
+    }
+
+    static Object sessionToken(Object controller) {
+        try { return controller == null ? null : activeToken(controller); }
+        catch (ReflectiveOperationException | RuntimeException failure) { return null; }
     }
 
     private static Object activeToken(Object controller) throws ReflectiveOperationException {
@@ -524,7 +577,7 @@ public final class SteeringWheelControls {
 
     private static SharedPreferences preferences(Context context) { return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE); }
     static boolean enabled(Context context) {
-        return com.shilapi.xcertplay.shared.BuildConfig.FAW_WHEEL_CONTROL_ENABLED
+        return com.shilapi.xcertplay.shared.BuildConfig.AUTUNN_WHEEL_CONTROL_ENABLED
                 && preferences(context).getBoolean("enabled", HongqiWheelControls.supported(context));
     }
     private static Binding readBinding(SharedPreferences prefs, int role) {
@@ -552,7 +605,7 @@ public final class SteeringWheelControls {
     private static void openAccess(Activity activity) {
         try { activity.startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)); }
         catch (ActivityNotFoundException | SecurityException absent) {
-            Toast.makeText(activity, text(activity, "请在系统无障碍设置中启用 FAW Play 服务。", "Enable the FAW Play service in system accessibility settings."), Toast.LENGTH_LONG).show();
+            Toast.makeText(activity, text(activity, "请在系统无障碍设置中启用 Autunn Play 服务。", "Enable the Autunn Play service in system accessibility settings."), Toast.LENGTH_LONG).show();
         }
     }
 

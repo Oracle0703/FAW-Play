@@ -4,6 +4,20 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class WirelessConnectionProofTest {
+    @Test fun runtimeLossRevokesOnlyItsAuthenticationAndKeepsIndependentMainFrameEvidence() {
+        val session = Any()
+        val proof = WirelessConnectionProof<Any>()
+        proof.begin(2) {}
+        proof.activate(2, session)
+        proof.authenticated(2, session)
+        proof.rendered(2, session)
+        proof.authenticationEnded(1, session)
+        proof.authenticationEnded(2, Any())
+        assertEquals(true, proof.isAuthenticated(2, session))
+        proof.authenticationEnded(2, session)
+        assertEquals(false, proof.isAuthenticated(2, session))
+        assertEquals(true, proof.hasRenderedFrame(2, session))
+    }
     @Test fun currentSessionProofRejectsEndedReplacedAndOldGenerationFrames() {
         val old = Any(); val current = Any()
         val proof = WirelessConnectionProof<Any>()
@@ -22,11 +36,14 @@ class WirelessConnectionProofTest {
 
     @Test fun authenticationWithoutVideoDoesNotConfirm() {
         var saves = 0
+        val session = Any()
         val proof = WirelessConnectionProof<Any>()
         proof.begin(1) { saves++ }
-        proof.activate(1, Any())
-        proof.authenticated(1)
+        proof.activate(1, session)
+        proof.authenticated(1, session)
         assertEquals(0, saves)
+        assertEquals(true, proof.isAuthenticated(1, session))
+        assertEquals(false, proof.hasRenderedFrame(1, session))
     }
 
     @Test fun bothEventsAreRequiredInEitherOrderAndOnlySaveOnce() {
@@ -36,11 +53,11 @@ class WirelessConnectionProofTest {
             val proof = WirelessConnectionProof<Any>()
             proof.begin(1) { saves++ }
             proof.activate(1, session)
-            if (videoFirst) proof.rendered(1, session) else proof.authenticated(1)
+            if (videoFirst) proof.rendered(1, session) else proof.authenticated(1, session)
             assertEquals(0, saves)
-            if (videoFirst) proof.authenticated(1) else proof.rendered(1, session)
+            if (videoFirst) proof.authenticated(1, session) else proof.rendered(1, session)
             proof.rendered(1, session)
-            proof.authenticated(1)
+            proof.authenticated(1, session)
             assertEquals(1, saves)
         }
     }
@@ -52,13 +69,13 @@ class WirelessConnectionProofTest {
         val proof = WirelessConnectionProof<Any>()
         proof.begin(1) { saves++ }
         proof.activate(1, old)
-        proof.authenticated(1)
+        proof.authenticated(1, old)
         proof.begin(2) { saves++ }
         proof.activate(2, current)
         proof.rendered(1, old)
-        proof.authenticated(1)
+        proof.authenticated(1, old)
         proof.rendered(2, old)
-        proof.authenticated(2)
+        proof.authenticated(2, current)
         assertEquals(0, saves)
         proof.rendered(2, current)
         assertEquals(1, saves)
@@ -72,10 +89,10 @@ class WirelessConnectionProofTest {
         proof.activate(1, session)
         proof.rendered(1, session)
         proof.end(1, session)
-        proof.authenticated(1)
+        proof.authenticated(1, session)
         proof.clear()
         proof.activate(1, session)
-        proof.authenticated(1)
+        proof.authenticated(1, session)
         proof.rendered(1, session)
         assertEquals(0, saves)
     }
@@ -87,11 +104,14 @@ class WirelessConnectionProofTest {
         val proof = WirelessConnectionProof<Any>()
         proof.begin(1) { saves++ }
         proof.activate(1, first)
-        proof.authenticated(1)
+        proof.authenticated(1, first)
         proof.activate(1, second)
         proof.rendered(1, second)
         assertEquals(0, saves)
-        proof.authenticated(1)
+        proof.authenticated(1, first)
+        assertEquals(false, proof.isAuthenticated(1, second))
+        assertEquals(0, saves)
+        proof.authenticated(1, second)
         assertEquals(1, saves)
     }
 }

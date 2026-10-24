@@ -1,0 +1,16 @@
+**
+!gradlew
+!gradle/
+!gradle/wrapper/
+!gradle/wrapper/**
+!authorization-server/
+!authorization-server/build.gradle.kts
+!authorization-server/settings.gradle.kts
+!authorization-server/src/
+!authorization-server/src/main/
+!authorization-server/src/main/**
+!site/
+!site/index.html
+!site/downloads.json
+!site/assets/
+!site/assets/**

@@ -1,0 +1,325 @@
+{
+  "firmware": "3222",
+  "verification": "static recovered CompactDex and disassembly only; no runtime vehicle acceptance",
+  "extractor": "work/qisi-interface-audit-20261010/extract_constants.py: extract",
+  "modules": {
+    "31": {
+      "manager": "CarEOLManager",
+      "queryBinderEvidence": "work/vehicle-controls-audit-20261015/QisiHVAC-3222/bytecode.dis.txt LF 2289935-2289936"
+    },
+    "33": {
+      "manager": "CarACManager",
+      "queryBinderEvidence": "work/vehicle-controls-audit-20261015/QisiHVAC-3222/bytecode.dis.txt LF 2271228-2271229"
+    },
+    "49": {
+      "manager": "CarSCCUManager",
+      "queryBinderEvidence": "work/vehicle-controls-audit-20261015/QisiHVAC-3222/bytecode.dis.txt LF 2308469-2308470"
+    }
+  },
+  "interfaces": {
+    "Lltd/qisi/adapterproxy/ICarATCManager$Stub;": {
+      "source": "work/update-package-20261009/format-audit/QisiAdapterService/QisiAdapterService_classes2.cdex",
+      "sha256": "23c19ce8b31f19fadaf875ac09ed29fe79ef0a0375388e6ef60ce0070609233e",
+      "classDefIndex": 4458,
+      "descriptor": "ltd.qisi.adapterproxy.ICarATCManager",
+      "transactions": {
+        "getACFrontState": 1,
+        "getACAutoMode": 3,
+        "getACZoneAutoSyncState": 5,
+        "getACCompressorState": 7,
+        "getACBlowMode": 9,
+        "getACFrontTemperature": 11,
+        "getACFrontVolume": 13,
+        "getACCirculationState": 15,
+        "getACFrontDefFunctionState": 17,
+        "getAmbientTemp": 93,
+        "setACTemperature": 12,
+        "setACFrontVolume": 14,
+        "registerCarATCStateListener": 85,
+        "unregisterCarATCStateListener": 86,
+        "setACFrontState": 2,
+        "setACAutoMode": 4,
+        "setACZoneAutoSyncState": 6,
+        "setACCompressorState": 8,
+        "setACCirculationState": 16,
+        "setACFrontDefFunctionState": 18,
+        "setACBlowMode": 10
+      }
+    },
+    "Lltd/qisi/adapterproxy/ICarSCCUManager$Stub;": {
+      "source": "work/update-package-20261009/format-audit/QisiAdapterService/QisiAdapterService_classes2.cdex",
+      "sha256": "23c19ce8b31f19fadaf875ac09ed29fe79ef0a0375388e6ef60ce0070609233e",
+      "classDefIndex": 4569,
+      "descriptor": "ltd.qisi.adapterproxy.ICarSCCUManager",
+      "transactions": {
+        "getFrontSeatHeatLevel": 7,
+        "getFrontSeatVentLevel": 3,
+        "setFrontSeatHeatLevel": 8,
+        "setFrontSeatVentLevel": 4,
+        "registerCarSCCUStateListener": 29,
+        "unregisterCarSCCUStateListener": 30
+      }
+    },
+    "Lltd/qisi/adapterproxy/ICarEOLManager$Stub;": {
+      "source": "work/update-package-20261009/format-audit/QisiAdapterService/QisiAdapterService_classes2.cdex",
+      "sha256": "23c19ce8b31f19fadaf875ac09ed29fe79ef0a0375388e6ef60ce0070609233e",
+      "classDefIndex": 4509,
+      "descriptor": "ltd.qisi.adapterproxy.ICarEOLManager",
+      "transactions": {
+        "getPDSN": 4,
+        "isSupportFRONT_SHS": 49,
+        "isSupportFRONT_SVS": 50
+      }
+    },
+    "Lltd/qisi/adapterproxy/listener/ICarATCStateListener$Stub;": {
+      "source": "work/update-package-20261009/format-audit/QisiAdapterService/QisiAdapterService_classes2.cdex",
+      "sha256": "23c19ce8b31f19fadaf875ac09ed29fe79ef0a0375388e6ef60ce0070609233e",
+      "classDefIndex": 4637,
+      "descriptor": "ltd.qisi.adapterproxy.listener.ICarATCStateListener",
+      "transactions": {
+        "onACFrontStateChange": 1,
+        "onACAutoModeChange": 2,
+        "onACZoneAutoSyncStateChange": 3,
+        "onACCompressorState": 4,
+        "onACBlowModeChange": 5,
+        "onACTemperatureChange": 6,
+        "onACFrontVolumeChange": 7,
+        "onACCirculationState": 8,
+        "onACFrontDefFunctionState": 9
+      }
+    },
+    "Lltd/qisi/adapterproxy/listener/IVehicleCarSCCUChangedListener$Stub;": {
+      "source": "work/update-package-20261009/format-audit/QisiAdapterService/QisiAdapterService_classes2.cdex",
+      "sha256": "23c19ce8b31f19fadaf875ac09ed29fe79ef0a0375388e6ef60ce0070609233e",
+      "classDefIndex": 4751,
+      "descriptor": "ltd.qisi.adapterproxy.listener.IVehicleCarSCCUChangedListener",
+      "transactions": {
+        "onFrontSeatHeatLevel": 4,
+        "onFrontSeatVentLevel": 2
+      }
+    }
+  },
+  "wireTypes": {
+    "ATC.getACFrontTemperature": "(int side) -> float Celsius",
+    "ATC.getAmbientTemp": "() -> float Celsius",
+    "ATC.getACAutoMode/getACZoneAutoSyncState/getACCompressorState": "(int state=-1) -> int OEM enum; exact OEM HVAC caller argument",
+    "ATC.setACTemperature": "(int side, float Celsius) -> int acknowledgement",
+    "ATC.setACFrontVolume": "(int level) -> int acknowledgement",
+    "SCCU.getFrontSeatHeatLevel/getFrontSeatVentLevel": "(int side) -> int OEM code",
+    "SCCU.setFrontSeatHeatLevel/setFrontSeatVentLevel": "(int side, int encodedLevel) -> int acknowledgement",
+    "ATC.onACTemperatureChange": "oneway (int side, float Celsius)",
+    "ATC.onACBlowModeChange": "oneway (int side, int mode); QISICarATCManager$2 emits side 0",
+    "ATC.otherSelectedCallbacks": "oneway (int OEM enum)",
+    "SCCU.onFrontSeatHeatLevel/onFrontSeatVentLevel": "oneway (int side, int encodedLevel)",
+    "ATC.setACFrontState/setACAutoMode/setACZoneAutoSyncState/setACCompressorState/setACCirculationState/setACFrontDefFunctionState": "(int encodedValue) -> int acknowledgement",
+    "ATC.setACBlowMode": "(int index=0, int encodedMode) -> int acknowledgement; exact Proxy writes two ints with tx10"
+  },
+  "boundsEvidence": {
+    "temperature": "QISICarATCManager.setACTemperature accepts 15..35; encoded by truncating (temp-15)*2. App accepts only exact half steps. getTemperture valid raw0..40 -> raw/2+15, invalid -65533.",
+    "ambient": "CarACConvertUtil.transformatonAmbientTemp accepts raw0..253 -> raw/2-40, invalid -65533.",
+    "fan": "QISICarATCManager.setACFrontVolume accepts0..7.",
+    "seat": "QISICarSCCUManager.setFrontSeatHeatLevel/setFrontSeatVentLevel accept1..4 for side0/1 only and carType1. Off/level meaning remains unverified. Independent *State methods return-2.",
+    "model": "QISICarEOLManager.carType compares first10 PDSN characters to7901010DD4 or7901010DD5 for type1; app emits only boolean, never PDSN.",
+    "climateSettings": "QISICarATCManager.isRightValue bytecode841200: compares value>=1 and value<=2. POWER/AUTO/SYNC/COMPRESSOR/FRONT_DEFROST call it and therefore accept encoded1..2. Their semantic on/off mapping is deliberately not guessed.",
+    "recirculation": "QISICarATCManager.setACCirculationState explicitly accepts0..2.",
+    "blowMode": "QISICarATCManager.setACBlowMode accepts only1,3,5,6,7 and internally translates them to1..5. App passes original encoded values using confirmed Binder tx10, not internal CAN command72."
+  },
+  "readValidation": "Read flags preserve raw0..2; raw0 is not asserted to mean off. Unknown/sentinel values outside this domain become null. Fan0..7, blow mode raw0..7, seat raw0..4 retained without physical-level labels. Temperature and ambient checked using OEM converted numeric bounds.",
+  "callbackFlagsEvidence": {
+    "source": "work/update-package-20261009/format-audit/QisiAdapterService/bytecode.dis.txt",
+    "interpretation": "For each invoke-interface, registers are receiver/code/data/reply/flags. The fourth argument is null reply; the fifth is1=FLAG_ONEWAY. Register allocation differs by method, so a zero constant by itself is not evidence for synchronous flags.",
+    "interfaces": {
+      "ICarATCStateListener$Stub$Proxy": {
+        "virtual_method #57140: onACAutoModeChange (I)V": {
+          "transactOriginalLine": 1939893,
+          "reply": "null",
+          "flags": 1,
+          "argumentRegisters": [
+            "v1",
+            "v2",
+            "v0",
+            "v3",
+            "v4"
+          ],
+          "operations": [
+            "      85cba2: 1203                                   |000f: const/4 v3, #int 0 // #0",
+            "      85cba4: 1214                                   |0010: const/4 v4, #int 1 // #1",
+            "      85cba6: 7254 7e01 2130                         |0011: invoke-interface {v1, v2, v0, v3, v4}, Landroid/os/IBinder;.transact:(ILandroid/os/Parcel;Landroid/os/Parcel;I)Z // method@017e"
+          ]
+        },
+        "virtual_method #57141: onACBlowModeChange (II)V": {
+          "transactOriginalLine": 1939932,
+          "reply": "null",
+          "flags": 1,
+          "argumentRegisters": [
+            "v1",
+            "v2",
+            "v0",
+            "v3",
+            "v4"
+          ],
+          "operations": [
+            "      85cc1c: 1203                                   |0012: const/4 v3, #int 0 // #0",
+            "      85cc1e: 1214                                   |0013: const/4 v4, #int 1 // #1",
+            "      85cc20: 7254 7e01 2130                         |0014: invoke-interface {v1, v2, v0, v3, v4}, Landroid/os/IBinder;.transact:(ILandroid/os/Parcel;Landroid/os/Parcel;I)Z // method@017e"
+          ]
+        },
+        "virtual_method #57142: onACCirculationState (I)V": {
+          "transactOriginalLine": 1939969,
+          "reply": "null",
+          "flags": 1,
+          "argumentRegisters": [
+            "v1",
+            "v2",
+            "v0",
+            "v3",
+            "v4"
+          ],
+          "operations": [
+            "      85cc90: 1203                                   |0010: const/4 v3, #int 0 // #0",
+            "      85cc92: 1214                                   |0011: const/4 v4, #int 1 // #1",
+            "      85cc94: 7254 7e01 2130                         |0012: invoke-interface {v1, v2, v0, v3, v4}, Landroid/os/IBinder;.transact:(ILandroid/os/Parcel;Landroid/os/Parcel;I)Z // method@017e"
+          ]
+        },
+        "virtual_method #57143: onACCompressorState (I)V": {
+          "transactOriginalLine": 1940006,
+          "reply": "null",
+          "flags": 1,
+          "argumentRegisters": [
+            "v1",
+            "v2",
+            "v0",
+            "v3",
+            "v4"
+          ],
+          "operations": [
+            "      85cd02: 1203                                   |000f: const/4 v3, #int 0 // #0",
+            "      85cd04: 1214                                   |0010: const/4 v4, #int 1 // #1",
+            "      85cd06: 7254 7e01 2130                         |0011: invoke-interface {v1, v2, v0, v3, v4}, Landroid/os/IBinder;.transact:(ILandroid/os/Parcel;Landroid/os/Parcel;I)Z // method@017e"
+          ]
+        },
+        "virtual_method #57144: onACFrontDefFunctionState (I)V": {
+          "transactOriginalLine": 1940043,
+          "reply": "null",
+          "flags": 1,
+          "argumentRegisters": [
+            "v1",
+            "v2",
+            "v0",
+            "v3",
+            "v4"
+          ],
+          "operations": [
+            "      85cd78: 1203                                   |0010: const/4 v3, #int 0 // #0",
+            "      85cd7a: 1214                                   |0011: const/4 v4, #int 1 // #1",
+            "      85cd7c: 7254 7e01 2130                         |0012: invoke-interface {v1, v2, v0, v3, v4}, Landroid/os/IBinder;.transact:(ILandroid/os/Parcel;Landroid/os/Parcel;I)Z // method@017e"
+          ]
+        },
+        "virtual_method #57145: onACFrontStateChange (I)V": {
+          "transactOriginalLine": 1940079,
+          "reply": "null",
+          "flags": 1,
+          "argumentRegisters": [
+            "v1",
+            "v3",
+            "v0",
+            "v2",
+            "v3"
+          ],
+          "operations": [
+            "      85cde8: 1202                                   |000e: const/4 v2, #int 0 // #0",
+            "      85cdea: 1213                                   |000f: const/4 v3, #int 1 // #1",
+            "      85cdec: 7253 7e01 3120                         |0010: invoke-interface {v1, v3, v0, v2, v3}, Landroid/os/IBinder;.transact:(ILandroid/os/Parcel;Landroid/os/Parcel;I)Z // method@017e"
+          ]
+        },
+        "virtual_method #57146: onACFrontVolumeChange (I)V": {
+          "transactOriginalLine": 1940116,
+          "reply": "null",
+          "flags": 1,
+          "argumentRegisters": [
+            "v1",
+            "v2",
+            "v0",
+            "v3",
+            "v4"
+          ],
+          "operations": [
+            "      85ce5a: 1203                                   |000f: const/4 v3, #int 0 // #0",
+            "      85ce5c: 1214                                   |0010: const/4 v4, #int 1 // #1",
+            "      85ce5e: 7254 7e01 2130                         |0011: invoke-interface {v1, v2, v0, v3, v4}, Landroid/os/IBinder;.transact:(ILandroid/os/Parcel;Landroid/os/Parcel;I)Z // method@017e"
+          ]
+        },
+        "virtual_method #57152: onACTemperatureChange (IF)V": {
+          "transactOriginalLine": 1940340,
+          "reply": "null",
+          "flags": 1,
+          "argumentRegisters": [
+            "v1",
+            "v2",
+            "v0",
+            "v3",
+            "v4"
+          ],
+          "operations": [
+            "      85d118: 1203                                   |0012: const/4 v3, #int 0 // #0",
+            "      85d11a: 1214                                   |0013: const/4 v4, #int 1 // #1",
+            "      85d11c: 7254 7e01 2130                         |0014: invoke-interface {v1, v2, v0, v3, v4}, Landroid/os/IBinder;.transact:(ILandroid/os/Parcel;Landroid/os/Parcel;I)Z // method@017e"
+          ]
+        },
+        "virtual_method #57154: onACZoneAutoSyncStateChange (I)V": {
+          "transactOriginalLine": 1940414,
+          "reply": "null",
+          "flags": 1,
+          "argumentRegisters": [
+            "v1",
+            "v2",
+            "v0",
+            "v3",
+            "v4"
+          ],
+          "operations": [
+            "      85d1fe: 1203                                   |000f: const/4 v3, #int 0 // #0",
+            "      85d200: 1214                                   |0010: const/4 v4, #int 1 // #1",
+            "      85d202: 7254 7e01 2130                         |0011: invoke-interface {v1, v2, v0, v3, v4}, Landroid/os/IBinder;.transact:(ILandroid/os/Parcel;Landroid/os/Parcel;I)Z // method@017e"
+          ]
+        }
+      },
+      "IVehicleCarSCCUChangedListener$Stub$Proxy": {
+        "virtual_method #58747: onFrontSeatHeatLevel (II)V": {
+          "transactOriginalLine": 1964000,
+          "reply": "null",
+          "flags": 1,
+          "argumentRegisters": [
+            "v1",
+            "v2",
+            "v0",
+            "v3",
+            "v4"
+          ],
+          "operations": [
+            "      86cfc4: 1203                                   |0012: const/4 v3, #int 0 // #0",
+            "      86cfc6: 1214                                   |0013: const/4 v4, #int 1 // #1",
+            "      86cfc8: 7254 7e01 2130                         |0014: invoke-interface {v1, v2, v0, v3, v4}, Landroid/os/IBinder;.transact:(ILandroid/os/Parcel;Landroid/os/Parcel;I)Z // method@017e"
+          ]
+        },
+        "virtual_method #58752: onFrontSeatVentLevel (II)V": {
+          "transactOriginalLine": 1964195,
+          "reply": "null",
+          "flags": 1,
+          "argumentRegisters": [
+            "v1",
+            "v2",
+            "v0",
+            "v3",
+            "v4"
+          ],
+          "operations": [
+            "      86d21c: 1203                                   |0012: const/4 v3, #int 0 // #0",
+            "      86d21e: 1214                                   |0013: const/4 v4, #int 1 // #1",
+            "      86d220: 7254 7e01 2130                         |0014: invoke-interface {v1, v2, v0, v3, v4}, Landroid/os/IBinder;.transact:(ILandroid/os/Parcel;Landroid/os/Parcel;I)Z // method@017e"
+          ]
+        }
+      }
+    }
+  }
+}

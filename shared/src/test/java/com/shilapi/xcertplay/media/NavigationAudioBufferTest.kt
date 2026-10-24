@@ -7,8 +7,9 @@ import org.junit.Test
 class NavigationAudioBufferTest {
     @Test fun hs5MonoNavigationCoversObservedGap() {
         val plan = NavigationAudioBuffer.plan(48_000, 1, 4_624)
-        assertEquals(15_360, plan.startBytes)
-        assertTrue(plan.trackBufferBytes / 96 > 183)
+        assertEquals(23_040, plan.startBytes)
+        assertTrue("Starting reserve must cover the measured 188ms gap", plan.startBytes / 96 > 188)
+        assertTrue(plan.trackBufferBytes / 96 >= 400)
         assertTrue(plan.startBytes < plan.trackBufferBytes)
     }
 

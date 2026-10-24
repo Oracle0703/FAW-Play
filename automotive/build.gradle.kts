@@ -13,8 +13,8 @@ android {
         applicationId = "com.shilapi.xcertplay"
         minSdk = 28
         targetSdk = 37
-        versionCode = 1201
-        versionName = "1.2.1"
+        versionCode = 1204
+        versionName = "1.2.4-AUTH3"
 
     }
 
@@ -33,8 +33,9 @@ android {
     buildTypes {
         release {
             optimization {
-                enable = false
+                enable = true
             }
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
             signingConfig = signingConfigs.getByName("release")
         }
     }
@@ -46,6 +47,8 @@ android {
         compose = true
     }
 }
+
+apply(from = rootProject.file("gradle/verify-license-release.gradle"))
 
 dependencies {
     implementation(project(":common"))

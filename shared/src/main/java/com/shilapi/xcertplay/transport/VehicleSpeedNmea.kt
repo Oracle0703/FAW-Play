@@ -1,6 +1,6 @@
 package com.shilapi.xcertplay.transport
 
-import java.util.Locale
+import com.shilapi.xcertplay.transport.NmeaSentence.format
 
 enum class VehicleGear(val letter: Char) { PARK('P'), REVERSE('R'), NEUTRAL('N'), DRIVE('D') }
 
@@ -40,12 +40,8 @@ object PascdEncoder {
                 append(',').append(format("%.3f", sample.metersPerSecond.coerceAtLeast(0.0)))
             }
         }
-        var checksum = 0
-        for (character in body) checksum = checksum xor character.code
-        return "$$body*${format("%02X", checksum)}\r\n"
+        return NmeaSentence.encode(body)
     }
-
-    private fun format(format: String, vararg arguments: Any): String = String.format(Locale.US, format, *arguments)
 }
 
 /**

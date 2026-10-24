@@ -1,0 +1,316 @@
+{
+  "verifiedAt": "2026-10-15T19:41:52+08:00",
+  "component": "server",
+  "scope": "Local Autunn header and admin toggle changes; no production access",
+  "currentChecks": {
+    "success": true,
+    "productionCredentialsUsed": false,
+    "commands": [
+      {
+        "command": [
+          "gradlew",
+          "-p",
+          "authorization-server",
+          "test",
+          "bootJar",
+          "--offline"
+        ],
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "node",
+          "--test",
+          "scripts/test_admin_web.cjs",
+          "scripts/test_web_api.cjs"
+        ],
+        "workingDirectory": "server/authorization-server",
+        "exitCode": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/build_site.py",
+          "--output",
+          "/var/folders/cg/78ypnwsn62jbz1r7lyvqjgb00000gp/T/fawplay-autunn-static-gzgx3ohv/site"
+        ],
+        "workingDirectory": "server",
+        "exitCode": 0
+      }
+    ]
+  },
+  "tests": {
+    "serverH2": {
+      "tests": 115,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "passed": 115,
+      "suites": 11
+    },
+    "web": {
+      "tests": 30,
+      "passed": 30,
+      "failures": 0
+    },
+    "staticSiteBuild": {
+      "passed": true,
+      "apiAssetMatchesCurrentSource": true
+    }
+  },
+  "builds": [
+    {
+      "task": "bootJar",
+      "ok": true,
+      "artifactSha256": "282bd459a309d352adaaf6d121ebee5b5478715ed46e3cf2d399bee140db04f5",
+      "artifactPath": "server/authorization-server/build/libs/faw-play-authorization-1.0.0.jar",
+      "adminStaticResourcesMatchCurrentSource": true
+    }
+  ],
+  "dataSafety": {
+    "databaseMigrationsChanged": false,
+    "productionAccessed": false,
+    "criticalFilesUnchangedFromBaseline": [
+      "server/authorization-server/compose.yml",
+      "server/authorization-server/compose.production.yml",
+      "server/authorization-server/src/main/resources/db/migration/V6__diagnostic_reports.sql",
+      "server/authorization-server/src/main/resources/db/migration/V1__authorization.sql",
+      "server/authorization-server/src/main/resources/db/migration/V5__activation_code_deletion.sql",
+      "server/authorization-server/src/main/resources/db/migration/V4__license_deletion.sql",
+      "server/authorization-server/src/main/resources/db/migration/V2__qr_activation.sql",
+      "server/authorization-server/src/main/resources/db/migration/V3__permanent_and_device_management.sql",
+      "server/authorization-server/src/main/resources/db/migration/V7__activation_reset.sql",
+      "server/authorization-server/src/main/java/com/shilapi/license/LicenseTokens.java",
+      "server/authorization-server/src/main/java/com/shilapi/license/Administration.java",
+      "server/authorization-server/src/main/java/com/shilapi/license/ActivationService.java"
+    ],
+    "updateValidationWritesEntitlementsOrCodesOrDevices": false,
+    "existingDataPreservationRegressionPassed": true
+  },
+  "notRun": [
+    "Production deployment or production database access",
+    "Existing PostgreSQL clone preservation acceptance",
+    "HS5 / iPhone runtime acceptance",
+    "Signed Release build"
+  ],
+  "historicalSnapshotVerification": {
+    "verifiedAt": "2026-10-15T14:28:19+08:00",
+    "component": "server",
+    "scope": "Independent copy of split source package",
+    "currentChecks": {
+      "component": "server",
+      "independentCopy": true,
+      "productionCredentialsUsed": false,
+      "accessoryIdentityBundled": false,
+      "commands": [
+        {
+          "command": [
+            "gradlew",
+            "-p",
+            "authorization-server",
+            "test",
+            "bootJar",
+            "--offline",
+            "--no-configuration-cache",
+            "--console=plain"
+          ],
+          "exitCode": 0,
+          "elapsedSeconds": 12.1
+        },
+        {
+          "command": [
+            "node",
+            "--test",
+            "authorization-server/scripts/test_admin_web.cjs",
+            "authorization-server/scripts/test_web_api.cjs"
+          ],
+          "exitCode": 0,
+          "elapsedSeconds": 0.2
+        },
+        {
+          "command": [
+            "python3",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "authorization-server/scripts",
+            "-p",
+            "test_admin.py"
+          ],
+          "exitCode": 0,
+          "elapsedSeconds": 0.6
+        }
+      ],
+      "success": true
+    },
+    "tests": {
+      "serverH2": {
+        "tests": 89,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "passed": 89
+      },
+      "web": {
+        "tests": 20,
+        "passed": 20,
+        "failures": 0
+      },
+      "adminCli": {
+        "tests": 3,
+        "passed": 3,
+        "failures": 0
+      }
+    },
+    "builds": [
+      {
+        "task": "bootJar",
+        "ok": true,
+        "artifactSha256": "4f045b6081f8d28c41783a15bbe3e3c840c6311bc0784311d96d5e2337d79163",
+        "siteResourcesIncluded": true,
+        "migrationV7Included": true,
+        "artifactIncludedInSourcePackage": false
+      }
+    ],
+    "lint": {},
+    "productionCredentialsUsed": false,
+    "notRun": [
+      "Production deployment",
+      "Real PostgreSQL / Keycloak integration",
+      "HS5 / iPhone runtime acceptance",
+      "Signed Release build"
+    ],
+    "sourceIntegrity": {
+      "projectFiles": 111,
+      "originalWorkingTreeStillMatchesCapturedHashes": true,
+      "allPackagedProjectFileHashesMatch": true,
+      "businessSourceRewritten": false,
+      "documentationAdaptedFiles": 2,
+      "credentialContainersIncluded": false
+    }
+  },
+  "previousLocalVerification": {
+    "verifiedAt": "2026-10-15T18:35:03+08:00",
+    "component": "server",
+    "scope": "Local H2 tests; no production data or keys used",
+    "currentChecks": {
+      "success": true,
+      "productionCredentialsUsed": false,
+      "commands": [
+        {
+          "command": [
+            "gradlew",
+            "-p",
+            "authorization-server",
+            "test",
+            "bootJar",
+            "--offline"
+          ],
+          "exitCode": 0
+        },
+        {
+          "command": [
+            "node",
+            "--test",
+            "authorization-server/scripts/test_admin_web.cjs",
+            "authorization-server/scripts/test_web_api.cjs"
+          ],
+          "exitCode": 0
+        },
+        {
+          "command": [
+            "python3",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "authorization-server/scripts",
+            "-p",
+            "test_admin.py"
+          ],
+          "exitCode": 0
+        }
+      ]
+    },
+    "tests": {
+      "serverH2": {
+        "tests": 102,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "passed": 102,
+        "suites": 10
+      },
+      "web": {
+        "tests": 21,
+        "passed": 21,
+        "failures": 0
+      },
+      "adminCli": {
+        "tests": 3,
+        "passed": 3,
+        "failures": 0
+      },
+      "staticSiteBuild": {
+        "passed": true,
+        "publicApkPackagingRejected": true
+      }
+    },
+    "builds": [
+      {
+        "task": "bootJar",
+        "ok": true,
+        "artifactSha256": "282bd459a309d352adaaf6d121ebee5b5478715ed46e3cf2d399bee140db04f5",
+        "artifactPath": "server/authorization-server/build/libs/faw-play-authorization-1.0.0.jar",
+        "adminStaticResourcesMatchCurrentSource": true
+      }
+    ],
+    "dataSafety": {
+      "databaseMigrationsChanged": false,
+      "productionAccessed": false,
+      "criticalFilesUnchangedFromBaseline": [
+        "server/authorization-server/compose.yml",
+        "server/authorization-server/compose.production.yml",
+        "server/authorization-server/src/main/resources/db/migration/V6__diagnostic_reports.sql",
+        "server/authorization-server/src/main/resources/db/migration/V1__authorization.sql",
+        "server/authorization-server/src/main/resources/db/migration/V5__activation_code_deletion.sql",
+        "server/authorization-server/src/main/resources/db/migration/V4__license_deletion.sql",
+        "server/authorization-server/src/main/resources/db/migration/V2__qr_activation.sql",
+        "server/authorization-server/src/main/resources/db/migration/V3__permanent_and_device_management.sql",
+        "server/authorization-server/src/main/resources/db/migration/V7__activation_reset.sql",
+        "server/authorization-server/src/main/java/com/shilapi/license/LicenseTokens.java",
+        "server/authorization-server/src/main/java/com/shilapi/license/Administration.java",
+        "server/authorization-server/src/main/java/com/shilapi/license/ActivationService.java"
+      ],
+      "updateValidationWritesEntitlementsOrCodesOrDevices": false,
+      "existingDataPreservationRegressionPassed": true
+    },
+    "notRun": [
+      "Production deployment or production database access",
+      "Existing PostgreSQL clone preservation acceptance",
+      "HS5 / iPhone runtime acceptance",
+      "Signed Release build"
+    ]
+  },
+  "reusedChecks": {
+    "adminCli": {
+      "tests": 3,
+      "passed": 3,
+      "failures": 0,
+      "reason": "Python scripts and related administration implementation unchanged since previous passing run"
+    }
+  },
+  "autunnHeader": {
+    "name": "Autunn",
+    "value": "1",
+    "defaultEnabled": false,
+    "adminPath": "/v1/admin/updates/settings",
+    "persistentFile": "UPDATE_DIRECTORY/.update-request-settings.json",
+    "atomicFileAndDirectorySynced": true,
+    "databaseMigrationsChanged": false,
+    "existingLicenseVerificationAlwaysRequired": true,
+    "testsCoverRestartAndFailedSave": true,
+    "productionAccessed": false
+  }
+}

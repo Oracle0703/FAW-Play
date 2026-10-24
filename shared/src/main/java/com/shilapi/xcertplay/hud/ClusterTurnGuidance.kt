@@ -12,7 +12,7 @@ data class ClusterTurnGuidance(
     val remainingMeters: Long? = null,
 ) {
     companion object {
-        internal fun from(frame: FawClusterFrame): ClusterTurnGuidance {
+        internal fun from(frame: AutunnClusterFrame): ClusterTurnGuidance {
             return ClusterTurnGuidance(frame.icon, frame.roundaboutExit, frame.distanceMeters, frame.road)
         }
     }

@@ -6,9 +6,11 @@ plugins {
 // Optional local-only input. CI and ordinary source builds contain no accessory identity.
 val localAuthenticationAssets = providers.environmentVariable("DIPLAY_AUTH_ASSETS_DIR")
     .orNull?.let { file(it).canonicalFile }
-val baselineTest = providers.gradleProperty("fawBaselineTest")
+val baselineTest = providers.gradleProperty("autunnBaselineTest")
+    .orElse(providers.gradleProperty("fawBaselineTest"))
     .map(String::toBooleanStrict).getOrElse(false)
-val clusterTuning = providers.gradleProperty("fawClusterTuning")
+val clusterTuning = providers.gradleProperty("autunnClusterTuning")
+    .orElse(providers.gradleProperty("fawClusterTuning"))
     .map(String::toBooleanStrict).getOrElse(false)
 check(!baselineTest || !clusterTuning) { "Select either baseline testing or cluster layout tuning" }
 
@@ -22,11 +24,11 @@ android {
         applicationId = "com.shihab.diplay"
         minSdk = 28
         targetSdk = 37
-        versionCode = 84
+        versionCode = 170
         versionName = when {
-            clusterTuning -> "0.2.12-FAW-NAVI30"
-            baselineTest -> "0.2.12-FAW-BASETEST1"
-            else -> "0.2.12-FAW-NAVI30"
+            clusterTuning -> "0.2.50-AUTUNN-AUTH1"
+            baselineTest -> "0.2.12-AUTUNN-BASETEST1"
+            else -> "0.3.20-AUTUNN39"
         }
 
     }
@@ -53,8 +55,9 @@ android {
         }
         release {
             optimization {
-                enable = false
+                enable = true
             }
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
             signingConfig = signingConfigs.getByName("release")
         }
     }
@@ -66,6 +69,8 @@ android {
         compose = true
     }
 }
+
+apply(from = rootProject.file("gradle/verify-license-release.gradle"))
 
 dependencies {
     implementation(platform(libs.androidx.compose.bom))

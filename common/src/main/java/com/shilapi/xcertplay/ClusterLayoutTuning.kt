@@ -22,7 +22,7 @@ internal object ClusterLayoutTuning {
     }
     data class Placement(val x: Int, val y: Int, val scale: Int, val width: Int? = null, val height: Int? = null)
 
-    fun active(): Boolean = BuildConfig.FAW_CLUSTER_TUNING_ENABLED && HongqiNavigation.clusterDefault()
+    fun active(): Boolean = BuildConfig.AUTUNN_CLUSTER_TUNING_ENABLED && HongqiNavigation.clusterDefault()
 
     fun preferences(context: Context): SharedPreferences =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)

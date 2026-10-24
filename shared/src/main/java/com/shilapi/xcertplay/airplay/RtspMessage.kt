@@ -8,6 +8,8 @@ package com.shilapi.xcertplay.airplay
  * this framing in a separate layer.
  */
 object RtspMessage {
+    internal const val MAX_HEADER_BYTES = 64 * 1024
+    internal const val MAX_BODY_BYTES = 8 * 1024 * 1024
     data class Request(
         val method: String,
         val path: String,
@@ -39,7 +41,12 @@ object RtspMessage {
         val messages = ArrayList<Request>()
         var offset = 0
         while (offset < buffer.size) {
-            val headerEndIndex = indexOf(buffer, headerEnd, offset) ?: break
+            val headerEndIndex = indexOf(buffer, headerEnd, offset)
+            if (headerEndIndex == null) {
+                require(buffer.size - offset <= MAX_HEADER_BYTES) { "RTSP header exceeds limit" }
+                break
+            }
+            require(headerEndIndex - offset <= MAX_HEADER_BYTES) { "RTSP header exceeds limit" }
             val headerText = String(buffer, offset, headerEndIndex - offset, Charsets.US_ASCII)
             val lines = headerText.split("\r\n")
             if (lines.isEmpty()) {
@@ -51,13 +58,23 @@ object RtspMessage {
             for (line in lines.drop(1)) {
                 val separator = line.indexOf(':')
                 if (separator == -1) continue
-                headers[line.substring(0, separator).trim().lowercase()] =
-                    line.substring(separator + 1).trim()
+                val name = line.substring(0, separator).trim().lowercase()
+                val value = line.substring(separator + 1).trim()
+                require(name != "content-length" || headers[name] == null || headers[name] == value) {
+                    "Conflicting RTSP content lengths"
+                }
+                headers[name] = value
             }
             val bodyStart = headerEndIndex + headerEnd.size
-            val contentLength = headers["content-length"]?.toIntOrNull()?.coerceAtLeast(0) ?: 0
+            val contentLength = headers["content-length"]?.let { value ->
+                require(value.isNotEmpty() && value.all { it in '0'..'9' }) { "Invalid RTSP content length" }
+                val length = value.toLongOrNull()
+                require(length != null && length <= MAX_BODY_BYTES) { "RTSP body exceeds limit" }
+                length.toInt()
+            } ?: 0
+            // Compare remaining bytes before addition; even an untrusted length cannot wrap Int.
+            if (contentLength > buffer.size - bodyStart) break
             val bodyEnd = bodyStart + contentLength
-            if (bodyEnd > buffer.size) break
             messages.add(
                 Request(
                     method = requestLine[0],

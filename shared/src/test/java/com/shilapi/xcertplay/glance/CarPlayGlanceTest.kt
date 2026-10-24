@@ -2,7 +2,7 @@ package com.shilapi.xcertplay.glance
 
 import com.shilapi.xcertplay.iap2.body.Iap2BodyBuilder
 import com.shilapi.xcertplay.iap2.message.Iap2Messages
-import com.shilapi.xcertplay.hud.FawHudRouteState
+import com.shilapi.xcertplay.hud.AutunnHudRouteState
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -104,7 +104,7 @@ class CarPlayGlanceTest {
     // Inject the route parser's monotonic clock rather than waiting 30 seconds in each test.
     private fun withRouteClock(test: ((Long) -> Unit) -> Unit) {
         val route = CarPlayGlance.javaClass.getDeclaredField("route").apply { isAccessible = true }
-            .get(CarPlayGlance) as FawHudRouteState
+            .get(CarPlayGlance) as AutunnHudRouteState
         val clock = route.javaClass.getDeclaredField("nanoTime").apply { isAccessible = true }
         val original = clock.get(route)
         var now = 1_000_000_000L

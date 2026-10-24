@@ -111,6 +111,90 @@ class LocalAdbTest {
         adbd.join(1_000)
     }
 
+    @Test fun totalDeadlineStopsContinuousPacketsAndTrickledHeaders() {
+        for (trickleHeader in listOf(false, true)) {
+            withShellPeer { socket, open ->
+                val out = socket.getOutputStream()
+                val encoded = AdbPacket(AdbPacket.WRTE, 77, open.arg0, byteArrayOf(65)).encode()
+                repeat(200) { index ->
+                    if (trickleHeader) out.write(encoded[index % encoded.size].toInt()) else out.write(encoded)
+                    out.flush()
+                    Thread.sleep(15)
+                }
+            }.use { adb ->
+                val started = System.nanoTime()
+                assertNull(adb.shell("continuous-output", 200))
+                assertTrue("A stream of packets/bytes must not renew the command deadline", (System.nanoTime() - started) / 1_000_000 < 1_500)
+            }
+        }
+    }
+
+    @Test fun shellRejectsOutputLargerThanOneMiB() {
+        withShellPeer { socket, open ->
+            val out = socket.getOutputStream()
+            repeat(5) {
+                out.write(AdbPacket(AdbPacket.WRTE, 77, open.arg0, ByteArray(256 * 1024) { 65 }).encode())
+                out.flush()
+                AdbPacket.read(socket.getInputStream())
+            }
+        }.use { adb -> assertNull(adb.shell("too-much-output", 2_000)) }
+    }
+
+    @Test fun silentConnectDeadlineIncludesATrickledHandshake() {
+        val server = ServerSocket(0)
+        val worker = thread(isDaemon = true) {
+            server.use {
+                server.accept().use { socket ->
+                    try {
+                        AdbPacket.read(socket.getInputStream())
+                        val bytes = AdbPacket(AdbPacket.CNXN, AdbPacket.VERSION,
+                            AdbPacket.MAX_PAYLOAD, ByteArray(1024) { 65 }).encode()
+                        for (byte in bytes) {
+                            socket.getOutputStream().write(byte.toInt())
+                            socket.getOutputStream().flush()
+                            Thread.sleep(10)
+                        }
+                    } catch (_: java.io.IOException) { /* Total handshake deadline closes peer. */ }
+                }
+            }
+        }
+        LocalAdb(key, port = server.localPort).use { adb ->
+            val started = System.nanoTime()
+            assertEquals(LocalAdb.Access.UNREACHABLE, adb.connect(mayAsk = false))
+            assertTrue("Each received byte must not renew the handshake deadline", (System.nanoTime() - started) / 1_000_000 < 7_000)
+        }
+        worker.join(1_000)
+    }
+
+    @Test fun completedCommandsDoNotLeaveTimersThatCloseTheNextCommand() {
+        val adbd = FakeAdbd(knowsKey = true, output = "ok")
+        LocalAdb(key, port = adbd.port).use { adb ->
+            assertEquals(LocalAdb.Access.READY, adb.connect(mayAsk = false))
+            assertEquals("ok", adb.shell("first", 300))
+            Thread.sleep(400)
+            assertEquals("ok", adb.shell("second", 300))
+        }
+    }
+
+    private fun withShellPeer(reply: (java.net.Socket, AdbPacket) -> Unit): LocalAdb {
+        val server = ServerSocket(0)
+        thread(isDaemon = true) {
+            server.use {
+                server.accept().use { socket ->
+                    try {
+                        AdbPacket.read(socket.getInputStream())
+                        socket.getOutputStream().write(AdbPacket(AdbPacket.CNXN, AdbPacket.VERSION,
+                            AdbPacket.MAX_PAYLOAD, "device::\u0000".toByteArray()).encode())
+                        val open = AdbPacket.read(socket.getInputStream())
+                        socket.getOutputStream().write(AdbPacket(AdbPacket.OKAY, 77, open.arg0, ByteArray(0)).encode())
+                        reply(socket, open)
+                    } catch (_: java.io.IOException) { /* Expected peer cancellation/deadline. */ }
+                }
+            }
+        }
+        return LocalAdb(key, port = server.localPort).also { assertEquals(LocalAdb.Access.READY, it.connect(mayAsk = false)) }
+    }
+
     private fun littleEndian(buffer: ByteBuffer, size: Int): BigInteger {
         val bytes = ByteArray(size).also { buffer.get(it) }
         return BigInteger(1, bytes.reversedArray())

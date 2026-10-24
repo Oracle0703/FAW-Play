@@ -13,7 +13,7 @@ class DiLink4ClusterDisplayTest {
             assertEquals(content.url, config.initialUrl)
             assertEquals(CarPlayClusterDisplay.config(1920, 720, scalePercent = 100, content = content).safeArea, config.safeArea)
             assertNotNull(config.safeArea)
-            assertEquals(true, config.safeAreaDrawOutside)
+            assertEquals(false, config.safeAreaDrawOutside)
         }
     }
 
@@ -33,7 +33,7 @@ class DiLink4ClusterDisplayTest {
         assertEquals(720, config.heightPixels)
         assertEquals(com.shilapi.xcertplay.airplay.AirPlayInsets(100, 100, 300, 420), config.safeArea)
         assertEquals(CarPlayClusterDisplay.Content.INSTRUMENTS.url, config.initialUrl)
-        assertEquals(true, config.safeAreaDrawOutside)
+        assertEquals(false, config.safeAreaDrawOutside)
         assertEquals(config.safeArea,
             DiLink4ClusterDisplay.streamConfig(CarPlayClusterDisplay.Content.INSTRUMENTS, -4, -3, rect).safeArea)
     }

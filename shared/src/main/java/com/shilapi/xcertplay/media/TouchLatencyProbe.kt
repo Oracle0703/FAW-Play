@@ -5,18 +5,33 @@ internal object TouchLatencyProbe {
     @Volatile var maxQueueWaitNs = 0L
     @Synchronized fun onQueueWait(nanos: Long) { maxQueueWaitNs = maxOf(maxQueueWaitNs, nanos) }
     @Volatile private var pendingTouchNs = 0L
+    @Volatile private var pendingPresentationNs = 0L
     @Volatile var maxSendNs = 0L
+    /** Independent of the first-frame counters: a refresh reply must never create an interaction. */
+    @Volatile var latestTouchSentNs = 0L
+        private set
 
-    fun onTouchSent(sentAtNs: Long, sendDurationNs: Long) {
+    @Synchronized fun onTouchSent(sentAtNs: Long, sendDurationNs: Long) {
+        latestTouchSentNs = sentAtNs
         if (pendingTouchNs == 0L) pendingTouchNs = sentAtNs
+        if (pendingPresentationNs == 0L) pendingPresentationNs = sentAtNs
         if (sendDurationNs > maxSendNs) maxSendNs = sendDurationNs
     }
 
     /** Returns touch-to-frame latency for the first frame after a touch, or -1. */
-    fun onFrame(nowNs: Long): Long {
+    @Synchronized fun onFrame(nowNs: Long): Long {
         val touch = pendingTouchNs
-        if (touch == 0L) return -1
+        if (touch == 0L || nowNs < touch) return -1
         pendingTouchNs = 0L
         return nowNs - touch
     }
+    /** Ignore presentation of pictures received before the touch. This is still not page completion. */
+    @Synchronized fun onPresented(ptsUs: Long, nowNs: Long): Long {
+        val touch = pendingPresentationNs
+        if (touch == 0L || ptsUs < touch / 1_000 || nowNs < touch) return -1
+        pendingPresentationNs = 0L
+        return nowNs - touch
+    }
+    @Synchronized fun awaitingNanos(nowNs: Long): Long =
+        if (pendingPresentationNs == 0L) 0L else (nowNs - pendingPresentationNs).coerceAtLeast(0)
 }

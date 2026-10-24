@@ -51,6 +51,8 @@ internal object CarPlayMediaKeys {
     private var session: MediaSession? = null
     private var focusRequest: AudioFocusRequest? = null
     private var focusHeld = false
+    private var focusGeneration = 0L
+    private var requestSinkAudioFocus: (() -> Unit)? = null
     private var appContext: Context? = null
     private var mediaAudioActive = false
     private var nowPlaying = CarPlayNowPlaying()
@@ -60,13 +62,14 @@ internal object CarPlayMediaKeys {
     private var placeholder: Bitmap? = null
 
     @Synchronized
-    fun attach(context: Context, next: CarPlayController) {
+    fun attach(context: Context, next: CarPlayController, requestAudioFocus: (() -> Unit)? = null) {
         if (controller !== next) {
             releaseLocked()
             artworkOwner = artworkQueue.newSession()
         }
         appContext = context.applicationContext
         controller = next
+        requestSinkAudioFocus = requestAudioFocus
         HongqiWheelControls.attach(context, next)
         next.playbackListener = { playing -> onIphonePlaying(next, playing) }
         next.nowPlayingListener = { update -> onNowPlayingChanged(next, update) }
@@ -88,6 +91,16 @@ internal object CarPlayMediaKeys {
     /** Called when CarPlay music starts or stops; may run on any thread. */
     fun onMediaAudioChanged(active: Boolean) {
         mainHandler.post { synchronized(this) { updateLocked(active) } }
+    }
+
+    /** Select CarPlay on an explicit screen entry, even while the iPhone's music is paused. */
+    @Synchronized
+    fun onCarPlayEntered(expected: CarPlayController): Boolean {
+        if (controller !== expected || !expected.selectProjectionScreen(true)) return false
+        // Foreground visibility is independent of the current FM/CarPlay audio choice.
+        publishPlaybackStateLocked()
+        Log.i(TAG, "CarPlay screen selected independently of audio")
+        return true
     }
 
     /** The iPhone started or stopped playing; may run on any thread. */
@@ -152,6 +165,11 @@ internal object CarPlayMediaKeys {
     // keys. When CarPlay starts playing again it becomes the car's media source again, as any player
     // would; only the start counts, so a car source picked while the iPhone plays on is not undone.
     private fun regainFocusLocked() {
+        if (controller?.mainAudioAllowed() == false) return
+        if (appContext?.let(AirPlayPersistence::loadAudioFocusEnabled) == true) {
+            requestSinkAudioFocus?.invoke()
+            return
+        }
         val request = focusRequest ?: return
         if (focusHeld) return
         val audio = appContext?.getSystemService(AudioManager::class.java) ?: return
@@ -173,6 +191,7 @@ internal object CarPlayMediaKeys {
 
     private fun start(context: Context) {
         val audio = context.getSystemService(AudioManager::class.java)
+        val generation = ++focusGeneration
         val request = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
             .setAudioAttributes(
                 AudioAttributes.Builder()
@@ -183,14 +202,24 @@ internal object CarPlayMediaKeys {
             .setOnAudioFocusChangeListener({ change ->
                 Log.i(TAG, "audio focus change=$change")
                 // Only a permanent loss moves the car's media keys elsewhere; transient losses come back.
-                if (change == AudioManager.AUDIOFOCUS_LOSS) synchronized(this) { focusHeld = false }
+                synchronized(this) {
+                    if (generation != focusGeneration) return@synchronized
+                    if (change == AudioManager.AUDIOFOCUS_LOSS) focusHeld = false
+                    else if (change == AudioManager.AUDIOFOCUS_GAIN) focusHeld = true
+                    controller?.nativeAudioFocusChanged(change)
+                }
             }, mainHandler)
             .build()
-        val granted = audio?.requestAudioFocus(request) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
-        focusRequest = request
+        // When the sink manages track focus it is the sole owner. A second music request here
+        // can displace its own navigation/call request and mute otherwise healthy playback.
+        val sinkOwnsFocus = AirPlayPersistence.loadAudioFocusEnabled(context)
+        val granted = !sinkOwnsFocus && controller?.mainAudioAllowed() != false &&
+            audio?.requestAudioFocus(request) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
+        focusRequest = request.takeUnless { sinkOwnsFocus }
+        if (sinkOwnsFocus) requestSinkAudioFocus?.invoke()
         focusHeld = granted
-        session = MediaSession(context, "FAW Play CarPlay").apply {
-            if (com.shilapi.xcertplay.shared.BuildConfig.FAW_WHEEL_CONTROL_ENABLED) setCallback(callback, mainHandler)
+        session = MediaSession(context, "Autunn Play CarPlay").apply {
+            if (com.shilapi.xcertplay.shared.BuildConfig.AUTUNN_WHEEL_CONTROL_ENABLED) setCallback(callback, mainHandler)
             setMetadata(androidMetadata(nowPlaying, shownArtworkLocked()))
             isActive = true
         }
@@ -198,6 +227,8 @@ internal object CarPlayMediaKeys {
     }
 
     private fun releaseLocked() {
+        focusGeneration++
+        requestSinkAudioFocus = null
         artworkOwner = null
         artworkQueue.clear()
         session?.let {
@@ -222,7 +253,7 @@ internal object CarPlayMediaKeys {
         }
         session?.setPlaybackState(
             PlaybackState.Builder()
-                .setActions(if (com.shilapi.xcertplay.shared.BuildConfig.FAW_WHEEL_CONTROL_ENABLED) ACTIONS else 0L)
+                .setActions(if (com.shilapi.xcertplay.shared.BuildConfig.AUTUNN_WHEEL_CONTROL_ENABLED) ACTIONS else 0L)
                 .setState(
                     if (playing) PlaybackState.STATE_PLAYING else PlaybackState.STATE_PAUSED,
                     nowPlaying.elapsedMillis ?: PlaybackState.PLAYBACK_POSITION_UNKNOWN,
@@ -236,7 +267,7 @@ internal object CarPlayMediaKeys {
     }
 
     private fun send(index: Int, source: String) {
-        if (!com.shilapi.xcertplay.shared.BuildConfig.FAW_WHEEL_CONTROL_ENABLED) return
+        if (!com.shilapi.xcertplay.shared.BuildConfig.AUTUNN_WHEEL_CONTROL_ENABLED) return
         // This method runs inside MediaSession.Callback, where Android 9 exposes
         // the controller responsible for the transport command.
         val caller = runCatching { synchronized(this) { session }?.currentControllerInfo }.getOrNull()

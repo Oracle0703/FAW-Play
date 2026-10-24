@@ -1,5 +1,6 @@
 package com.shilapi.xcertplay.airplay
 
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -27,7 +28,7 @@ class CarPlayClusterDisplayTest {
         assertEquals(600, alt["heightPixels"])
         assertEquals(0, alt["features"])
         assertEquals(0, alt["primaryInputDevice"])
-        assertEquals("maps:/car/instrumentcluster/map", alt["initialURL"])
+        assertEquals("maps:/car/instrumentcluster/map?showETA=yes", alt["initialURL"])
         assertEquals(292, alt["widthPhysical"])
         assertEquals(110, alt["heightPhysical"])
 
@@ -40,7 +41,7 @@ class CarPlayClusterDisplayTest {
         assertEquals(96, safe["originYPixels"])
         assertEquals(464, safe["widthPixels"])
         assertEquals(354, safe["heightPixels"])
-        assertEquals(true, safe["drawUIOutsideSafeArea"])
+        assertFalse(safe.containsKey("drawUIOutsideSafeArea"))
 
         // The main screen keeps its touch and knob features.
         assertEquals(0x0A, (displays[0] as Map<*, *>)["features"])
@@ -55,13 +56,38 @@ class CarPlayClusterDisplayTest {
         assertEquals("maps:/car/instrumentcluster/map", custom.initialUrl)
         assertEquals(
             listOf(
-                "maps:/car/instrumentcluster/map",
+                "maps:/car/instrumentcluster/map?showETA=yes",
                 "maps:/car/instrumentcluster/instructioncard",
-                "maps:/car/instrumentcluster",
+                "maps:/car/instrumentcluster?showETA=yes",
                 "maps:/car/instrumentcluster/map",
             ),
             CarPlayClusterDisplay.Content.entries.map { it.url },
         )
+    }
+
+    @Test
+    fun nativeInstrumentsAdvertiseEtaInTheInitialPhoneConfiguration() {
+        val info = AirPlayInfoPlist.build(
+            AirPlayConfig(
+                deviceName = "test", deviceId = "02:00:00:00:00:02", btMac = "02:00:00:00:00:02",
+                sourceVersion = "366.0", main = AirPlayDisplayConfig(1280, 720),
+                cluster = CarPlayClusterDisplay.config(1920, 720, content = CarPlayClusterDisplay.Content.INSTRUMENTS),
+            ),
+        )
+        val alt = (info["displays"] as List<*>)[1] as Map<*, *>
+        assertEquals("maps:/car/instrumentcluster?showETA=yes", alt["initialURL"])
+        assertEquals(AirPlayInfoPlist.ALT_UUID, alt["uuid"])
+        assertEquals(111, alt["type"])
+    }
+
+    @Test
+    fun everyClusterContentUsesItsDefaultPhoneLayout() {
+        for (content in CarPlayClusterDisplay.Content.entries) {
+            val config = CarPlayClusterDisplay.config(1920, 720, content = content)
+            assertEquals(content.url, config.initialUrl)
+            assertEquals(0, config.features)
+            assertEquals(0, config.primaryInputDevice)
+        }
     }
 
     @Test

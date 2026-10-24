@@ -36,6 +36,7 @@ class LocalOnlyHotspotManager(context: Context, private val onDiagnostic: (Strin
     private val wifiManager = context.applicationContext.getSystemService(WifiManager::class.java)
         ?: throw IllegalStateException("WifiManager is unavailable")
     private val stateLock = Object()
+    private val cleanupLock = Any()
 
     private var startAttempt: StartAttempt? = null
     private var reservation: WifiManager.LocalOnlyHotspotReservation? = null
@@ -138,7 +139,8 @@ class LocalOnlyHotspotManager(context: Context, private val onDiagnostic: (Strin
                 backend = WirelessHotspotBackend.LOCAL_ONLY_HOTSPOT,
             )
         } catch (failure: Exception) {
-            cleanupFailedStart(attempt, acquiredMulticastLock)
+            try { cleanupFailedStart(attempt, acquiredMulticastLock) }
+            catch (cleanupFailure: Exception) { failure.addSuppressed(cleanupFailure) }
             throw failure
         } finally {
             if (!observerAdopted) radioInfo.close()
@@ -189,7 +191,7 @@ class LocalOnlyHotspotManager(context: Context, private val onDiagnostic: (Strin
             try {
                 val builder = SoftApConfiguration.Builder()
                 SoftApConfiguration.Builder::class.java.getMethod("setSsid", String::class.java)
-                    .invoke(builder, "FAW-Play-${UUID.randomUUID().toString().take(6)}")
+                    .invoke(builder, "Autunn-Play-${UUID.randomUUID().toString().take(6)}")
                 SoftApConfiguration.Builder::class.java.getMethod("setPassphrase", String::class.java, Int::class.javaPrimitiveType)
                     .invoke(builder, UUID.randomUUID().toString().replace("-", "").take(20), SoftApConfiguration.SECURITY_TYPE_WPA2_PSK)
                 // Request the station's 5 GHz channel, or 36 without a 5 GHz station.
@@ -293,25 +295,45 @@ class LocalOnlyHotspotManager(context: Context, private val onDiagnostic: (Strin
     }
 
     override fun close() {
+        synchronized(stateLock) {
+            closed = true
+            startAttempt?.stopped = true
+            stateLock.notifyAll()
+        }
+        releaseResources()
+    }
+
+    private fun releaseResources() = synchronized(cleanupLock) {
+        val attempt: StartAttempt?
         val activeReservation: WifiManager.LocalOnlyHotspotReservation?
         val activeMulticastLock: WifiManager.MulticastLock?
         val activeObserver: LocalOnlyHotspotRadioInfo?
         synchronized(stateLock) {
-            if (closed) return
-            closed = true
-            startAttempt?.stopped = true
-            stateLock.notifyAll()
-            activeReservation = reservation
+            attempt = startAttempt
+            activeReservation = reservation ?: attempt?.reservation
             activeMulticastLock = multicastLock
             activeObserver = radioObserver
-            radioObserver = null
-            reservation = null
-            multicastLock = null
         }
-
-        releaseMulticastLock(activeMulticastLock)
-        activeObserver?.close()
-        activeReservation?.close()
+        val failures = mutableListOf<Exception>()
+        fun release(block: () -> Unit): Boolean = try {
+            block()
+            true
+        } catch (error: Exception) {
+            failures.add(error)
+            false
+        }
+        if (release { releaseMulticastLock(activeMulticastLock, strict = true) }) synchronized(stateLock) {
+            if (multicastLock === activeMulticastLock) multicastLock = null
+        }
+        if (release { activeObserver?.close() }) synchronized(stateLock) {
+            if (radioObserver === activeObserver) radioObserver = null
+        }
+        if (release { activeReservation?.close() }) synchronized(stateLock) {
+            if (reservation === activeReservation) reservation = null
+            if (attempt?.reservation === activeReservation) attempt?.reservation = null
+            if (startAttempt === attempt && attempt?.stopped == true && attempt.reservation == null) startAttempt = null
+        }
+        if (failures.isNotEmpty()) throw IOException("LocalOnlyHotspot resources are not fully released", failures.first())
     }
 
     private fun createCallback(attempt: StartAttempt): WifiManager.LocalOnlyHotspotCallback =
@@ -653,15 +675,12 @@ class LocalOnlyHotspotManager(context: Context, private val onDiagnostic: (Strin
         attempt: StartAttempt,
         multicastLock: WifiManager.MulticastLock?,
     ) {
-        val failedReservation: WifiManager.LocalOnlyHotspotReservation?
         synchronized(stateLock) {
-            if (startAttempt === attempt) startAttempt = null
             attempt.stopped = true
             stateLock.notifyAll()
-            failedReservation = attempt.reservation
+            if (this.multicastLock == null) this.multicastLock = multicastLock
         }
-        releaseMulticastLock(multicastLock)
-        failedReservation?.close()
+        releaseResources()
     }
 
     private fun waitNanos(nanos: Long) {
@@ -803,11 +822,12 @@ class LocalOnlyHotspotManager(context: Context, private val onDiagnostic: (Strin
         else -> "reason $reason"
     }
 
-    private fun releaseMulticastLock(lock: WifiManager.MulticastLock?) {
+    private fun releaseMulticastLock(lock: WifiManager.MulticastLock?, strict: Boolean = false) {
         if (lock == null) return
         try {
             if (lock.isHeld) lock.release()
-        } catch (_: RuntimeException) {
+        } catch (error: RuntimeException) {
+            if (strict) throw error
             // close() is best-effort; the hotspot reservation remains the authoritative owner.
         }
     }

@@ -6,123 +6,111 @@ import java.io.Closeable
 import java.io.DataOutputStream
 import java.io.File
 import java.io.FileOutputStream
-import java.util.concurrent.atomic.AtomicBoolean
+import java.io.OutputStream
+import java.util.ArrayDeque
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 /**
- * Diagnostic capture for the encrypted UDP datagrams and decrypted RTP packets of one audio
- * stream. The caller must opt in by supplying a capture directory.
+ * Opt-in diagnostic capture. A bounded writer queue keeps disk I/O off the audio receive thread.
  *
- * File format:
- *   bytes 0..7: "XCAUDIO1"
- *   int32 version
- *   int32 stream type
- *   int64 wall-clock start time (milliseconds)
- *   repeated records:
- *     int32 wire length
- *     int32 decrypted RTP length, or -1 when authentication failed
- *     int32 RTP sample position, or -1 when unavailable
- *     int64 monotonic timestamp (nanoseconds)
- *     int32 UTF-8 error length
- *     wire bytes
- *     decrypted RTP bytes when length >= 0
- *     UTF-8 error bytes
+ * Version 1 format is unchanged: "XCAUDIO1", version, stream type, wall-clock start milliseconds;
+ * then records containing wire length, RTP length (-1 if absent), sample (-1 if absent), monotonic
+ * nanoseconds, error length, wire bytes, RTP bytes and UTF-8 error bytes (all integers big-endian).
  */
 class AudioPacketCapture(
-    directory: File,
+    private val directory: File,
     private val streamType: Int,
     private val maxPackets: Int = 512,
     private val maxBytes: Long = 16L * 1024L * 1024L,
+    private val openOutput: (File) -> OutputStream = { FileOutputStream(it, false) },
 ) : Closeable {
-    private val closed = AtomicBoolean(false)
-    private var packets = 0
-    private var bytesWritten: Long = (MAGIC.size + HEADER_BYTES).toLong()
-    private val output: DataOutputStream?
-
-    val file: File
+    private data class Record(val wire: ByteArray, val rtp: ByteArray?, val sample: Int?,
+        val error: ByteArray, val timestampNs: Long) {
+        val size: Long get() = RECORD_HEADER_BYTES + wire.size.toLong() + (rtp?.size ?: 0) + error.size
+    }
+    private val lock = Object()
+    private val pending = ArrayDeque<Record>()
+    private val complete = CountDownLatch(1)
+    private var accepting = maxPackets > 0
+    private var queuedBytes = 0L
+    private var acceptedPackets = 0
+    private var reservedBytes = (MAGIC.size + HEADER_BYTES).toLong()
+    private var droppedPackets = 0L
+    private val startedMillis = System.currentTimeMillis()
+    val file = File(directory, "audio-$startedMillis-type-$streamType.xcap")
 
     init {
-        val captureDirectory = if (directory.isDirectory || directory.mkdirs()) {
-            directory
-        } else {
-            null
-        }
-        file = if (captureDirectory == null) {
-            File(directory, "audio-capture-unavailable-type-$streamType.xcap")
-        } else {
-            File(
-                captureDirectory,
-                "audio-${System.currentTimeMillis()}-type-$streamType.xcap",
-            )
-        }
-        output = if (captureDirectory == null) {
-            null
-        } else {
-            try {
-                DataOutputStream(BufferedOutputStream(FileOutputStream(file, false))).also {
-                    it.write(MAGIC)
-                    it.writeInt(VERSION)
-                    it.writeInt(streamType)
-                    it.writeLong(System.currentTimeMillis())
-                    it.flush()
-                    Log.i(TAG, "audio capture started type=$streamType file=${file.absolutePath}")
-                }
-            } catch (error: Exception) {
-                Log.w(TAG, "audio capture could not open type=$streamType", error)
-                null
-            }
-        }
+        require(maxPackets >= 0 && maxBytes >= MAGIC.size + HEADER_BYTES)
+        Thread(::writeCapture, "carplay-audio-capture-$streamType").apply { isDaemon = true; start() }
     }
 
-    fun record(
-        wire: ByteArray,
-        rtp: ByteArray?,
-        sample: Int?,
-        error: Throwable?,
-    ) {
-        if (output == null || closed.get()) return
-        synchronized(this) {
-            if (closed.get() || packets >= maxPackets) return
-            val errorBytes = error?.message?.toByteArray(Charsets.UTF_8) ?: ByteArray(0)
-            val recordBytes = 4L * 4 + 8 + wire.size + (rtp?.size ?: 0) + errorBytes.size
-            if (bytesWritten + recordBytes > maxBytes) {
-                close()
+    fun record(wire: ByteArray, rtp: ByteArray?, sample: Int?, error: Throwable?) {
+        synchronized(lock) {
+            if (!accepting) return
+            val errorBytes = error?.message?.take(MAX_ERROR_CHARS)?.toByteArray(Charsets.UTF_8) ?: ByteArray(0)
+            val size = RECORD_HEADER_BYTES + wire.size.toLong() + (rtp?.size ?: 0) + errorBytes.size
+            if (reservedBytes + size > maxBytes) {
+                accepting = false
+                lock.notifyAll()
                 return
             }
-            try {
-                output.writeInt(wire.size)
-                output.writeInt(rtp?.size ?: -1)
-                output.writeInt(sample ?: -1)
-                output.writeLong(System.nanoTime())
-                output.writeInt(errorBytes.size)
-                output.write(wire)
-                if (rtp != null) output.write(rtp)
-                output.write(errorBytes)
-                packets += 1
-                bytesWritten += recordBytes
-                if (packets % FLUSH_INTERVAL_PACKETS == 0) output.flush()
-                if (packets >= maxPackets) close()
-            } catch (failure: Exception) {
-                Log.w(TAG, "audio capture write failed type=$streamType", failure)
-                close()
+            if (pending.size >= MAX_QUEUED_PACKETS || queuedBytes + size > MAX_QUEUED_BYTES) {
+                droppedPackets++ // Discard diagnostic data, never block live audio on a slow disk.
+                return
             }
+            val record = Record(wire.copyOf(), rtp?.copyOf(), sample, errorBytes, System.nanoTime())
+            pending.addLast(record)
+            queuedBytes += size
+            reservedBytes += size
+            acceptedPackets++
+            if (acceptedPackets >= maxPackets) accepting = false
+            lock.notifyAll()
         }
     }
 
-    override fun close() {
-        if (!closed.compareAndSet(false, true)) return
+    /** Signals the writer to drain and close; callers never wait for disk flush or close. */
+    override fun close() = synchronized(lock) { accepting = false; lock.notifyAll() }
+
+    internal fun awaitClosed(timeoutMillis: Long): Boolean = complete.await(timeoutMillis, TimeUnit.MILLISECONDS)
+
+    private fun writeCapture() {
+        var output: DataOutputStream? = null
+        var writtenPackets = 0
+        var writtenBytes = 0L
         try {
-            output?.flush()
-            output?.close()
-        } catch (error: Exception) {
-            Log.w(TAG, "audio capture close failed type=$streamType", error)
-        } finally {
-            if (output != null) {
-                Log.i(
-                    TAG,
-                    "audio capture stopped type=$streamType packets=$packets " +
-                        "bytes=$bytesWritten file=${file.absolutePath}",
-                )
+            check(directory.isDirectory || directory.mkdirs()) { "Audio capture directory unavailable" }
+            output = DataOutputStream(BufferedOutputStream(openOutput(file)))
+            output.write(MAGIC)
+            output.writeInt(VERSION)
+            output.writeInt(streamType)
+            output.writeLong(startedMillis)
+            writtenBytes = (MAGIC.size + HEADER_BYTES).toLong()
+            while (true) {
+                val record = synchronized(lock) {
+                    while (pending.isEmpty() && accepting) lock.wait()
+                    pending.pollFirst()?.also { queuedBytes -= it.size }
+                } ?: break
+                output.writeInt(record.wire.size)
+                output.writeInt(record.rtp?.size ?: -1)
+                output.writeInt(record.sample ?: -1)
+                output.writeLong(record.timestampNs)
+                output.writeInt(record.error.size)
+                output.write(record.wire)
+                record.rtp?.let(output::write)
+                output.write(record.error)
+                writtenPackets++
+                writtenBytes += record.size
+                if (writtenPackets % FLUSH_INTERVAL_PACKETS == 0) output.flush()
             }
+        } catch (error: Exception) {
+            Log.w(TAG, "audio capture write failed type=$streamType", error)
+        } finally {
+            synchronized(lock) { accepting = false; pending.clear(); queuedBytes = 0 }
+            runCatching { output?.close() }.onFailure { Log.w(TAG, "audio capture close failed type=$streamType", it) }
+            Log.i(TAG, "audio capture stopped type=$streamType packets=$writtenPackets bytes=$writtenBytes " +
+                "diagnosticDrops=$droppedPackets file=${file.absolutePath}")
+            complete.countDown()
         }
     }
 
@@ -130,7 +118,11 @@ class AudioPacketCapture(
         const val TAG = "xcertplay-usb"
         const val VERSION = 1
         const val HEADER_BYTES = 16
+        const val RECORD_HEADER_BYTES = 24L
         const val FLUSH_INTERVAL_PACKETS = 16
+        const val MAX_QUEUED_PACKETS = 64
+        const val MAX_QUEUED_BYTES = 1024L * 1024L
+        const val MAX_ERROR_CHARS = 1024
         val MAGIC = "XCAUDIO1".toByteArray(Charsets.US_ASCII)
     }
 }

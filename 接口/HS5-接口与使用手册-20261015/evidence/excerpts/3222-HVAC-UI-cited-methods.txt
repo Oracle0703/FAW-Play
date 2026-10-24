@@ -1,0 +1,763 @@
+# Source: work/vehicle-controls-audit-20261015/QisiHVAC-3222/bytecode.dis.txt
+
+# Original LF start: 2408891
+      d69084: e520 9000                              |0018: iget-object-quick v0, v2, [obj+0090]
+[new] d69084: 5420 dfd0                              |0018: iget-object v0, v2, Lltd/qisi/hvac/repository/HvacRepository;.mCarSteeringWheelType:Landroidx/lifecycle/MutableLiveData; // field@d0df
+      d69088: 7110 5d07 0300                         |001a: invoke-static {v3}, Ljava/lang/Integer;.valueOf:(I)Ljava/lang/Integer; // method@075d
+      d6908e: 0c03                                   |001d: move-result-object v3
+      d69090: e920 1400 3000                         |001e: invoke-virtual-quick {v0, v3}, [0014] // vtable #0014
+[new] d69090: 6e20 6705 3000                         |001e: invoke-virtual {v0, v3}, Landroidx/lifecycle/MutableLiveData;.postValue:(Ljava/lang/Object;)V // method@0567
+      d69096: 7300                                   |0021: return-void-no-barrier
+[new] d69096: 0e00                                   |0021: return-void
+
+# Original LF start: 2409159
+[new] d69368: 6e20 3108 1000                         |0011: invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;.append:(Ljava/lang/String;)Ljava/lang/StringBuilder; // method@0831
+      d6936e: 0c00                                   |0014: move-result-object v0
+      d69370: e920 4600 4000                         |0015: invoke-virtual-quick {v0, v4}, [0046] // vtable #0046
+[new] d69370: 6e20 2c08 4000                         |0015: invoke-virtual {v0, v4}, Ljava/lang/StringBuilder;.append:(I)Ljava/lang/StringBuilder; // method@082c
+      d69376: 0c00                                   |0018: move-result-object v0
+      d69378: e910 0700 0000                         |0019: invoke-virtual-quick {v0}, [0007] // vtable #0007
+[new] d69378: 6e10 4108 0000                         |0019: invoke-virtual {v0}, Ljava/lang/StringBuilder;.toString:()Ljava/lang/String; // method@0841
+      d6937e: 0c00                                   |001c: move-result-object v0
+      d69380: 1a01 8c24                              |001d: const-string v1, "HvacRepository" // string@248c
+      d69384: 7120 2a8d 0100                         |001f: invoke-static {v1, v0}, Lltd/qisi/hvac/utils/AppLog;.info:(Ljava/lang/String;Ljava/lang/String;)V // method@8d2a
+      d6938a: 1210                                   |0022: const/4 v0, #int 1 // #1
+      d6938c: 3303 0c00                              |0023: if-ne v3, v0, 002f // +000c
+      d69390: e523 e800                              |0025: iget-object-quick v3, v2, [obj+00e8]
+[new] d69390: 5423 f5d0                              |0025: iget-object v3, v2, Lltd/qisi/hvac/repository/HvacRepository;.mFrontSeatMemoryOne:Landroidx/lifecycle/MutableLiveData; // field@d0f5
+      d69394: 7110 5d07 0400                         |0027: invoke-static {v4}, Ljava/lang/Integer;.valueOf:(I)Ljava/lang/Integer; // method@075d
+      d6939a: 0c04                                   |002a: move-result-object v4
+      d6939c: e920 1400 4300                         |002b: invoke-virtual-quick {v3, v4}, [0014] // vtable #0014
+[new] d6939c: 6e20 6705 4300                         |002b: invoke-virtual {v3, v4}, Landroidx/lifecycle/MutableLiveData;.postValue:(Ljava/lang/Object;)V // method@0567
+      d693a2: 281a                                   |002e: goto 0048 // +001a
+      d693a4: 1220                                   |002f: const/4 v0, #int 2 // #2
+      d693a6: 3303 0c00                              |0030: if-ne v3, v0, 003c // +000c
+      d693aa: e523 f000                              |0032: iget-object-quick v3, v2, [obj+00f0]
+[new] d693aa: 5423 f7d0                              |0032: iget-object v3, v2, Lltd/qisi/hvac/repository/HvacRepository;.mFrontSeatMemoryTwo:Landroidx/lifecycle/MutableLiveData; // field@d0f7
+      d693ae: 7110 5d07 0400                         |0034: invoke-static {v4}, Ljava/lang/Integer;.valueOf:(I)Ljava/lang/Integer; // method@075d
+      d693b4: 0c04                                   |0037: move-result-object v4
+      d693b6: e920 1400 4300                         |0038: invoke-virtual-quick {v3, v4}, [0014] // vtable #0014
+[new] d693b6: 6e20 6705 4300                         |0038: invoke-virtual {v3, v4}, Landroidx/lifecycle/MutableLiveData;.postValue:(Ljava/lang/Object;)V // method@0567
+      d693bc: 280d                                   |003b: goto 0048 // +000d
+      d693be: 1230                                   |003c: const/4 v0, #int 3 // #3
+      d693c0: 3303 0b00                              |003d: if-ne v3, v0, 0048 // +000b
+      d693c4: e523 ec00                              |003f: iget-object-quick v3, v2, [obj+00ec]
+[new] d693c4: 5423 f6d0                              |003f: iget-object v3, v2, Lltd/qisi/hvac/repository/HvacRepository;.mFrontSeatMemoryThree:Landroidx/lifecycle/MutableLiveData; // field@d0f6
+      d693c8: 7110 5d07 0400                         |0041: invoke-static {v4}, Ljava/lang/Integer;.valueOf:(I)Ljava/lang/Integer; // method@075d
+      d693ce: 0c04                                   |0044: move-result-object v4
+      d693d0: e920 1400 4300                         |0045: invoke-virtual-quick {v3, v4}, [0014] // vtable #0014
+[new] d693d0: 6e20 6705 4300                         |0045: invoke-virtual {v3, v4}, Landroidx/lifecycle/MutableLiveData;.postValue:(Ljava/lang/Object;)V // method@0567
+      d693d6: 7300                                   |0048: return-void-no-barrier
+[new] d693d6: 0e00                                   |0048: return-void
+
+# Original LF start: 2412735
+      d6a29a: d800 03ff                              |0018: add-int/lit8 v0, v3, #int -1 // #ff
+      d6a29e: 7020 1584 0200                         |001a: invoke-direct {v2, v0}, Lltd/qisi/hvac/repository/HvacRepository;.initACAQFunctionState:(I)V // method@8415
+      d6a2a4: 1400 aebd 9800                         |001d: const v0, #float 1.4027e-38 // #0098bdae
+      d6a2aa: 7020 9884 0200                         |0020: invoke-direct {v2, v0}, Lltd/qisi/hvac/repository/HvacRepository;.sendMessageDelayed:(I)V // method@8498
+      d6a2b0: 7100 4631 0000                         |0023: invoke-static {}, Lltd/qisi/adapterproxy/CarACManager;.getInstance:()Lltd/qisi/adapterproxy/CarACManager; // method@3146
+      d6a2b6: 0c00                                   |0026: move-result-object v0
+      d6a2b8: e920 4000 3000                         |0027: invoke-virtual-quick {v0, v3}, [0040] // vtable #0040
+[new] d6a2b8: 6e20 5331 3000                         |0027: invoke-virtual {v0, v3}, Lltd/qisi/adapterproxy/CarACManager;.setACAQFunctionState:(I)I // method@3153
+      d6a2be: 7300                                   |002a: return-void-no-barrier
+[new] d6a2be: 0e00                                   |002a: return-void
+
+# Original LF start: 2412763
+      d6a2f4: d800 03ff                              |0018: add-int/lit8 v0, v3, #int -1 // #ff
+      d6a2f8: 7020 1684 0200                         |001a: invoke-direct {v2, v0}, Lltd/qisi/hvac/repository/HvacRepository;.initACAirCleanAGFunctionState:(I)V // method@8416
+      d6a2fe: 1400 acbd 9800                         |001d: const v0, #float 1.4027e-38 // #0098bdac
+      d6a304: 7020 9884 0200                         |0020: invoke-direct {v2, v0}, Lltd/qisi/hvac/repository/HvacRepository;.sendMessageDelayed:(I)V // method@8498
+      d6a30a: 7100 4631 0000                         |0023: invoke-static {}, Lltd/qisi/adapterproxy/CarACManager;.getInstance:()Lltd/qisi/adapterproxy/CarACManager; // method@3146
+      d6a310: 0c00                                   |0026: move-result-object v0
+      d6a312: e920 4100 3000                         |0027: invoke-virtual-quick {v0, v3}, [0041] // vtable #0041
+[new] d6a312: 6e20 5431 3000                         |0027: invoke-virtual {v0, v3}, Lltd/qisi/adapterproxy/CarACManager;.setACAirCleanAGFunctionState:(I)I // method@3154
+      d6a318: 7300                                   |002a: return-void-no-barrier
+[new] d6a318: 0e00                                   |002a: return-void
+
+# Original LF start: 2412790
+      d6a348: 7120 2a8d 0100                         |0015: invoke-static {v1, v0}, Lltd/qisi/hvac/utils/AppLog;.info:(Ljava/lang/String;Ljava/lang/String;)V // method@8d2a
+      d6a34e: d800 03ff                              |0018: add-int/lit8 v0, v3, #int -1 // #ff
+      d6a352: 7020 1784 0200                         |001a: invoke-direct {v2, v0}, Lltd/qisi/hvac/repository/HvacRepository;.initACAutoMode:(I)V // method@8417
+      d6a358: 1400 a5bd 9800                         |001d: const v0, #float 1.4027e-38 // #0098bda5
+      d6a35e: 7020 9884 0200                         |0020: invoke-direct {v2, v0}, Lltd/qisi/hvac/repository/HvacRepository;.sendMessageDelayed:(I)V // method@8498
+      d6a364: 7100 4631 0000                         |0023: invoke-static {}, Lltd/qisi/adapterproxy/CarACManager;.getInstance:()Lltd/qisi/adapterproxy/CarACManager; // method@3146
+      d6a36a: 0c00                                   |0026: move-result-object v0
+      d6a36c: e920 4200 3000                         |0027: invoke-virtual-quick {v0, v3}, [0042] // vtable #0042
+[new] d6a36c: 6e20 5531 3000                         |0027: invoke-virtual {v0, v3}, Lltd/qisi/adapterproxy/CarACManager;.setACAutoMode:(I)I // method@3155
+      d6a372: 7300                                   |002a: return-void-no-barrier
+[new] d6a372: 0e00                                   |002a: return-void
+
+# Original LF start: 2412818
+      d6a3a2: 7120 2a8d 0100                         |0015: invoke-static {v1, v0}, Lltd/qisi/hvac/utils/AppLog;.info:(Ljava/lang/String;Ljava/lang/String;)V // method@8d2a
+      d6a3a8: 7020 1984 3200                         |0018: invoke-direct {v2, v3}, Lltd/qisi/hvac/repository/HvacRepository;.initACCirculationState:(I)V // method@8419
+      d6a3ae: 1400 b5bd 9800                         |001b: const v0, #float 1.4027e-38 // #0098bdb5
+      d6a3b4: 7020 9884 0200                         |001e: invoke-direct {v2, v0}, Lltd/qisi/hvac/repository/HvacRepository;.sendMessageDelayed:(I)V // method@8498
+      d6a3ba: 7100 4631 0000                         |0021: invoke-static {}, Lltd/qisi/adapterproxy/CarACManager;.getInstance:()Lltd/qisi/adapterproxy/CarACManager; // method@3146
+      d6a3c0: 0c00                                   |0024: move-result-object v0
+      d6a3c2: e920 4400 3000                         |0025: invoke-virtual-quick {v0, v3}, [0044] // vtable #0044
+[new] d6a3c2: 6e20 5731 3000                         |0025: invoke-virtual {v0, v3}, Lltd/qisi/adapterproxy/CarACManager;.setACCirculationState:(I)I // method@3157
+      d6a3c8: 7300                                   |0028: return-void-no-barrier
+[new] d6a3c8: 0e00                                   |0028: return-void
+
+# Original LF start: 2412846
+      d6a3fe: d800 03ff                              |0018: add-int/lit8 v0, v3, #int -1 // #ff
+      d6a402: 7020 1a84 0200                         |001a: invoke-direct {v2, v0}, Lltd/qisi/hvac/repository/HvacRepository;.initACCompressorState:(I)V // method@841a
+      d6a408: 1400 b2bd 9800                         |001d: const v0, #float 1.4027e-38 // #0098bdb2
+      d6a40e: 7020 9884 0200                         |0020: invoke-direct {v2, v0}, Lltd/qisi/hvac/repository/HvacRepository;.sendMessageDelayed:(I)V // method@8498
+      d6a414: 7100 4631 0000                         |0023: invoke-static {}, Lltd/qisi/adapterproxy/CarACManager;.getInstance:()Lltd/qisi/adapterproxy/CarACManager; // method@3146
+      d6a41a: 0c00                                   |0026: move-result-object v0
+      d6a41c: e920 4500 3000                         |0027: invoke-virtual-quick {v0, v3}, [0045] // vtable #0045
+[new] d6a41c: 6e20 5831 3000                         |0027: invoke-virtual {v0, v3}, Lltd/qisi/adapterproxy/CarACManager;.setACCompressorState:(I)I // method@3158
+      d6a422: 7300                                   |002a: return-void-no-barrier
+[new] d6a422: 0e00                                   |002a: return-void
+
+# Original LF start: 2413090
+      d6a6ea: 7120 2a8d 0100                         |001f: invoke-static {v1, v0}, Lltd/qisi/hvac/utils/AppLog;.info:(Ljava/lang/String;Ljava/lang/String;)V // method@8d2a
+      d6a6f0: 7100 7338 0000                         |0022: invoke-static {}, Lltd/qisi/adapterproxy/CarSCCUManager;.getInstance:()Lltd/qisi/adapterproxy/CarSCCUManager; // method@3873
+      d6a6f6: 0c00                                   |0025: move-result-object v0
+      d6a6f8: e930 2c00 3004                         |0026: invoke-virtual-quick {v0, v3, v4}, [002c] // vtable #002c
+[new] d6a6f8: 6e30 8f38 3004                         |0026: invoke-virtual {v0, v3, v4}, Lltd/qisi/adapterproxy/CarSCCUManager;.setRearSeatHeatLevel:(II)I // method@388f
+      d6a6fe: 7300                                   |0029: return-void-no-barrier
+[new] d6a6fe: 0e00                                   |0029: return-void
+
+# Original LF start: 2413526
+      d6ac16: d800 03ff                              |0018: add-int/lit8 v0, v3, #int -1 // #ff
+      d6ac1a: 7020 1b84 0200                         |001a: invoke-direct {v2, v0}, Lltd/qisi/hvac/repository/HvacRepository;.initACFragranceConcentration:(I)V // method@841b
+      d6ac20: 1400 b6bd 9800                         |001d: const v0, #float 1.40271e-38 // #0098bdb6
+      d6ac26: 7020 9884 0200                         |0020: invoke-direct {v2, v0}, Lltd/qisi/hvac/repository/HvacRepository;.sendMessageDelayed:(I)V // method@8498
+      d6ac2c: 7100 8536 0000                         |0023: invoke-static {}, Lltd/qisi/adapterproxy/CarFragranceManager;.getInstance:()Lltd/qisi/adapterproxy/CarFragranceManager; // method@3685
+      d6ac32: 0c00                                   |0026: move-result-object v0
+      d6ac34: e920 1400 3000                         |0027: invoke-virtual-quick {v0, v3}, [0014] // vtable #0014
+[new] d6ac34: 6e20 8a36 3000                         |0027: invoke-virtual {v0, v3}, Lltd/qisi/adapterproxy/CarFragranceManager;.setFragranceConcentration:(I)I // method@368a
+      d6ac3a: 7300                                   |002a: return-void-no-barrier
+[new] d6ac3a: 0e00                                   |002a: return-void
+
+# Original LF start: 2413701
+[new] d6ae42: 6e30 8b38 3004                         |0031: invoke-virtual {v0, v3, v4}, Lltd/qisi/adapterproxy/CarSCCUManager;.setFrontSeatMassageMode:(II)I // method@388b
+      d6ae48: 7300                                   |0034: return-void-no-barrier
+[new] d6ae48: 0e00                                   |0034: return-void
+
+# Original LF start: 2424572
+    quickening_size=5 (5)
+      d8f9f6: 7100 738d 0000                         |0000: invoke-static {}, Lltd/qisi/hvac/utils/HVACUtil;.getVehicleType:()Ljava/lang/String; // method@8d73
+      d8f9fc: 0c00                                   |0003: move-result-object v0
+      d8f9fe: 7100 8881 0000                         |0004: invoke-static {}, Lltd/qisi/hvac/HvacApplication;.getContext:()Lltd/qisi/hvac/HvacApplication; // method@8188
+      d8fa04: 0c01                                   |0007: move-result-object v1
+      d8fa06: 1402 aa00 117f                         |0008: const v2, #float 1.92742e+38 // #7f1100aa
+      d8fa0c: e920 5d00 2100                         |000b: invoke-virtual-quick {v1, v2}, [005d] // vtable #005d
+[new] d8fa0c: 6e20 8a81 2100                         |000b: invoke-virtual {v1, v2}, Lltd/qisi/hvac/HvacApplication;.getString:(I)Ljava/lang/String; // method@818a
+      d8fa12: 0c01                                   |000e: move-result-object v1
+      d8fa14: e920 1700 1000                         |000f: invoke-virtual-quick {v0, v1}, [0017] // vtable #0017
+[new] d8fa14: 6e20 f207 1000                         |000f: invoke-virtual {v0, v1}, Ljava/lang/String;.equalsIgnoreCase:(Ljava/lang/String;)Z // method@07f2
+      d8fa1a: 0a00                                   |0012: move-result v0
+      d8fa1c: 0f00                                   |0013: return v0
+
+# Original LF start: 2431442
+      d99b14: 6201 ab19                              |0062: sget-object v1, Lltd/qisi/adapterproxy/common/CarVrPosition;.FIRST_ROW:Lltd/qisi/adapterproxy/common/CarVrPosition; // field@19ab
+      d99b18: e910 0f00 0100                         |0064: invoke-virtual-quick {v1}, [000f] // vtable #000f
+[new] d99b18: 6e10 d765 0100                         |0064: invoke-virtual {v1}, Lltd/qisi/adapterproxy/common/CarVrPosition;.ordinal:()I // method@65d7
+      d99b1e: 0a01                                   |0067: move-result v1
+      d99b20: 1302 0900                              |0068: const/16 v2, #int 9 // #9
+      d99b24: 4b02 0001                              |006a: aput v2, v0, v1
+      d99b28: 6200 f5d8                              |006c: sget-object v0, Lltd/qisi/hvac/voice/manager/TTS2Helper$1;.$SwitchMap$ltd$qisi$adapterproxy$common$CarVrPosition:[I // field@d8f5
+      d99b2c: 6201 b219                              |006e: sget-object v1, Lltd/qisi/adapterproxy/common/CarVrPosition;.SECOND_ROW:Lltd/qisi/adapterproxy/common/CarVrPosition; // field@19b2
+      d99b30: e910 0f00 0100                         |0070: invoke-virtual-quick {v1}, [000f] // vtable #000f
+[new] d99b30: 6e10 d765 0100                         |0070: invoke-virtual {v1}, Lltd/qisi/adapterproxy/common/CarVrPosition;.ordinal:()I // method@65d7
+      d99b36: 0a01                                   |0073: move-result v1
+      d99b38: 1302 0a00                              |0074: const/16 v2, #int 10 // #a
+      d99b3c: 4b02 0001                              |0076: aput v2, v0, v1
+      d99b40: 6200 f5d8                              |0078: sget-object v0, Lltd/qisi/hvac/voice/manager/TTS2Helper$1;.$SwitchMap$ltd$qisi$adapterproxy$common$CarVrPosition:[I // field@d8f5
+      d99b44: 6201 b619                              |007a: sget-object v1, Lltd/qisi/adapterproxy/common/CarVrPosition;.THIRD_ROW:Lltd/qisi/adapterproxy/common/CarVrPosition; // field@19b6
+      d99b48: e910 0f00 0100                         |007c: invoke-virtual-quick {v1}, [000f] // vtable #000f
+[new] d99b48: 6e10 d765 0100                         |007c: invoke-virtual {v1}, Lltd/qisi/adapterproxy/common/CarVrPosition;.ordinal:()I // method@65d7
+      d99b4e: 0a01                                   |007f: move-result v1
+      d99b50: 1302 0b00                              |0080: const/16 v2, #int 11 // #b
+      d99b54: 4b02 0001                              |0082: aput v2, v0, v1
+      d99b58: 6200 f5d8                              |0084: sget-object v0, Lltd/qisi/hvac/voice/manager/TTS2Helper$1;.$SwitchMap$ltd$qisi$adapterproxy$common$CarVrPosition:[I // field@d8f5
+      d99b5c: 6201 aa19                              |0086: sget-object v1, Lltd/qisi/adapterproxy/common/CarVrPosition;.ALL:Lltd/qisi/adapterproxy/common/CarVrPosition; // field@19aa
+      d99b60: e910 0f00 0100                         |0088: invoke-virtual-quick {v1}, [000f] // vtable #000f
+[new] d99b60: 6e10 d765 0100                         |0088: invoke-virtual {v1}, Lltd/qisi/adapterproxy/common/CarVrPosition;.ordinal:()I // method@65d7
+      d99b66: 0a01                                   |008b: move-result v1
+      d99b68: 1302 0c00                              |008c: const/16 v2, #int 12 // #c
+      d99b6c: 4b02 0001                              |008e: aput v2, v0, v1
+      d99b70: 7300                                   |0090: return-void-no-barrier
+[new] d99b70: 0e00                                   |0090: return-void
+
+# Original LF start: 2431555
+      d99d4a: 3b00 0300                              |005b: if-gez v0, 005e // +0003
+      d99d4e: 1101                                   |005d: return-object v1
+      d99d50: 2f00 0402                              |005e: cmpl-double v0, v4, v2
+      d99d54: 1802 0000 0000 0080 3740               |0060: const-wide v2, #double 23.5 // #4037800000000000
+      d99d5e: 3a00 0900                              |0065: if-ltz v0, 006e // +0009
+      d99d62: 3000 0402                              |0067: cmpg-double v0, v4, v2
+      d99d66: 3b00 0500                              |0069: if-gez v0, 006e // +0005
+      d99d6a: 1a04 180f                              |006b: const-string v4, "2" // string@0f18
+      d99d6e: 1104                                   |006d: return-object v4
+      d99d70: 2f00 0402                              |006e: cmpl-double v0, v4, v2
+      d99d74: 1802 0000 0000 0080 3a40               |0070: const-wide v2, #double 26.5 // #403a800000000000
+      d99d7e: 3a00 0900                              |0075: if-ltz v0, 007e // +0009
+      d99d82: 3000 0402                              |0077: cmpg-double v0, v4, v2
+      d99d86: 3b00 0500                              |0079: if-gez v0, 007e // +0005
+      d99d8a: 1a04 220f                              |007b: const-string v4, "3" // string@0f22
+      d99d8e: 1104                                   |007d: return-object v4
+      d99d90: 2f00 0402                              |007e: cmpl-double v0, v4, v2
+      d99d94: 1802 0000 0000 0080 3d40               |0080: const-wide v2, #double 29.5 // #403d800000000000
+      d99d9e: 3a00 0900                              |0085: if-ltz v0, 008e // +0009
+      d99da2: 3000 0402                              |0087: cmpg-double v0, v4, v2
+      d99da6: 3b00 0500                              |0089: if-gez v0, 008e // +0005
+      d99daa: 1a04 270f                              |008b: const-string v4, "4" // string@0f27
+      d99dae: 1104                                   |008d: return-object v4
+      d99db0: 2f00 0402                              |008e: cmpl-double v0, v4, v2
+      d99db4: 1802 0000 0000 0040 4040               |0090: const-wide v2, #double 32.5 // #4040400000000000
+      d99dbe: 3a00 0900                              |0095: if-ltz v0, 009e // +0009
+      d99dc2: 3000 0402                              |0097: cmpg-double v0, v4, v2
+      d99dc6: 3b00 0500                              |0099: if-gez v0, 009e // +0005
+      d99dca: 1a04 2b0f                              |009b: const-string v4, "5" // string@0f2b
+      d99dce: 1104                                   |009d: return-object v4
+      d99dd0: 2f04 0402                              |009e: cmpl-double v4, v4, v2
+      d99dd4: 3a04 0500                              |00a0: if-ltz v4, 00a5 // +0005
+      d99dd8: 1a04 2d0f                              |00a2: const-string v4, "6" // string@0f2d
+      d99ddc: 1104                                   |00a4: return-object v4
+      d99dde: 1101                                   |00a5: return-object v1
+      d99de0: 7110 1b08 0400                         |00a6: invoke-static {v4}, Ljava/lang/String;.valueOf:(F)Ljava/lang/String; // method@081b
+      d99de6: 0c04                                   |00a9: move-result-object v4
+      d99de8: 1104                                   |00aa: return-object v4
+
+# Original LF start: 2928246
+   direct_method #36439: fragTypeLevel ()I
+    access=0002 (PRIVATE)
+    codeOff=d94a9e (14240414)
+    quickening_size=13 (19)
+      d94aa2: 7100 8536 0000                         |0000: invoke-static {}, Lltd/qisi/adapterproxy/CarFragranceManager;.getInstance:()Lltd/qisi/adapterproxy/CarFragranceManager; // method@3685
+      d94aa8: 0c00                                   |0003: move-result-object v0
+      d94aaa: e910 0c00 0000                         |0004: invoke-virtual-quick {v0}, [000c] // vtable #000c
+[new] d94aaa: 6e10 8036 0000                         |0004: invoke-virtual {v0}, Lltd/qisi/adapterproxy/CarFragranceManager;.getFragranceConcentration:()I // method@3680
+      d94ab0: 0a00                                   |0007: move-result v0
+      d94ab2: 1211                                   |0008: const/4 v1, #int 1 // #1
+      d94ab4: b010                                   |0009: add-int/2addr v0, v1
+      d94ab6: e630 5800                              |000a: iput-quick v0, v3, [obj+0058]
+[new] d94ab6: 5930 55d7                              |000a: iput v0, v3, Lltd/qisi/hvac/viewmodel/HvacViewModel;.fragLevel:I // field@d755
+      d94aba: b010                                   |000c: add-int/2addr v0, v1
+      d94abc: e630 5800                              |000d: iput-quick v0, v3, [obj+0058]
+[new] d94abc: 5930 55d7                              |000d: iput v0, v3, Lltd/qisi/hvac/viewmodel/HvacViewModel;.fragLevel:I // field@d755
+      d94ac0: 1232                                   |000f: const/4 v2, #int 3 // #3
+      d94ac2: 3620 0400                              |0010: if-gt v0, v2, 0014 // +0004
+      d94ac6: 3510 0400                              |0012: if-ge v0, v1, 0016 // +0004
+      d94aca: e631 5800                              |0014: iput-quick v1, v3, [obj+0058]
+[new] d94aca: 5931 55d7                              |0014: iput v1, v3, Lltd/qisi/hvac/viewmodel/HvacViewModel;.fragLevel:I // field@d755
+      d94ace: 2200 1a02                              |0016: new-instance v0, Ljava/lang/StringBuilder; // type@021a
+      d94ad2: 7010 2508 0000                         |0018: invoke-direct {v0}, Ljava/lang/StringBuilder;.<init>:()V // method@0825
+      d94ad8: 1a01 6e03                              |001b: const-string v1, " fragTypeLevel  fragLevel =  " // string@036e
+      d94adc: e920 4b00 1000                         |001d: invoke-virtual-quick {v0, v1}, [004b] // vtable #004b
+[new] d94adc: 6e20 3108 1000                         |001d: invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;.append:(Ljava/lang/String;)Ljava/lang/StringBuilder; // method@0831
+      d94ae2: 0c00                                   |0020: move-result-object v0
+      d94ae4: e331 5800                              |0021: iget-quick v1, v3, [obj+0058]
+[new] d94ae4: 5231 55d7                              |0021: iget v1, v3, Lltd/qisi/hvac/viewmodel/HvacViewModel;.fragLevel:I // field@d755
+      d94ae8: e920 4600 1000                         |0023: invoke-virtual-quick {v0, v1}, [0046] // vtable #0046
+[new] d94ae8: 6e20 2c08 1000                         |0023: invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;.append:(I)Ljava/lang/StringBuilder; // method@082c
+      d94aee: 0c00                                   |0026: move-result-object v0
+      d94af0: e910 0700 0000                         |0027: invoke-virtual-quick {v0}, [0007] // vtable #0007
+[new] d94af0: 6e10 4108 0000                         |0027: invoke-virtual {v0}, Ljava/lang/StringBuilder;.toString:()Ljava/lang/String; // method@0841
+      d94af6: 0c00                                   |002a: move-result-object v0
+      d94af8: 1a01 9324                              |002b: const-string v1, "HvacViewModel" // string@2493
+      d94afc: 7120 2a8d 0100                         |002d: invoke-static {v1, v0}, Lltd/qisi/hvac/utils/AppLog;.info:(Ljava/lang/String;Ljava/lang/String;)V // method@8d2a
+      d94b02: e330 5800                              |0030: iget-quick v0, v3, [obj+0058]
+[new] d94b02: 5230 55d7                              |0030: iget v0, v3, Lltd/qisi/hvac/viewmodel/HvacViewModel;.fragLevel:I // field@d755
+      d94b06: 0f00                                   |0032: return v0
+
+# Original LF start: 2928570
+      d94306: 7100 fd83 0000                         |0000: invoke-static {}, Lltd/qisi/hvac/repository/HvacRepository;.getInstance:()Lltd/qisi/hvac/repository/HvacRepository; // method@83fd
+      d9430c: 0c00                                   |0003: move-result-object v0
+      d9430e: e910 2400 0000                         |0004: invoke-virtual-quick {v0}, [0024] // vtable #0024
+[new] d9430e: 6e10 d583 0000                         |0004: invoke-virtual {v0}, Lltd/qisi/hvac/repository/HvacRepository;.getAirCleanLiveData:()Landroidx/lifecycle/MutableLiveData; // method@83d5
+      d94314: 0c00                                   |0007: move-result-object v0
+      d94316: e910 0c00 0000                         |0008: invoke-virtual-quick {v0}, [000c] // vtable #000c
+[new] d94316: 6e10 6405 0000                         |0008: invoke-virtual {v0}, Landroidx/lifecycle/MutableLiveData;.getValue:()Ljava/lang/Object; // method@0564
+      d9431c: 0c00                                   |000b: move-result-object v0
+      d9431e: 3900 0d00                              |000c: if-nez v0, 0019 // +000d
+      d94322: 7100 4631 0000                         |000e: invoke-static {}, Lltd/qisi/adapterproxy/CarACManager;.getInstance:()Lltd/qisi/adapterproxy/CarACManager; // method@3146
+      d94328: 0c00                                   |0011: move-result-object v0
+      d9432a: e910 0d00 0000                         |0012: invoke-virtual-quick {v0}, [000d] // vtable #000d
+[new] d9432a: 6e10 1e31 0000                         |0012: invoke-virtual {v0}, Lltd/qisi/adapterproxy/CarACManager;.getACAirCleanAGFunctionState:()I // method@311e
+      d94330: 0a00                                   |0015: move-result v0
+      d94332: e630 2000                              |0016: iput-quick v0, v3, [obj+0020]
+[new] d94332: 5930 47d7                              |0016: iput v0, v3, Lltd/qisi/hvac/viewmodel/HvacViewModel;.acAirCleanStateValue:I // field@d747
+      d94336: 2815                                   |0018: goto 002d // +0015
+      d94338: 7100 fd83 0000                         |0019: invoke-static {}, Lltd/qisi/hvac/repository/HvacRepository;.getInstance:()Lltd/qisi/hvac/repository/HvacRepository; // method@83fd
+      d9433e: 0c00                                   |001c: move-result-object v0
+      d94340: e910 2400 0000                         |001d: invoke-virtual-quick {v0}, [0024] // vtable #0024
+[new] d94340: 6e10 d583 0000                         |001d: invoke-virtual {v0}, Lltd/qisi/hvac/repository/HvacRepository;.getAirCleanLiveData:()Landroidx/lifecycle/MutableLiveData; // method@83d5
+      d94346: 0c00                                   |0020: move-result-object v0
+      d94348: e910 0c00 0000                         |0021: invoke-virtual-quick {v0}, [000c] // vtable #000c
+[new] d94348: 6e10 6405 0000                         |0021: invoke-virtual {v0}, Landroidx/lifecycle/MutableLiveData;.getValue:()Ljava/lang/Object; // method@0564
+      d9434e: 0c00                                   |0024: move-result-object v0
+      d94350: 1f00 0102                              |0025: check-cast v0, Ljava/lang/Integer; // type@0201
+      d94354: e910 0e00 0000                         |0027: invoke-virtual-quick {v0}, [000e] // vtable #000e
+[new] d94354: 6e10 5507 0000                         |0027: invoke-virtual {v0}, Ljava/lang/Integer;.intValue:()I // method@0755
+      d9435a: 0a00                                   |002a: move-result v0
+      d9435c: e630 2000                              |002b: iput-quick v0, v3, [obj+0020]
+[new] d9435c: 5930 47d7                              |002b: iput v0, v3, Lltd/qisi/hvac/viewmodel/HvacViewModel;.acAirCleanStateValue:I // field@d747
+      d94360: e330 2000                              |002d: iget-quick v0, v3, [obj+0020]
+[new] d94360: 5230 47d7                              |002d: iget v0, v3, Lltd/qisi/hvac/viewmodel/HvacViewModel;.acAirCleanStateValue:I // field@d747
+      d94364: 1211                                   |002f: const/4 v1, #int 1 // #1
+      d94366: 3210 0700                              |0030: if-eq v0, v1, 0037 // +0007
+      d9436a: 1222                                   |0032: const/4 v2, #int 2 // #2
+      d9436c: 3320 0300                              |0033: if-ne v0, v2, 0036 // +0003
+      d94370: 2802                                   |0035: goto 0037 // +0002
+      d94372: 1201                                   |0036: const/4 v1, #int 0 // #0
+      d94374: 0f01                                   |0037: return v1
+
+# Original LF start: 2928655
+    codeOff=d943e6 (14238694)
+    quickening_size=13 (19)
+      d943ea: 7100 fd83 0000                         |0000: invoke-static {}, Lltd/qisi/hvac/repository/HvacRepository;.getInstance:()Lltd/qisi/hvac/repository/HvacRepository; // method@83fd
+      d943f0: 0c00                                   |0003: move-result-object v0
+      d943f2: e910 1c00 0000                         |0004: invoke-virtual-quick {v0}, [001c] // vtable #001c
+[new] d943f2: 6e10 cd83 0000                         |0004: invoke-virtual {v0}, Lltd/qisi/hvac/repository/HvacRepository;.getACRearDefFunctionLiveData:()Landroidx/lifecycle/MutableLiveData; // method@83cd
+      d943f8: 0c00                                   |0007: move-result-object v0
+      d943fa: e910 0c00 0000                         |0008: invoke-virtual-quick {v0}, [000c] // vtable #000c
+[new] d943fa: 6e10 6405 0000                         |0008: invoke-virtual {v0}, Landroidx/lifecycle/MutableLiveData;.getValue:()Ljava/lang/Object; // method@0564
+      d94400: 0c00                                   |000b: move-result-object v0
+      d94402: 3900 0d00                              |000c: if-nez v0, 0019 // +000d
+      d94406: 7100 4631 0000                         |000e: invoke-static {}, Lltd/qisi/adapterproxy/CarACManager;.getInstance:()Lltd/qisi/adapterproxy/CarACManager; // method@3146
+      d9440c: 0c00                                   |0011: move-result-object v0
+      d9440e: e910 1a00 0000                         |0012: invoke-virtual-quick {v0}, [001a] // vtable #001a
+[new] d9440e: 6e10 2b31 0000                         |0012: invoke-virtual {v0}, Lltd/qisi/adapterproxy/CarACManager;.getACRearDefFunctionState:()I // method@312b
+      d94414: 0a00                                   |0015: move-result v0
+      d94416: e620 4400                              |0016: iput-quick v0, v2, [obj+0044]
+[new] d94416: 5920 50d7                              |0016: iput v0, v2, Lltd/qisi/hvac/viewmodel/HvacViewModel;.acRearDefStateValue:I // field@d750
+      d9441a: 2815                                   |0018: goto 002d // +0015
+      d9441c: 7100 fd83 0000                         |0019: invoke-static {}, Lltd/qisi/hvac/repository/HvacRepository;.getInstance:()Lltd/qisi/hvac/repository/HvacRepository; // method@83fd
+      d94422: 0c00                                   |001c: move-result-object v0
+      d94424: e910 1c00 0000                         |001d: invoke-virtual-quick {v0}, [001c] // vtable #001c
+[new] d94424: 6e10 cd83 0000                         |001d: invoke-virtual {v0}, Lltd/qisi/hvac/repository/HvacRepository;.getACRearDefFunctionLiveData:()Landroidx/lifecycle/MutableLiveData; // method@83cd
+      d9442a: 0c00                                   |0020: move-result-object v0
+      d9442c: e910 0c00 0000                         |0021: invoke-virtual-quick {v0}, [000c] // vtable #000c
+[new] d9442c: 6e10 6405 0000                         |0021: invoke-virtual {v0}, Landroidx/lifecycle/MutableLiveData;.getValue:()Ljava/lang/Object; // method@0564
+      d94432: 0c00                                   |0024: move-result-object v0
+      d94434: 1f00 0102                              |0025: check-cast v0, Ljava/lang/Integer; // type@0201
+      d94438: e910 0e00 0000                         |0027: invoke-virtual-quick {v0}, [000e] // vtable #000e
+[new] d94438: 6e10 5507 0000                         |0027: invoke-virtual {v0}, Ljava/lang/Integer;.intValue:()I // method@0755
+      d9443e: 0a00                                   |002a: move-result v0
+      d94440: e620 4400                              |002b: iput-quick v0, v2, [obj+0044]
+[new] d94440: 5920 50d7                              |002b: iput v0, v2, Lltd/qisi/hvac/viewmodel/HvacViewModel;.acRearDefStateValue:I // field@d750
+      d94444: e320 4400                              |002d: iget-quick v0, v2, [obj+0044]
+[new] d94444: 5220 50d7                              |002d: iget v0, v2, Lltd/qisi/hvac/viewmodel/HvacViewModel;.acRearDefStateValue:I // field@d750
+      d94448: 1211                                   |002f: const/4 v1, #int 1 // #1
+      d9444a: 3310 0300                              |0030: if-ne v0, v1, 0033 // +0003
+      d9444e: 2802                                   |0032: goto 0034 // +0002
+      d94450: 1201                                   |0033: const/4 v1, #int 0 // #0
+      d94452: 0f01                                   |0034: return v1
+
+# Original LF start: 2928949
+    codeOff=d946d2 (14239442)
+    quickening_size=13 (19)
+      d946d6: 7100 fd83 0000                         |0000: invoke-static {}, Lltd/qisi/hvac/repository/HvacRepository;.getInstance:()Lltd/qisi/hvac/repository/HvacRepository; // method@83fd
+      d946dc: 0c00                                   |0003: move-result-object v0
+      d946de: e910 2d00 0000                         |0004: invoke-virtual-quick {v0}, [002d] // vtable #002d
+[new] d946de: 6e10 de83 0000                         |0004: invoke-virtual {v0}, Lltd/qisi/hvac/repository/HvacRepository;.getFragranceAutoWorkingStatus:()Landroidx/lifecycle/MutableLiveData; // method@83de
+      d946e4: 0c00                                   |0007: move-result-object v0
+      d946e6: e910 0c00 0000                         |0008: invoke-virtual-quick {v0}, [000c] // vtable #000c
+[new] d946e6: 6e10 6405 0000                         |0008: invoke-virtual {v0}, Landroidx/lifecycle/MutableLiveData;.getValue:()Ljava/lang/Object; // method@0564
+      d946ec: 0c00                                   |000b: move-result-object v0
+      d946ee: 3900 0d00                              |000c: if-nez v0, 0019 // +000d
+      d946f2: 7100 8536 0000                         |000e: invoke-static {}, Lltd/qisi/adapterproxy/CarFragranceManager;.getInstance:()Lltd/qisi/adapterproxy/CarFragranceManager; // method@3685
+      d946f8: 0c00                                   |0011: move-result-object v0
+      d946fa: e910 0b00 0000                         |0012: invoke-virtual-quick {v0}, [000b] // vtable #000b
+[new] d946fa: 6e10 7f36 0000                         |0012: invoke-virtual {v0}, Lltd/qisi/adapterproxy/CarFragranceManager;.getFragranceAutoWorkingStatus:()I // method@367f
+      d94700: 0a00                                   |0015: move-result v0
+      d94702: e620 5c00                              |0016: iput-quick v0, v2, [obj+005c]
+[new] d94702: 5920 56d7                              |0016: iput v0, v2, Lltd/qisi/hvac/viewmodel/HvacViewModel;.fragranceAutoWorkingStatus:I // field@d756
+      d94706: 2815                                   |0018: goto 002d // +0015
+      d94708: 7100 fd83 0000                         |0019: invoke-static {}, Lltd/qisi/hvac/repository/HvacRepository;.getInstance:()Lltd/qisi/hvac/repository/HvacRepository; // method@83fd
+      d9470e: 0c00                                   |001c: move-result-object v0
+      d94710: e910 2d00 0000                         |001d: invoke-virtual-quick {v0}, [002d] // vtable #002d
+[new] d94710: 6e10 de83 0000                         |001d: invoke-virtual {v0}, Lltd/qisi/hvac/repository/HvacRepository;.getFragranceAutoWorkingStatus:()Landroidx/lifecycle/MutableLiveData; // method@83de
+      d94716: 0c00                                   |0020: move-result-object v0
+      d94718: e910 0c00 0000                         |0021: invoke-virtual-quick {v0}, [000c] // vtable #000c
+[new] d94718: 6e10 6405 0000                         |0021: invoke-virtual {v0}, Landroidx/lifecycle/MutableLiveData;.getValue:()Ljava/lang/Object; // method@0564
+      d9471e: 0c00                                   |0024: move-result-object v0
+      d94720: 1f00 0102                              |0025: check-cast v0, Ljava/lang/Integer; // type@0201
+      d94724: e910 0e00 0000                         |0027: invoke-virtual-quick {v0}, [000e] // vtable #000e
+[new] d94724: 6e10 5507 0000                         |0027: invoke-virtual {v0}, Ljava/lang/Integer;.intValue:()I // method@0755
+      d9472a: 0a00                                   |002a: move-result v0
+      d9472c: e620 5c00                              |002b: iput-quick v0, v2, [obj+005c]
+[new] d9472c: 5920 56d7                              |002b: iput v0, v2, Lltd/qisi/hvac/viewmodel/HvacViewModel;.fragranceAutoWorkingStatus:I // field@d756
+      d94730: e320 5c00                              |002d: iget-quick v0, v2, [obj+005c]
+[new] d94730: 5220 56d7                              |002d: iget v0, v2, Lltd/qisi/hvac/viewmodel/HvacViewModel;.fragranceAutoWorkingStatus:I // field@d756
+      d94734: 1211                                   |002f: const/4 v1, #int 1 // #1
+      d94736: 3310 0300                              |0030: if-ne v0, v1, 0033 // +0003
+      d9473a: 2802                                   |0032: goto 0034 // +0002
+      d9473c: 1201                                   |0033: const/4 v1, #int 0 // #0
+      d9473e: 0f01                                   |0034: return v1
+
+# Original LF start: 2929013
+[new] d947ee: 6e10 c183 0000                         |001d: invoke-virtual {v0}, Lltd/qisi/hvac/repository/HvacRepository;.getACFrontDefFunctionLiveData:()Landroidx/lifecycle/MutableLiveData; // method@83c1
+      d947f4: 0c00                                   |0020: move-result-object v0
+      d947f6: e910 0c00 0000                         |0021: invoke-virtual-quick {v0}, [000c] // vtable #000c
+[new] d947f6: 6e10 6405 0000                         |0021: invoke-virtual {v0}, Landroidx/lifecycle/MutableLiveData;.getValue:()Ljava/lang/Object; // method@0564
+      d947fc: 0c00                                   |0024: move-result-object v0
+      d947fe: 1f00 0102                              |0025: check-cast v0, Ljava/lang/Integer; // type@0201
+      d94802: e910 0e00 0000                         |0027: invoke-virtual-quick {v0}, [000e] // vtable #000e
+[new] d94802: 6e10 5507 0000                         |0027: invoke-virtual {v0}, Ljava/lang/Integer;.intValue:()I // method@0755
+      d94808: 0a00                                   |002a: move-result v0
+      d9480a: e620 3800                              |002b: iput-quick v0, v2, [obj+0038]
+[new] d9480a: 5920 4dd7                              |002b: iput v0, v2, Lltd/qisi/hvac/viewmodel/HvacViewModel;.acFrontDefFunctionStateValue:I // field@d74d
+      d9480e: e320 3800                              |002d: iget-quick v0, v2, [obj+0038]
+[new] d9480e: 5220 4dd7                              |002d: iget v0, v2, Lltd/qisi/hvac/viewmodel/HvacViewModel;.acFrontDefFunctionStateValue:I // field@d74d
+      d94812: 1211                                   |002f: const/4 v1, #int 1 // #1
+      d94814: 3310 0300                              |0030: if-ne v0, v1, 0033 // +0003
+      d94818: 2802                                   |0032: goto 0034 // +0002
+      d9481a: 1201                                   |0033: const/4 v1, #int 0 // #0
+      d9481c: 0f01                                   |0034: return v1
+
+# Original LF start: 2929150
+    codeOff=d94994 (14240148)
+    quickening_size=13 (19)
+      d94998: 7100 fd83 0000                         |0000: invoke-static {}, Lltd/qisi/hvac/repository/HvacRepository;.getInstance:()Lltd/qisi/hvac/repository/HvacRepository; // method@83fd
+      d9499e: 0c00                                   |0003: move-result-object v0
+      d949a0: e910 5f00 0000                         |0004: invoke-virtual-quick {v0}, [005f] // vtable #005f
+[new] d949a0: 6e10 1184 0000                         |0004: invoke-virtual {v0}, Lltd/qisi/hvac/repository/HvacRepository;.getSteeringWheelHeatStateLiveData:()Landroidx/lifecycle/MutableLiveData; // method@8411
+      d949a6: 0c00                                   |0007: move-result-object v0
+      d949a8: e910 0c00 0000                         |0008: invoke-virtual-quick {v0}, [000c] // vtable #000c
+[new] d949a8: 6e10 6405 0000                         |0008: invoke-virtual {v0}, Landroidx/lifecycle/MutableLiveData;.getValue:()Ljava/lang/Object; // method@0564
+      d949ae: 0c00                                   |000b: move-result-object v0
+      d949b0: 3900 0d00                              |000c: if-nez v0, 0019 // +000d
+      d949b4: 7100 4631 0000                         |000e: invoke-static {}, Lltd/qisi/adapterproxy/CarACManager;.getInstance:()Lltd/qisi/adapterproxy/CarACManager; // method@3146
+      d949ba: 0c00                                   |0011: move-result-object v0
+      d949bc: e910 3c00 0000                         |0012: invoke-virtual-quick {v0}, [003c] // vtable #003c
+[new] d949bc: 6e10 4e31 0000                         |0012: invoke-virtual {v0}, Lltd/qisi/adapterproxy/CarACManager;.getSteeringWheelheat:()I // method@314e
+      d949c2: 0a00                                   |0015: move-result v0
+      d949c4: e620 9400                              |0016: iput-quick v0, v2, [obj+0094]
+[new] d949c4: 5920 70d7                              |0016: iput v0, v2, Lltd/qisi/hvac/viewmodel/HvacViewModel;.steeringWheelHeatValue:I // field@d770
+      d949c8: 2815                                   |0018: goto 002d // +0015
+      d949ca: 7100 fd83 0000                         |0019: invoke-static {}, Lltd/qisi/hvac/repository/HvacRepository;.getInstance:()Lltd/qisi/hvac/repository/HvacRepository; // method@83fd
+      d949d0: 0c00                                   |001c: move-result-object v0
+      d949d2: e910 5f00 0000                         |001d: invoke-virtual-quick {v0}, [005f] // vtable #005f
+[new] d949d2: 6e10 1184 0000                         |001d: invoke-virtual {v0}, Lltd/qisi/hvac/repository/HvacRepository;.getSteeringWheelHeatStateLiveData:()Landroidx/lifecycle/MutableLiveData; // method@8411
+      d949d8: 0c00                                   |0020: move-result-object v0
+      d949da: e910 0c00 0000                         |0021: invoke-virtual-quick {v0}, [000c] // vtable #000c
+[new] d949da: 6e10 6405 0000                         |0021: invoke-virtual {v0}, Landroidx/lifecycle/MutableLiveData;.getValue:()Ljava/lang/Object; // method@0564
+      d949e0: 0c00                                   |0024: move-result-object v0
+      d949e2: 1f00 0102                              |0025: check-cast v0, Ljava/lang/Integer; // type@0201
+      d949e6: e910 0e00 0000                         |0027: invoke-virtual-quick {v0}, [000e] // vtable #000e
+[new] d949e6: 6e10 5507 0000                         |0027: invoke-virtual {v0}, Ljava/lang/Integer;.intValue:()I // method@0755
+      d949ec: 0a00                                   |002a: move-result v0
+      d949ee: e620 9400                              |002b: iput-quick v0, v2, [obj+0094]
+[new] d949ee: 5920 70d7                              |002b: iput v0, v2, Lltd/qisi/hvac/viewmodel/HvacViewModel;.steeringWheelHeatValue:I // field@d770
+      d949f2: e320 9400                              |002d: iget-quick v0, v2, [obj+0094]
+[new] d949f2: 5220 70d7                              |002d: iget v0, v2, Lltd/qisi/hvac/viewmodel/HvacViewModel;.steeringWheelHeatValue:I // field@d770
+      d949f6: 1211                                   |002f: const/4 v1, #int 1 // #1
+      d949f8: 3310 0300                              |0030: if-ne v0, v1, 0033 // +0003
+      d949fc: 2802                                   |0032: goto 0034 // +0002
+      d949fe: 1201                                   |0033: const/4 v1, #int 0 // #0
+      d94a00: 0f01                                   |0034: return v1
+
+# Original LF start: 2930074
+[new] d9409c: 6e10 1184 0000                         |0004: invoke-virtual {v0}, Lltd/qisi/hvac/repository/HvacRepository;.getSteeringWheelHeatStateLiveData:()Landroidx/lifecycle/MutableLiveData; // method@8411
+      d940a2: 0c00                                   |0007: move-result-object v0
+      d940a4: 1100                                   |0008: return-object v0
+
+# Original LF start: 2930392
+   virtual_method #36573: setACAQFunctionState ()V
+    access=0001 (PUBLIC)
+    codeOff=d94ff8 (14241784)
+    quickening_size=5 (5)
+      d94ffc: 7010 b28e 0200                         |0000: invoke-direct {v2}, Lltd/qisi/hvac/viewmodel/HvacViewModel;.isACAQFunctionOn:()Z // method@8eb2
+      d95002: 0a00                                   |0003: move-result v0
+      d95004: 3800 0b00                              |0004: if-eqz v0, 000f // +000b
+      d95008: 7100 fd83 0000                         |0006: invoke-static {}, Lltd/qisi/hvac/repository/HvacRepository;.getInstance:()Lltd/qisi/hvac/repository/HvacRepository; // method@83fd
+      d9500e: 0c00                                   |0009: move-result-object v0
+      d95010: 1211                                   |000a: const/4 v1, #int 1 // #1
+      d95012: e920 9c00 1000                         |000b: invoke-virtual-quick {v0, v1}, [009c] // vtable #009c
+[new] d95012: 6e20 9a84 1000                         |000b: invoke-virtual {v0, v1}, Lltd/qisi/hvac/repository/HvacRepository;.setACAQFunctionState:(I)V // method@849a
+      d95018: 2809                                   |000e: goto 0017 // +0009
+      d9501a: 7100 fd83 0000                         |000f: invoke-static {}, Lltd/qisi/hvac/repository/HvacRepository;.getInstance:()Lltd/qisi/hvac/repository/HvacRepository; // method@83fd
+      d95020: 0c00                                   |0012: move-result-object v0
+      d95022: 1221                                   |0013: const/4 v1, #int 2 // #2
+      d95024: e920 9c00 1000                         |0014: invoke-virtual-quick {v0, v1}, [009c] // vtable #009c
+[new] d95024: 6e20 9a84 1000                         |0014: invoke-virtual {v0, v1}, Lltd/qisi/hvac/repository/HvacRepository;.setACAQFunctionState:(I)V // method@849a
+      d9502a: 7300                                   |0017: return-void-no-barrier
+[new] d9502a: 0e00                                   |0017: return-void
+
+# Original LF start: 2930413
+    access=0001 (PUBLIC)
+    codeOff=d9502c (14241836)
+    quickening_size=5 (5)
+      d95030: 7010 b38e 0200                         |0000: invoke-direct {v2}, Lltd/qisi/hvac/viewmodel/HvacViewModel;.isACAirCleanOn:()Z // method@8eb3
+      d95036: 0a00                                   |0003: move-result v0
+      d95038: 3800 0b00                              |0004: if-eqz v0, 000f // +000b
+      d9503c: 7100 fd83 0000                         |0006: invoke-static {}, Lltd/qisi/hvac/repository/HvacRepository;.getInstance:()Lltd/qisi/hvac/repository/HvacRepository; // method@83fd
+      d95042: 0c00                                   |0009: move-result-object v0
+      d95044: 1211                                   |000a: const/4 v1, #int 1 // #1
+      d95046: e920 9d00 1000                         |000b: invoke-virtual-quick {v0, v1}, [009d] // vtable #009d
+[new] d95046: 6e20 9b84 1000                         |000b: invoke-virtual {v0, v1}, Lltd/qisi/hvac/repository/HvacRepository;.setACAirCleanState:(I)V // method@849b
+      d9504c: 2809                                   |000e: goto 0017 // +0009
+      d9504e: 7100 fd83 0000                         |000f: invoke-static {}, Lltd/qisi/hvac/repository/HvacRepository;.getInstance:()Lltd/qisi/hvac/repository/HvacRepository; // method@83fd
+      d95054: 0c00                                   |0012: move-result-object v0
+      d95056: 1221                                   |0013: const/4 v1, #int 2 // #2
+      d95058: e920 9d00 1000                         |0014: invoke-virtual-quick {v0, v1}, [009d] // vtable #009d
+[new] d95058: 6e20 9b84 1000                         |0014: invoke-virtual {v0, v1}, Lltd/qisi/hvac/repository/HvacRepository;.setACAirCleanState:(I)V // method@849b
+      d9505e: 7300                                   |0017: return-void-no-barrier
+[new] d9505e: 0e00                                   |0017: return-void
+
+# Original LF start: 2930470
+[new] d950c0: 6e20 9d84 1000                         |0014: invoke-virtual {v0, v1}, Lltd/qisi/hvac/repository/HvacRepository;.setACCirculationState:(I)V // method@849d
+      d950c6: 7300                                   |0017: return-void-no-barrier
+[new] d950c6: 0e00                                   |0017: return-void
+
+# Original LF start: 2930526
+      d95160: e920 a000 1000                         |0014: invoke-virtual-quick {v0, v1}, [00a0] // vtable #00a0
+[new] d95160: 6e20 9e84 1000                         |0014: invoke-virtual {v0, v1}, Lltd/qisi/hvac/repository/HvacRepository;.setACCompressorState:(I)V // method@849e
+      d95166: 7300                                   |0017: return-void-no-barrier
+[new] d95166: 0e00                                   |0017: return-void
+
+# Original LF start: 2930546
+      d95194: 0c00                                   |0014: move-result-object v0
+      d95196: e920 9f00 3000                         |0015: invoke-virtual-quick {v0, v3}, [009f] // vtable #009f
+[new] d95196: 6e20 9d84 3000                         |0015: invoke-virtual {v0, v3}, Lltd/qisi/hvac/repository/HvacRepository;.setACCirculationState:(I)V // method@849d
+      d9519c: 2818                                   |0018: goto 0030 // +0018
+      d9519e: 7100 fd83 0000                         |0019: invoke-static {}, Lltd/qisi/hvac/repository/HvacRepository;.getInstance:()Lltd/qisi/hvac/repository/HvacRepository; // method@83fd
+      d951a4: 0c00                                   |001c: move-result-object v0
+      d951a6: e920 9f00 2000                         |001d: invoke-virtual-quick {v0, v2}, [009f] // vtable #009f
+[new] d951a6: 6e20 9d84 2000                         |001d: invoke-virtual {v0, v2}, Lltd/qisi/hvac/repository/HvacRepository;.setACCirculationState:(I)V // method@849d
+      d951ac: 2810                                   |0020: goto 0030 // +0010
+      d951ae: 7100 fd83 0000                         |0021: invoke-static {}, Lltd/qisi/hvac/repository/HvacRepository;.getInstance:()Lltd/qisi/hvac/repository/HvacRepository; // method@83fd
+      d951b4: 0c00                                   |0024: move-result-object v0
+      d951b6: e920 9f00 3000                         |0025: invoke-virtual-quick {v0, v3}, [009f] // vtable #009f
+[new] d951b6: 6e20 9d84 3000                         |0025: invoke-virtual {v0, v3}, Lltd/qisi/hvac/repository/HvacRepository;.setACCirculationState:(I)V // method@849d
+      d951bc: 2808                                   |0028: goto 0030 // +0008
+      d951be: 7100 fd83 0000                         |0029: invoke-static {}, Lltd/qisi/hvac/repository/HvacRepository;.getInstance:()Lltd/qisi/hvac/repository/HvacRepository; // method@83fd
+      d951c4: 0c00                                   |002c: move-result-object v0
+      d951c6: e920 9f00 1000                         |002d: invoke-virtual-quick {v0, v1}, [009f] // vtable #009f
+[new] d951c6: 6e20 9d84 1000                         |002d: invoke-virtual {v0, v1}, Lltd/qisi/hvac/repository/HvacRepository;.setACCirculationState:(I)V // method@849d
+      d951cc: 7300                                   |0030: return-void-no-barrier
+[new] d951cc: 0e00                                   |0030: return-void
+
+# Original LF start: 2930959
+      d95636: 0c01                                   |0056: move-result-object v1
+      d95638: 1f01 0102                              |0057: check-cast v1, Ljava/lang/Integer; // type@0201
+      d9563c: e910 0e00 0100                         |0059: invoke-virtual-quick {v1}, [000e] // vtable #000e
+[new] d9563c: 6e10 5507 0100                         |0059: invoke-virtual {v1}, Ljava/lang/Integer;.intValue:()I // method@0755
+      d95642: 0a01                                   |005c: move-result v1
+      d95644: e631 8400                              |005d: iput-quick v1, v3, [obj+0084]
+[new] d95644: 5931 6bd7                              |005d: iput v1, v3, Lltd/qisi/hvac/viewmodel/HvacViewModel;.mRearRightSeatHeatLevel:I // field@d76b
+      d95648: 7020 db8e 4300                         |005f: invoke-direct {v3, v4}, Lltd/qisi/hvac/viewmodel/HvacViewModel;.rearSeatHeatLevel:(I)I // method@8edb
+      d9564e: 0a01                                   |0062: move-result v1
+      d95650: 3901 0900                              |0063: if-nez v1, 006c // +0009
+      d95654: 7100 fd83 0000                         |0065: invoke-static {}, Lltd/qisi/hvac/repository/HvacRepository;.getInstance:()Lltd/qisi/hvac/repository/HvacRepository; // method@83fd
+      d9565a: 0c02                                   |0068: move-result-object v2
+      d9565c: e930 aa00 4200                         |0069: invoke-virtual-quick {v2, v4, v0}, [00aa] // vtable #00aa
+[new] d9565c: 6e30 a884 4200                         |0069: invoke-virtual {v2, v4, v0}, Lltd/qisi/hvac/repository/HvacRepository;.setACRearSeatHeatState:(II)V // method@84a8
+      d95662: 7100 fd83 0000                         |006c: invoke-static {}, Lltd/qisi/hvac/repository/HvacRepository;.getInstance:()Lltd/qisi/hvac/repository/HvacRepository; // method@83fd
+      d95668: 0c00                                   |006f: move-result-object v0
+      d9566a: e930 a900 4001                         |0070: invoke-virtual-quick {v0, v4, v1}, [00a9] // vtable #00a9
+[new] d9566a: 6e30 a784 4001                         |0070: invoke-virtual {v0, v4, v1}, Lltd/qisi/hvac/repository/HvacRepository;.setACRearSeatHeatLevel:(II)V // method@84a7
+      d95670: 7300                                   |0073: return-void-no-barrier
+[new] d95670: 0e00                                   |0073: return-void
+
+# Original LF start: 3042898
+      d7f2b2: 5400 b3d2                              |0000: iget-object v0, v0, Lltd/qisi/hvac/ui/fragment/C235/HvacC235Fragment;.viewModel:Landroidx/lifecycle/ViewModel; // field@d2b3
+      d7f2b6: 1100                                   |0002: return-object v0
+
+# Original LF start: 3043270
+    quickening_size=15 (21)
+      d7f738: 2200 1a02                              |0000: new-instance v0, Ljava/lang/StringBuilder; // type@021a
+      d7f73c: 7010 2508 0000                         |0002: invoke-direct {v0}, Ljava/lang/StringBuilder;.<init>:()V // method@0825
+      d7f742: 1a01 def3                              |0005: const-string v1, "获取Auto状态:" // string@f3de
+      d7f746: e920 4b00 1000                         |0007: invoke-virtual-quick {v0, v1}, [004b] // vtable #004b
+[new] d7f746: 6e20 3108 1000                         |0007: invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;.append:(Ljava/lang/String;)Ljava/lang/StringBuilder; // method@0831
+      d7f74c: 0c00                                   |000a: move-result-object v0
+      d7f74e: 7110 808d 0300                         |000b: invoke-static {v3}, Lltd/qisi/hvac/utils/HVACUtil;.isHvacState:(I)Z // method@8d80
+      d7f754: 0a01                                   |000e: move-result v1
+      d7f756: e920 4d00 1000                         |000f: invoke-virtual-quick {v0, v1}, [004d] // vtable #004d
+[new] d7f756: 6e20 3308 1000                         |000f: invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;.append:(Z)Ljava/lang/StringBuilder; // method@0833
+      d7f75c: 0c00                                   |0012: move-result-object v0
+      d7f75e: e910 0700 0000                         |0013: invoke-virtual-quick {v0}, [0007] // vtable #0007
+[new] d7f75e: 6e10 4108 0000                         |0013: invoke-virtual {v0}, Ljava/lang/StringBuilder;.toString:()Ljava/lang/String; // method@0841
+      d7f764: 0c00                                   |0016: move-result-object v0
+      d7f766: 7020 5389 0200                         |0017: invoke-direct {v2, v0}, Lltd/qisi/hvac/ui/fragment/C235/HvacC235Fragment;.setLog:(Ljava/lang/String;)V // method@8953
+      d7f76c: e623 c800                              |001a: iput-quick v3, v2, [obj+00c8]
+[new] d7f76c: 5923 aed2                              |001a: iput v3, v2, Lltd/qisi/hvac/ui/fragment/C235/HvacC235Fragment;.mAutoState:I // field@d2ae
+      d7f770: e520 a800                              |001c: iget-object-quick v0, v2, [obj+00a8]
+[new] d7f770: 5420 b2d2                              |001c: iget-object v0, v2, Lltd/qisi/hvac/ui/fragment/C235/HvacC235Fragment;.viewBinding:Landroidx/viewbinding/ViewBinding; // field@d2b2
+      d7f774: 1f00 f90c                              |001e: check-cast v0, Lltd/qisi/hvac/databinding/MainC235FragmentBinding; // type@0cf9
+      d7f778: e500 1000                              |0020: iget-object-quick v0, v0, [obj+0010]
+[new] d7f778: 5400 84d0                              |0020: iget-object v0, v0, Lltd/qisi/hvac/databinding/MainC235FragmentBinding;.ibAuto:Lltd/qisi/uiguideline/controls/BaseImageButton; // field@d084
+      d7f77c: 7110 808d 0300                         |0022: invoke-static {v3}, Lltd/qisi/hvac/utils/HVACUtil;.isHvacState:(I)Z // method@8d80
+      d7f782: 0a01                                   |0025: move-result v1
+      d7f784: e920 6f02 1000                         |0026: invoke-virtual-quick {v0, v1}, [026f] // vtable #026f
+[new] d7f784: 6e20 fe9c 1000                         |0026: invoke-virtual {v0, v1}, Lltd/qisi/uiguideline/controls/BaseImageButton;.setActivated:(Z)V // method@9cfe
+      d7f78a: e520 a800                              |0029: iget-object-quick v0, v2, [obj+00a8]
+[new] d7f78a: 5420 b2d2                              |0029: iget-object v0, v2, Lltd/qisi/hvac/ui/fragment/C235/HvacC235Fragment;.viewBinding:Landroidx/viewbinding/ViewBinding; // field@d2b2
+      d7f78e: 1f00 f90c                              |002b: check-cast v0, Lltd/qisi/hvac/databinding/MainC235FragmentBinding; // type@0cf9
+      d7f792: e500 1000                              |002d: iget-object-quick v0, v0, [obj+0010]
+[new] d7f792: 5400 84d0                              |002d: iget-object v0, v0, Lltd/qisi/hvac/databinding/MainC235FragmentBinding;.ibAuto:Lltd/qisi/uiguideline/controls/BaseImageButton; // field@d084
+      d7f796: 3a03 0400                              |002f: if-ltz v3, 0033 // +0004
+      d7f79a: 1213                                   |0031: const/4 v3, #int 1 // #1
+      d7f79c: 2802                                   |0032: goto 0034 // +0002
+      d7f79e: 1203                                   |0033: const/4 v3, #int 0 // #0
+      d7f7a0: e920 8e02 3000                         |0034: invoke-virtual-quick {v0, v3}, [028e] // vtable #028e
+[new] d7f7a0: 6e20 009d 3000                         |0034: invoke-virtual {v0, v3}, Lltd/qisi/uiguideline/controls/BaseImageButton;.setEnabled:(Z)V // method@9d00
+      d7f7a6: 7300                                   |0037: return-void-no-barrier
+[new] d7f7a6: 0e00                                   |0037: return-void
+
+# Original LF start: 3045235
+      d8122a: 3800 0c00                              |0033: if-eqz v0, 003f // +000c
+      d8122e: e523 a800                              |0035: iget-object-quick v3, v2, [obj+00a8]
+[new] d8122e: 5423 b2d2                              |0035: iget-object v3, v2, Lltd/qisi/hvac/ui/fragment/C235/HvacC235Fragment;.viewBinding:Landroidx/viewbinding/ViewBinding; // field@d2b2
+      d81232: 1f03 f90c                              |0037: check-cast v3, Lltd/qisi/hvac/databinding/MainC235FragmentBinding; // type@0cf9
+      d81236: e533 2800                              |0039: iget-object-quick v3, v3, [obj+0028]
+[new] d81236: 5433 8ad0                              |0039: iget-object v3, v3, Lltd/qisi/hvac/databinding/MainC235FragmentBinding;.ibSync:Lltd/qisi/uiguideline/controls/BaseImageButton; // field@d08a
+      d8123a: e920 3d03 1300                         |003b: invoke-virtual-quick {v3, v1}, [033d] // vtable #033d
+[new] d8123a: 6e20 019d 1300                         |003b: invoke-virtual {v3, v1}, Lltd/qisi/uiguideline/controls/BaseImageButton;.setImageResource:(I)V // method@9d01
+      d81240: 281f                                   |003e: goto 005d // +001f
+      d81242: 1a00 c87f                              |003f: const-string v0, "ar" // string@7fc8
+      d81246: e920 0100 0300                         |0041: invoke-virtual-quick {v3, v0}, [0001] // vtable #0001
+[new] d81246: 6e20 f107 0300                         |0041: invoke-virtual {v3, v0}, Ljava/lang/String;.equals:(Ljava/lang/Object;)Z // method@07f1
+      d8124c: 0a03                                   |0044: move-result v3
+      d8124e: 3803 0c00                              |0045: if-eqz v3, 0051 // +000c
+      d81252: e523 a800                              |0047: iget-object-quick v3, v2, [obj+00a8]
+[new] d81252: 5423 b2d2                              |0047: iget-object v3, v2, Lltd/qisi/hvac/ui/fragment/C235/HvacC235Fragment;.viewBinding:Landroidx/viewbinding/ViewBinding; // field@d2b2
+      d81256: 1f03 f90c                              |0049: check-cast v3, Lltd/qisi/hvac/databinding/MainC235FragmentBinding; // type@0cf9
+      d8125a: e533 2800                              |004b: iget-object-quick v3, v3, [obj+0028]
+[new] d8125a: 5433 8ad0                              |004b: iget-object v3, v3, Lltd/qisi/hvac/databinding/MainC235FragmentBinding;.ibSync:Lltd/qisi/uiguideline/controls/BaseImageButton; // field@d08a
+      d8125e: e920 3d03 1300                         |004d: invoke-virtual-quick {v3, v1}, [033d] // vtable #033d
+[new] d8125e: 6e20 019d 1300                         |004d: invoke-virtual {v3, v1}, Lltd/qisi/uiguideline/controls/BaseImageButton;.setImageResource:(I)V // method@9d01
+      d81264: 280d                                   |0050: goto 005d // +000d
+      d81266: e523 a800                              |0051: iget-object-quick v3, v2, [obj+00a8]
+[new] d81266: 5423 b2d2                              |0051: iget-object v3, v2, Lltd/qisi/hvac/ui/fragment/C235/HvacC235Fragment;.viewBinding:Landroidx/viewbinding/ViewBinding; // field@d2b2
+      d8126a: 1f03 f90c                              |0053: check-cast v3, Lltd/qisi/hvac/databinding/MainC235FragmentBinding; // type@0cf9
+      d8126e: e533 2800                              |0055: iget-object-quick v3, v3, [obj+0028]
+[new] d8126e: 5433 8ad0                              |0055: iget-object v3, v3, Lltd/qisi/hvac/databinding/MainC235FragmentBinding;.ibSync:Lltd/qisi/uiguideline/controls/BaseImageButton; // field@d08a
+      d81272: 1400 8b02 087f                         |0057: const v0, #float 1.80788e+38 // #7f08028b
+      d81278: e920 3d03 0300                         |005a: invoke-virtual-quick {v3, v0}, [033d] // vtable #033d
+[new] d81278: 6e20 019d 0300                         |005a: invoke-virtual {v3, v0}, Lltd/qisi/uiguideline/controls/BaseImageButton;.setImageResource:(I)V // method@9d01
+      d8127e: 7300                                   |005d: return-void-no-barrier
+[new] d8127e: 0e00                                   |005d: return-void
+
+# Original LF start: 3045345
+      d8135a: e544 1800                              |0063: iget-object-quick v4, v4, [obj+0018]
+[new] d8135a: 5444 a4cf                              |0063: iget-object v4, v4, Lltd/qisi/hvac/databinding/LayoutC255SeatWindModeBinding;.ibLeftSeatHeating:Lltd/qisi/uiguideline/controls/BaseImageButton; // field@cfa4
+      d8135e: 1400 6a02 087f                         |0065: const v0, #float 1.80788e+38 // #7f08026a
+      d81364: e920 3d03 0400                         |0068: invoke-virtual-quick {v4, v0}, [033d] // vtable #033d
+[new] d81364: 6e20 019d 0400                         |0068: invoke-virtual {v4, v0}, Lltd/qisi/uiguideline/controls/BaseImageButton;.setImageResource:(I)V // method@9d01
+      d8136a: 282d                                   |006b: goto 0098 // +002d
+      d8136c: e534 a800                              |006c: iget-object-quick v4, v3, [obj+00a8]
+[new] d8136c: 5434 b2d2                              |006c: iget-object v4, v3, Lltd/qisi/hvac/ui/fragment/C235/HvacC235Fragment;.viewBinding:Landroidx/viewbinding/ViewBinding; // field@d2b2
+      d81370: 1f04 f90c                              |006e: check-cast v4, Lltd/qisi/hvac/databinding/MainC235FragmentBinding; // type@0cf9
+      d81374: e544 3000                              |0070: iget-object-quick v4, v4, [obj+0030]
+[new] d81374: 5444 8cd0                              |0070: iget-object v4, v4, Lltd/qisi/hvac/databinding/MainC235FragmentBinding;.layoutC255Include:Lltd/qisi/hvac/databinding/LayoutC255SeatWindModeBinding; // field@d08c
+      d81378: e544 1800                              |0072: iget-object-quick v4, v4, [obj+0018]
+[new] d81378: 5444 a4cf                              |0072: iget-object v4, v4, Lltd/qisi/hvac/databinding/LayoutC255SeatWindModeBinding;.ibLeftSeatHeating:Lltd/qisi/uiguideline/controls/BaseImageButton; // field@cfa4
+      d8137c: 1400 6902 087f                         |0074: const v0, #float 1.80788e+38 // #7f080269
+      d81382: e920 3d03 0400                         |0077: invoke-virtual-quick {v4, v0}, [033d] // vtable #033d
+[new] d81382: 6e20 019d 0400                         |0077: invoke-virtual {v4, v0}, Lltd/qisi/uiguideline/controls/BaseImageButton;.setImageResource:(I)V // method@9d01
+      d81388: 281e                                   |007a: goto 0098 // +001e
+      d8138a: e534 a800                              |007b: iget-object-quick v4, v3, [obj+00a8]
+[new] d8138a: 5434 b2d2                              |007b: iget-object v4, v3, Lltd/qisi/hvac/ui/fragment/C235/HvacC235Fragment;.viewBinding:Landroidx/viewbinding/ViewBinding; // field@d2b2
+      d8138e: 1f04 f90c                              |007d: check-cast v4, Lltd/qisi/hvac/databinding/MainC235FragmentBinding; // type@0cf9
+      d81392: e544 3000                              |007f: iget-object-quick v4, v4, [obj+0030]
+[new] d81392: 5444 8cd0                              |007f: iget-object v4, v4, Lltd/qisi/hvac/databinding/MainC235FragmentBinding;.layoutC255Include:Lltd/qisi/hvac/databinding/LayoutC255SeatWindModeBinding; // field@d08c
+      d81396: e544 1800                              |0081: iget-object-quick v4, v4, [obj+0018]
+[new] d81396: 5444 a4cf                              |0081: iget-object v4, v4, Lltd/qisi/hvac/databinding/LayoutC255SeatWindModeBinding;.ibLeftSeatHeating:Lltd/qisi/uiguideline/controls/BaseImageButton; // field@cfa4
+      d8139a: 1400 6802 087f                         |0083: const v0, #float 1.80788e+38 // #7f080268
+      d813a0: e920 3d03 0400                         |0086: invoke-virtual-quick {v4, v0}, [033d] // vtable #033d
+[new] d813a0: 6e20 019d 0400                         |0086: invoke-virtual {v4, v0}, Lltd/qisi/uiguideline/controls/BaseImageButton;.setImageResource:(I)V // method@9d01
+      d813a6: 280f                                   |0089: goto 0098 // +000f
+      d813a8: e534 a800                              |008a: iget-object-quick v4, v3, [obj+00a8]
+[new] d813a8: 5434 b2d2                              |008a: iget-object v4, v3, Lltd/qisi/hvac/ui/fragment/C235/HvacC235Fragment;.viewBinding:Landroidx/viewbinding/ViewBinding; // field@d2b2
+      d813ac: 1f04 f90c                              |008c: check-cast v4, Lltd/qisi/hvac/databinding/MainC235FragmentBinding; // type@0cf9
+      d813b0: e544 3000                              |008e: iget-object-quick v4, v4, [obj+0030]
+[new] d813b0: 5444 8cd0                              |008e: iget-object v4, v4, Lltd/qisi/hvac/databinding/MainC235FragmentBinding;.layoutC255Include:Lltd/qisi/hvac/databinding/LayoutC255SeatWindModeBinding; // field@d08c
+      d813b4: e544 1800                              |0090: iget-object-quick v4, v4, [obj+0018]
+[new] d813b4: 5444 a4cf                              |0090: iget-object v4, v4, Lltd/qisi/hvac/databinding/LayoutC255SeatWindModeBinding;.ibLeftSeatHeating:Lltd/qisi/uiguideline/controls/BaseImageButton; // field@cfa4
+      d813b8: 1400 6b02 087f                         |0092: const v0, #float 1.80788e+38 // #7f08026b
+      d813be: e920 3d03 0400                         |0095: invoke-virtual-quick {v4, v0}, [033d] // vtable #033d
+[new] d813be: 6e20 019d 0400                         |0095: invoke-virtual {v4, v0}, Lltd/qisi/uiguideline/controls/BaseImageButton;.setImageResource:(I)V // method@9d01
+      d813c4: 7300                                   |0098: return-void-no-barrier
+[new] d813c4: 0e00                                   |0098: return-void
+
+# Original LF start: 3045455
+      d81490: e544 1c00                              |0063: iget-object-quick v4, v4, [obj+001c]
+[new] d81490: 5444 a5cf                              |0063: iget-object v4, v4, Lltd/qisi/hvac/databinding/LayoutC255SeatWindModeBinding;.ibLeftSeatVentilation:Lltd/qisi/uiguideline/controls/BaseImageButton; // field@cfa5
+      d81494: 1400 7502 087f                         |0065: const v0, #float 1.80788e+38 // #7f080275
+      d8149a: e920 3d03 0400                         |0068: invoke-virtual-quick {v4, v0}, [033d] // vtable #033d
+[new] d8149a: 6e20 019d 0400                         |0068: invoke-virtual {v4, v0}, Lltd/qisi/uiguideline/controls/BaseImageButton;.setImageResource:(I)V // method@9d01
+      d814a0: 282d                                   |006b: goto 0098 // +002d
+      d814a2: e534 a800                              |006c: iget-object-quick v4, v3, [obj+00a8]
+[new] d814a2: 5434 b2d2                              |006c: iget-object v4, v3, Lltd/qisi/hvac/ui/fragment/C235/HvacC235Fragment;.viewBinding:Landroidx/viewbinding/ViewBinding; // field@d2b2
+      d814a6: 1f04 f90c                              |006e: check-cast v4, Lltd/qisi/hvac/databinding/MainC235FragmentBinding; // type@0cf9
+      d814aa: e544 3000                              |0070: iget-object-quick v4, v4, [obj+0030]
+[new] d814aa: 5444 8cd0                              |0070: iget-object v4, v4, Lltd/qisi/hvac/databinding/MainC235FragmentBinding;.layoutC255Include:Lltd/qisi/hvac/databinding/LayoutC255SeatWindModeBinding; // field@d08c
+      d814ae: e544 1c00                              |0072: iget-object-quick v4, v4, [obj+001c]
+[new] d814ae: 5444 a5cf                              |0072: iget-object v4, v4, Lltd/qisi/hvac/databinding/LayoutC255SeatWindModeBinding;.ibLeftSeatVentilation:Lltd/qisi/uiguideline/controls/BaseImageButton; // field@cfa5
+      d814b2: 1400 7402 087f                         |0074: const v0, #float 1.80788e+38 // #7f080274
+      d814b8: e920 3d03 0400                         |0077: invoke-virtual-quick {v4, v0}, [033d] // vtable #033d
+[new] d814b8: 6e20 019d 0400                         |0077: invoke-virtual {v4, v0}, Lltd/qisi/uiguideline/controls/BaseImageButton;.setImageResource:(I)V // method@9d01
+      d814be: 281e                                   |007a: goto 0098 // +001e
+      d814c0: e534 a800                              |007b: iget-object-quick v4, v3, [obj+00a8]
+[new] d814c0: 5434 b2d2                              |007b: iget-object v4, v3, Lltd/qisi/hvac/ui/fragment/C235/HvacC235Fragment;.viewBinding:Landroidx/viewbinding/ViewBinding; // field@d2b2
+      d814c4: 1f04 f90c                              |007d: check-cast v4, Lltd/qisi/hvac/databinding/MainC235FragmentBinding; // type@0cf9
+      d814c8: e544 3000                              |007f: iget-object-quick v4, v4, [obj+0030]
+[new] d814c8: 5444 8cd0                              |007f: iget-object v4, v4, Lltd/qisi/hvac/databinding/MainC235FragmentBinding;.layoutC255Include:Lltd/qisi/hvac/databinding/LayoutC255SeatWindModeBinding; // field@d08c
+      d814cc: e544 1c00                              |0081: iget-object-quick v4, v4, [obj+001c]
+[new] d814cc: 5444 a5cf                              |0081: iget-object v4, v4, Lltd/qisi/hvac/databinding/LayoutC255SeatWindModeBinding;.ibLeftSeatVentilation:Lltd/qisi/uiguideline/controls/BaseImageButton; // field@cfa5
+      d814d0: 1400 7302 087f                         |0083: const v0, #float 1.80788e+38 // #7f080273
+      d814d6: e920 3d03 0400                         |0086: invoke-virtual-quick {v4, v0}, [033d] // vtable #033d
+[new] d814d6: 6e20 019d 0400                         |0086: invoke-virtual {v4, v0}, Lltd/qisi/uiguideline/controls/BaseImageButton;.setImageResource:(I)V // method@9d01
+      d814dc: 280f                                   |0089: goto 0098 // +000f
+      d814de: e534 a800                              |008a: iget-object-quick v4, v3, [obj+00a8]
+[new] d814de: 5434 b2d2                              |008a: iget-object v4, v3, Lltd/qisi/hvac/ui/fragment/C235/HvacC235Fragment;.viewBinding:Landroidx/viewbinding/ViewBinding; // field@d2b2
+      d814e2: 1f04 f90c                              |008c: check-cast v4, Lltd/qisi/hvac/databinding/MainC235FragmentBinding; // type@0cf9
+      d814e6: e544 3000                              |008e: iget-object-quick v4, v4, [obj+0030]
+[new] d814e6: 5444 8cd0                              |008e: iget-object v4, v4, Lltd/qisi/hvac/databinding/MainC235FragmentBinding;.layoutC255Include:Lltd/qisi/hvac/databinding/LayoutC255SeatWindModeBinding; // field@d08c
+      d814ea: e544 1c00                              |0090: iget-object-quick v4, v4, [obj+001c]
+[new] d814ea: 5444 a5cf                              |0090: iget-object v4, v4, Lltd/qisi/hvac/databinding/LayoutC255SeatWindModeBinding;.ibLeftSeatVentilation:Lltd/qisi/uiguideline/controls/BaseImageButton; // field@cfa5
+      d814ee: 1400 7602 087f                         |0092: const v0, #float 1.80788e+38 // #7f080276
+      d814f4: e920 3d03 0400                         |0095: invoke-virtual-quick {v4, v0}, [033d] // vtable #033d
+[new] d814f4: 6e20 019d 0400                         |0095: invoke-virtual {v4, v0}, Lltd/qisi/uiguideline/controls/BaseImageButton;.setImageResource:(I)V // method@9d01
+      d814fa: 7300                                   |0098: return-void-no-barrier
+[new] d814fa: 0e00                                   |0098: return-void
+
+# Original LF start: 3045565
+      d815c6: e544 2000                              |0063: iget-object-quick v4, v4, [obj+0020]
+[new] d815c6: 5444 a6cf                              |0063: iget-object v4, v4, Lltd/qisi/hvac/databinding/LayoutC255SeatWindModeBinding;.ibRightSeatHeating:Lltd/qisi/uiguideline/controls/BaseImageButton; // field@cfa6
+      d815ca: 1400 6e02 087f                         |0065: const v0, #float 1.80788e+38 // #7f08026e
+      d815d0: e920 3d03 0400                         |0068: invoke-virtual-quick {v4, v0}, [033d] // vtable #033d
+[new] d815d0: 6e20 019d 0400                         |0068: invoke-virtual {v4, v0}, Lltd/qisi/uiguideline/controls/BaseImageButton;.setImageResource:(I)V // method@9d01
+      d815d6: 282d                                   |006b: goto 0098 // +002d
+      d815d8: e534 a800                              |006c: iget-object-quick v4, v3, [obj+00a8]
+[new] d815d8: 5434 b2d2                              |006c: iget-object v4, v3, Lltd/qisi/hvac/ui/fragment/C235/HvacC235Fragment;.viewBinding:Landroidx/viewbinding/ViewBinding; // field@d2b2
+      d815dc: 1f04 f90c                              |006e: check-cast v4, Lltd/qisi/hvac/databinding/MainC235FragmentBinding; // type@0cf9
+      d815e0: e544 3000                              |0070: iget-object-quick v4, v4, [obj+0030]
+[new] d815e0: 5444 8cd0                              |0070: iget-object v4, v4, Lltd/qisi/hvac/databinding/MainC235FragmentBinding;.layoutC255Include:Lltd/qisi/hvac/databinding/LayoutC255SeatWindModeBinding; // field@d08c
+      d815e4: e544 2000                              |0072: iget-object-quick v4, v4, [obj+0020]
+[new] d815e4: 5444 a6cf                              |0072: iget-object v4, v4, Lltd/qisi/hvac/databinding/LayoutC255SeatWindModeBinding;.ibRightSeatHeating:Lltd/qisi/uiguideline/controls/BaseImageButton; // field@cfa6
+      d815e8: 1400 6d02 087f                         |0074: const v0, #float 1.80788e+38 // #7f08026d
+      d815ee: e920 3d03 0400                         |0077: invoke-virtual-quick {v4, v0}, [033d] // vtable #033d
+[new] d815ee: 6e20 019d 0400                         |0077: invoke-virtual {v4, v0}, Lltd/qisi/uiguideline/controls/BaseImageButton;.setImageResource:(I)V // method@9d01
+      d815f4: 281e                                   |007a: goto 0098 // +001e
+      d815f6: e534 a800                              |007b: iget-object-quick v4, v3, [obj+00a8]
+[new] d815f6: 5434 b2d2                              |007b: iget-object v4, v3, Lltd/qisi/hvac/ui/fragment/C235/HvacC235Fragment;.viewBinding:Landroidx/viewbinding/ViewBinding; // field@d2b2
+      d815fa: 1f04 f90c                              |007d: check-cast v4, Lltd/qisi/hvac/databinding/MainC235FragmentBinding; // type@0cf9
+      d815fe: e544 3000                              |007f: iget-object-quick v4, v4, [obj+0030]
+[new] d815fe: 5444 8cd0                              |007f: iget-object v4, v4, Lltd/qisi/hvac/databinding/MainC235FragmentBinding;.layoutC255Include:Lltd/qisi/hvac/databinding/LayoutC255SeatWindModeBinding; // field@d08c
+      d81602: e544 2000                              |0081: iget-object-quick v4, v4, [obj+0020]
+[new] d81602: 5444 a6cf                              |0081: iget-object v4, v4, Lltd/qisi/hvac/databinding/LayoutC255SeatWindModeBinding;.ibRightSeatHeating:Lltd/qisi/uiguideline/controls/BaseImageButton; // field@cfa6
+      d81606: 1400 6c02 087f                         |0083: const v0, #float 1.80788e+38 // #7f08026c
+      d8160c: e920 3d03 0400                         |0086: invoke-virtual-quick {v4, v0}, [033d] // vtable #033d
+[new] d8160c: 6e20 019d 0400                         |0086: invoke-virtual {v4, v0}, Lltd/qisi/uiguideline/controls/BaseImageButton;.setImageResource:(I)V // method@9d01
+      d81612: 280f                                   |0089: goto 0098 // +000f
+      d81614: e534 a800                              |008a: iget-object-quick v4, v3, [obj+00a8]
+[new] d81614: 5434 b2d2                              |008a: iget-object v4, v3, Lltd/qisi/hvac/ui/fragment/C235/HvacC235Fragment;.viewBinding:Landroidx/viewbinding/ViewBinding; // field@d2b2
+      d81618: 1f04 f90c                              |008c: check-cast v4, Lltd/qisi/hvac/databinding/MainC235FragmentBinding; // type@0cf9
+      d8161c: e544 3000                              |008e: iget-object-quick v4, v4, [obj+0030]
+[new] d8161c: 5444 8cd0                              |008e: iget-object v4, v4, Lltd/qisi/hvac/databinding/MainC235FragmentBinding;.layoutC255Include:Lltd/qisi/hvac/databinding/LayoutC255SeatWindModeBinding; // field@d08c
+      d81620: e544 2000                              |0090: iget-object-quick v4, v4, [obj+0020]
+[new] d81620: 5444 a6cf                              |0090: iget-object v4, v4, Lltd/qisi/hvac/databinding/LayoutC255SeatWindModeBinding;.ibRightSeatHeating:Lltd/qisi/uiguideline/controls/BaseImageButton; // field@cfa6
+      d81624: 1400 6f02 087f                         |0092: const v0, #float 1.80788e+38 // #7f08026f
+      d8162a: e920 3d03 0400                         |0095: invoke-virtual-quick {v4, v0}, [033d] // vtable #033d
+[new] d8162a: 6e20 019d 0400                         |0095: invoke-virtual {v4, v0}, Lltd/qisi/uiguideline/controls/BaseImageButton;.setImageResource:(I)V // method@9d01
+      d81630: 7300                                   |0098: return-void-no-barrier
+[new] d81630: 0e00                                   |0098: return-void

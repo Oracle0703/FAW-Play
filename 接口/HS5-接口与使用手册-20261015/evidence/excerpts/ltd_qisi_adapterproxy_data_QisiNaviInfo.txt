@@ -1,0 +1,424 @@
+# Source: work/update-package-20261009/format-audit/QisiAdapterService/bytecode.dis.txt
+# Original LF start: 1417781
+  class #2122: QisiNaviInfo ('Lltd/qisi/adapterproxy/data/QisiNaviInfo;')
+   access=0001 (PUBLIC)
+   source_file=QisiNaviInfo.java, class_data_off=a0937b (10523515)
+   static_fields=1, instance_fields=9, direct_methods=5, virtual_methods=23
+   direct_method #56639: <clinit> ()V
+    access=10009 (PUBLIC STATIC CONSTRUCTOR)
+    codeOff=858a54 (8751700)
+    quickening_size=1 (1)
+      858a58: 2200 5e19                              |0000: new-instance v0, Lltd/qisi/adapterproxy/data/QisiNaviInfo$1; // type@195e
+      858a5c: 7010 39dd 0000                         |0002: invoke-direct {v0}, Lltd/qisi/adapterproxy/data/QisiNaviInfo$1;.<init>:()V // method@dd39
+      858a62: 6900 8458                              |0005: sput-object v0, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.CREATOR:Landroid/os/Parcelable$Creator; // field@5884
+      858a66: 7300                                   |0007: return-void-no-barrier
+[new] 858a66: 0e00                                   |0007: return-void
+   direct_method #56640: <init> ()V
+    access=10001 (PUBLIC CONSTRUCTOR)
+    codeOff=5d53c0 (6116288)
+      5d53c4: 7010 b699 0000                         |0000: invoke-direct {v0}, Ljava/lang/Object;.<init>:()V // method@99b6
+      5d53ca: 0e00                                   |0003: return-void
+   direct_method #56641: <init> (Landroid/os/Parcel;)V
+    access=10001 (PUBLIC CONSTRUCTOR)
+    codeOff=858a68 (8751720)
+    quickening_size=1d (29)
+      858a6c: 7010 b699 0100                         |0000: invoke-direct {v1}, Ljava/lang/Object;.<init>:()V // method@99b6
+      858a72: e910 5c00 0200                         |0003: invoke-virtual-quick {v2}, [005c] // vtable #005c
+[new] 858a72: 6e10 9b01 0200                         |0003: invoke-virtual {v2}, Landroid/os/Parcel;.readString:()Ljava/lang/String; // method@019b
+      858a78: 0c00                                   |0006: move-result-object v0
+      858a7a: e810 1000                              |0007: iput-object-quick v0, v1, [obj+0010]
+[new] 858a7a: 5b10 8858                              |0007: iput-object v0, v1, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTDistance:Ljava/lang/String; // field@5888
+      858a7e: e910 4600 0200                         |0009: invoke-virtual-quick {v2}, [0046] // vtable #0046
+[new] 858a7e: 6e10 9601 0200                         |0009: invoke-virtual {v2}, Landroid/os/Parcel;.readInt:()I // method@0196
+      858a84: 0a00                                   |000c: move-result v0
+      858a86: e610 1c00                              |000d: iput-quick v0, v1, [obj+001c]
+[new] 858a86: 5910 8a58                              |000d: iput v0, v1, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTRange:I // field@588a
+      858a8a: e910 5c00 0200                         |000f: invoke-virtual-quick {v2}, [005c] // vtable #005c
+[new] 858a8a: 6e10 9b01 0200                         |000f: invoke-virtual {v2}, Landroid/os/Parcel;.readString:()Ljava/lang/String; // method@019b
+      858a90: 0c00                                   |0012: move-result-object v0
+      858a92: e810 1400                              |0013: iput-object-quick v0, v1, [obj+0014]
+[new] 858a92: 5b10 8958                              |0013: iput-object v0, v1, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTNextRoadName:Ljava/lang/String; // field@5889
+      858a96: e910 5c00 0200                         |0015: invoke-virtual-quick {v2}, [005c] // vtable #005c
+[new] 858a96: 6e10 9b01 0200                         |0015: invoke-virtual {v2}, Landroid/os/Parcel;.readString:()Ljava/lang/String; // method@019b
+      858a9c: 0c00                                   |0018: move-result-object v0
+      858a9e: e810 0800                              |0019: iput-object-quick v0, v1, [obj+0008]
+[new] 858a9e: 5b10 8558                              |0019: iput-object v0, v1, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviDestinationDistance:Ljava/lang/String; // field@5885
+      858aa2: e910 5c00 0200                         |001b: invoke-virtual-quick {v2}, [005c] // vtable #005c
+[new] 858aa2: 6e10 9b01 0200                         |001b: invoke-virtual {v2}, Landroid/os/Parcel;.readString:()Ljava/lang/String; // method@019b
+      858aa8: 0c00                                   |001e: move-result-object v0
+      858aaa: e810 0c00                              |001f: iput-object-quick v0, v1, [obj+000c]
+[new] 858aaa: 5b10 8658                              |001f: iput-object v0, v1, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviDestinationTime:Ljava/lang/String; // field@5886
+      858aae: e910 4600 0200                         |0021: invoke-virtual-quick {v2}, [0046] // vtable #0046
+[new] 858aae: 6e10 9601 0200                         |0021: invoke-virtual {v2}, Landroid/os/Parcel;.readInt:()I // method@0196
+      858ab4: 0a00                                   |0024: move-result v0
+      858ab6: e610 1800                              |0025: iput-quick v0, v1, [obj+0018]
+[new] 858ab6: 5910 8758                              |0025: iput v0, v1, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTDirection:I // field@5887
+      858aba: e910 4600 0200                         |0027: invoke-virtual-quick {v2}, [0046] // vtable #0046
+[new] 858aba: 6e10 9601 0200                         |0027: invoke-virtual {v2}, Landroid/os/Parcel;.readInt:()I // method@0196
+      858ac0: 0a02                                   |002a: move-result v2
+      858ac2: e612 2000                              |002b: iput-quick v2, v1, [obj+0020]
+[new] 858ac2: 5912 8b58                              |002b: iput v2, v1, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTRoundAboutExitCross:I // field@588b
+      858ac6: 7300                                   |002d: return-void-no-barrier
+[new] 858ac6: 0e00                                   |002d: return-void
+   direct_method #56642: <init> (Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;II)V
+    access=10001 (PUBLIC CONSTRUCTOR)
+    codeOff=858ac8 (8751816)
+    quickening_size=f (15)
+      858acc: 7010 b699 0000                         |0000: invoke-direct {v0}, Ljava/lang/Object;.<init>:()V // method@99b6
+      858ad2: e801 1000                              |0003: iput-object-quick v1, v0, [obj+0010]
+[new] 858ad2: 5b01 8858                              |0003: iput-object v1, v0, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTDistance:Ljava/lang/String; // field@5888
+      858ad6: e602 1c00                              |0005: iput-quick v2, v0, [obj+001c]
+[new] 858ad6: 5902 8a58                              |0005: iput v2, v0, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTRange:I // field@588a
+      858ada: e803 1400                              |0007: iput-object-quick v3, v0, [obj+0014]
+[new] 858ada: 5b03 8958                              |0007: iput-object v3, v0, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTNextRoadName:Ljava/lang/String; // field@5889
+      858ade: e804 0800                              |0009: iput-object-quick v4, v0, [obj+0008]
+[new] 858ade: 5b04 8558                              |0009: iput-object v4, v0, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviDestinationDistance:Ljava/lang/String; // field@5885
+      858ae2: e805 0c00                              |000b: iput-object-quick v5, v0, [obj+000c]
+[new] 858ae2: 5b05 8658                              |000b: iput-object v5, v0, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviDestinationTime:Ljava/lang/String; // field@5886
+      858ae6: e606 1800                              |000d: iput-quick v6, v0, [obj+0018]
+[new] 858ae6: 5906 8758                              |000d: iput v6, v0, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTDirection:I // field@5887
+      858aea: e607 2000                              |000f: iput-quick v7, v0, [obj+0020]
+[new] 858aea: 5907 8b58                              |000f: iput v7, v0, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTRoundAboutExitCross:I // field@588b
+      858aee: 7300                                   |0011: return-void-no-barrier
+[new] 858aee: 0e00                                   |0011: return-void
+   direct_method #56643: <init> (Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;IIII)V
+    access=10001 (PUBLIC CONSTRUCTOR)
+    codeOff=858af0 (8751856)
+    quickening_size=13 (19)
+      858af4: 7010 b699 0000                         |0000: invoke-direct {v0}, Ljava/lang/Object;.<init>:()V // method@99b6
+      858afa: e801 1000                              |0003: iput-object-quick v1, v0, [obj+0010]
+[new] 858afa: 5b01 8858                              |0003: iput-object v1, v0, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTDistance:Ljava/lang/String; // field@5888
+      858afe: e602 1c00                              |0005: iput-quick v2, v0, [obj+001c]
+[new] 858afe: 5902 8a58                              |0005: iput v2, v0, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTRange:I // field@588a
+      858b02: e803 1400                              |0007: iput-object-quick v3, v0, [obj+0014]
+[new] 858b02: 5b03 8958                              |0007: iput-object v3, v0, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTNextRoadName:Ljava/lang/String; // field@5889
+      858b06: e804 0800                              |0009: iput-object-quick v4, v0, [obj+0008]
+[new] 858b06: 5b04 8558                              |0009: iput-object v4, v0, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviDestinationDistance:Ljava/lang/String; // field@5885
+      858b0a: e805 0c00                              |000b: iput-object-quick v5, v0, [obj+000c]
+[new] 858b0a: 5b05 8658                              |000b: iput-object v5, v0, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviDestinationTime:Ljava/lang/String; // field@5886
+      858b0e: e606 1800                              |000d: iput-quick v6, v0, [obj+0018]
+[new] 858b0e: 5906 8758                              |000d: iput v6, v0, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTDirection:I // field@5887
+      858b12: e607 2000                              |000f: iput-quick v7, v0, [obj+0020]
+[new] 858b12: 5907 8b58                              |000f: iput v7, v0, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTRoundAboutExitCross:I // field@588b
+      858b16: e608 2800                              |0011: iput-quick v8, v0, [obj+0028]
+[new] 858b16: 5908 8d58                              |0011: iput v8, v0, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.navi_FullMapStatus:I // field@588d
+      858b1a: e609 2400                              |0013: iput-quick v9, v0, [obj+0024]
+[new] 858b1a: 5909 8c58                              |0013: iput v9, v0, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.navi_FullMapLoadStatus:I // field@588c
+      858b1e: 7300                                   |0015: return-void-no-barrier
+[new] 858b1e: 0e00                                   |0015: return-void
+   virtual_method #56644: describeContents ()I
+    access=0001 (PUBLIC)
+    codeOff=5d9bd6 (6134742)
+      5d9bda: 1200                                   |0000: const/4 v0, #int 0 // #0
+      5d9bdc: 0f00                                   |0001: return v0
+   virtual_method #56645: getNaviDestinationDistance ()Ljava/lang/String;
+    access=0001 (PUBLIC)
+    codeOff=85890c (8751372)
+    quickening_size=3 (3)
+      858910: e510 0800                              |0000: iget-object-quick v0, v1, [obj+0008]
+[new] 858910: 5410 8558                              |0000: iget-object v0, v1, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviDestinationDistance:Ljava/lang/String; // field@5885
+      858914: 1100                                   |0002: return-object v0
+   virtual_method #56646: getNaviDestinationTime ()Ljava/lang/String;
+    access=0001 (PUBLIC)
+    codeOff=858916 (8751382)
+    quickening_size=3 (3)
+      85891a: e510 0c00                              |0000: iget-object-quick v0, v1, [obj+000c]
+[new] 85891a: 5410 8658                              |0000: iget-object v0, v1, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviDestinationTime:Ljava/lang/String; // field@5886
+      85891e: 1100                                   |0002: return-object v0
+   virtual_method #56647: getNaviTBTDirection ()I
+    access=0001 (PUBLIC)
+    codeOff=8588da (8751322)
+    quickening_size=3 (3)
+      8588de: e310 1800                              |0000: iget-quick v0, v1, [obj+0018]
+[new] 8588de: 5210 8758                              |0000: iget v0, v1, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTDirection:I // field@5887
+      8588e2: 0f00                                   |0002: return v0
+   virtual_method #56648: getNaviTBTDistance ()Ljava/lang/String;
+    access=0001 (PUBLIC)
+    codeOff=858920 (8751392)
+    quickening_size=3 (3)
+      858924: e510 1000                              |0000: iget-object-quick v0, v1, [obj+0010]
+[new] 858924: 5410 8858                              |0000: iget-object v0, v1, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTDistance:Ljava/lang/String; // field@5888
+      858928: 1100                                   |0002: return-object v0
+   virtual_method #56649: getNaviTBTNextRoadName ()Ljava/lang/String;
+    access=0001 (PUBLIC)
+    codeOff=85892a (8751402)
+    quickening_size=3 (3)
+      85892e: e510 1400                              |0000: iget-object-quick v0, v1, [obj+0014]
+[new] 85892e: 5410 8958                              |0000: iget-object v0, v1, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTNextRoadName:Ljava/lang/String; // field@5889
+      858932: 1100                                   |0002: return-object v0
+   virtual_method #56650: getNaviTBTRange ()I
+    access=0001 (PUBLIC)
+    codeOff=8588e4 (8751332)
+    quickening_size=3 (3)
+      8588e8: e310 1c00                              |0000: iget-quick v0, v1, [obj+001c]
+[new] 8588e8: 5210 8a58                              |0000: iget v0, v1, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTRange:I // field@588a
+      8588ec: 0f00                                   |0002: return v0
+   virtual_method #56651: getNaviTBTRoundAboutExitCross ()I
+    access=0001 (PUBLIC)
+    codeOff=8588ee (8751342)
+    quickening_size=3 (3)
+      8588f2: e310 2000                              |0000: iget-quick v0, v1, [obj+0020]
+[new] 8588f2: 5210 8b58                              |0000: iget v0, v1, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTRoundAboutExitCross:I // field@588b
+      8588f6: 0f00                                   |0002: return v0
+   virtual_method #56652: getNavi_FullMapLoadStatus ()I
+    access=0001 (PUBLIC)
+    codeOff=8588f8 (8751352)
+    quickening_size=3 (3)
+      8588fc: e310 2400                              |0000: iget-quick v0, v1, [obj+0024]
+[new] 8588fc: 5210 8c58                              |0000: iget v0, v1, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.navi_FullMapLoadStatus:I // field@588c
+      858900: 0f00                                   |0002: return v0
+   virtual_method #56653: getNavi_FullMapStatus ()I
+    access=0001 (PUBLIC)
+    codeOff=858902 (8751362)
+    quickening_size=3 (3)
+      858906: e310 2800                              |0000: iget-quick v0, v1, [obj+0028]
+[new] 858906: 5210 8d58                              |0000: iget v0, v1, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.navi_FullMapStatus:I // field@588d
+      85890a: 0f00                                   |0002: return v0
+   virtual_method #56654: readFromParcel (Landroid/os/Parcel;)V
+    access=0001 (PUBLIC)
+    codeOff=858b20 (8751904)
+    quickening_size=1d (29)
+      858b24: e910 5c00 0200                         |0000: invoke-virtual-quick {v2}, [005c] // vtable #005c
+[new] 858b24: 6e10 9b01 0200                         |0000: invoke-virtual {v2}, Landroid/os/Parcel;.readString:()Ljava/lang/String; // method@019b
+      858b2a: 0c00                                   |0003: move-result-object v0
+      858b2c: e810 1000                              |0004: iput-object-quick v0, v1, [obj+0010]
+[new] 858b2c: 5b10 8858                              |0004: iput-object v0, v1, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTDistance:Ljava/lang/String; // field@5888
+      858b30: e910 4600 0200                         |0006: invoke-virtual-quick {v2}, [0046] // vtable #0046
+[new] 858b30: 6e10 9601 0200                         |0006: invoke-virtual {v2}, Landroid/os/Parcel;.readInt:()I // method@0196
+      858b36: 0a00                                   |0009: move-result v0
+      858b38: e610 1c00                              |000a: iput-quick v0, v1, [obj+001c]
+[new] 858b38: 5910 8a58                              |000a: iput v0, v1, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTRange:I // field@588a
+      858b3c: e910 5c00 0200                         |000c: invoke-virtual-quick {v2}, [005c] // vtable #005c
+[new] 858b3c: 6e10 9b01 0200                         |000c: invoke-virtual {v2}, Landroid/os/Parcel;.readString:()Ljava/lang/String; // method@019b
+      858b42: 0c00                                   |000f: move-result-object v0
+      858b44: e810 1400                              |0010: iput-object-quick v0, v1, [obj+0014]
+[new] 858b44: 5b10 8958                              |0010: iput-object v0, v1, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTNextRoadName:Ljava/lang/String; // field@5889
+      858b48: e910 5c00 0200                         |0012: invoke-virtual-quick {v2}, [005c] // vtable #005c
+[new] 858b48: 6e10 9b01 0200                         |0012: invoke-virtual {v2}, Landroid/os/Parcel;.readString:()Ljava/lang/String; // method@019b
+      858b4e: 0c00                                   |0015: move-result-object v0
+      858b50: e810 0800                              |0016: iput-object-quick v0, v1, [obj+0008]
+[new] 858b50: 5b10 8558                              |0016: iput-object v0, v1, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviDestinationDistance:Ljava/lang/String; // field@5885
+      858b54: e910 5c00 0200                         |0018: invoke-virtual-quick {v2}, [005c] // vtable #005c
+[new] 858b54: 6e10 9b01 0200                         |0018: invoke-virtual {v2}, Landroid/os/Parcel;.readString:()Ljava/lang/String; // method@019b
+      858b5a: 0c00                                   |001b: move-result-object v0
+      858b5c: e810 0c00                              |001c: iput-object-quick v0, v1, [obj+000c]
+[new] 858b5c: 5b10 8658                              |001c: iput-object v0, v1, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviDestinationTime:Ljava/lang/String; // field@5886
+      858b60: e910 4600 0200                         |001e: invoke-virtual-quick {v2}, [0046] // vtable #0046
+[new] 858b60: 6e10 9601 0200                         |001e: invoke-virtual {v2}, Landroid/os/Parcel;.readInt:()I // method@0196
+      858b66: 0a00                                   |0021: move-result v0
+      858b68: e610 1800                              |0022: iput-quick v0, v1, [obj+0018]
+[new] 858b68: 5910 8758                              |0022: iput v0, v1, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTDirection:I // field@5887
+      858b6c: e910 4600 0200                         |0024: invoke-virtual-quick {v2}, [0046] // vtable #0046
+[new] 858b6c: 6e10 9601 0200                         |0024: invoke-virtual {v2}, Landroid/os/Parcel;.readInt:()I // method@0196
+      858b72: 0a02                                   |0027: move-result v2
+      858b74: e612 2000                              |0028: iput-quick v2, v1, [obj+0020]
+[new] 858b74: 5912 8b58                              |0028: iput v2, v1, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTRoundAboutExitCross:I // field@588b
+      858b78: 7300                                   |002a: return-void-no-barrier
+[new] 858b78: 0e00                                   |002a: return-void
+   virtual_method #56655: setNaviDestinationDistance (Ljava/lang/String;)V
+    access=0001 (PUBLIC)
+    codeOff=858b7a (8751994)
+    quickening_size=3 (3)
+      858b7e: e801 0800                              |0000: iput-object-quick v1, v0, [obj+0008]
+[new] 858b7e: 5b01 8558                              |0000: iput-object v1, v0, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviDestinationDistance:Ljava/lang/String; // field@5885
+      858b82: 7300                                   |0002: return-void-no-barrier
+[new] 858b82: 0e00                                   |0002: return-void
+   virtual_method #56656: setNaviDestinationTime (Ljava/lang/String;)V
+    access=0001 (PUBLIC)
+    codeOff=858b84 (8752004)
+    quickening_size=3 (3)
+      858b88: e801 0c00                              |0000: iput-object-quick v1, v0, [obj+000c]
+[new] 858b88: 5b01 8658                              |0000: iput-object v1, v0, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviDestinationTime:Ljava/lang/String; // field@5886
+      858b8c: 7300                                   |0002: return-void-no-barrier
+[new] 858b8c: 0e00                                   |0002: return-void
+   virtual_method #56657: setNaviTBTDirection (I)V
+    access=0001 (PUBLIC)
+    codeOff=858b8e (8752014)
+    quickening_size=3 (3)
+      858b92: e601 1800                              |0000: iput-quick v1, v0, [obj+0018]
+[new] 858b92: 5901 8758                              |0000: iput v1, v0, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTDirection:I // field@5887
+      858b96: 7300                                   |0002: return-void-no-barrier
+[new] 858b96: 0e00                                   |0002: return-void
+   virtual_method #56658: setNaviTBTDistance (Ljava/lang/String;)V
+    access=0001 (PUBLIC)
+    codeOff=858b98 (8752024)
+    quickening_size=3 (3)
+      858b9c: e801 1000                              |0000: iput-object-quick v1, v0, [obj+0010]
+[new] 858b9c: 5b01 8858                              |0000: iput-object v1, v0, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTDistance:Ljava/lang/String; // field@5888
+      858ba0: 7300                                   |0002: return-void-no-barrier
+[new] 858ba0: 0e00                                   |0002: return-void
+   virtual_method #56659: setNaviTBTNextRoadName (Ljava/lang/String;)V
+    access=0001 (PUBLIC)
+    codeOff=858ba2 (8752034)
+    quickening_size=3 (3)
+      858ba6: e801 1400                              |0000: iput-object-quick v1, v0, [obj+0014]
+[new] 858ba6: 5b01 8958                              |0000: iput-object v1, v0, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTNextRoadName:Ljava/lang/String; // field@5889
+      858baa: 7300                                   |0002: return-void-no-barrier
+[new] 858baa: 0e00                                   |0002: return-void
+   virtual_method #56660: setNaviTBTRange (I)V
+    access=0001 (PUBLIC)
+    codeOff=858bac (8752044)
+    quickening_size=3 (3)
+      858bb0: e601 1c00                              |0000: iput-quick v1, v0, [obj+001c]
+[new] 858bb0: 5901 8a58                              |0000: iput v1, v0, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTRange:I // field@588a
+      858bb4: 7300                                   |0002: return-void-no-barrier
+[new] 858bb4: 0e00                                   |0002: return-void
+   virtual_method #56661: setNaviTBTRoundAboutExitCross (I)V
+    access=0001 (PUBLIC)
+    codeOff=858bb6 (8752054)
+    quickening_size=3 (3)
+      858bba: e601 2000                              |0000: iput-quick v1, v0, [obj+0020]
+[new] 858bba: 5901 8b58                              |0000: iput v1, v0, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTRoundAboutExitCross:I // field@588b
+      858bbe: 7300                                   |0002: return-void-no-barrier
+[new] 858bbe: 0e00                                   |0002: return-void
+   virtual_method #56662: setNavi_FullMapLoadStatus (I)V
+    access=0001 (PUBLIC)
+    codeOff=858bc0 (8752064)
+    quickening_size=3 (3)
+      858bc4: e601 2400                              |0000: iput-quick v1, v0, [obj+0024]
+[new] 858bc4: 5901 8c58                              |0000: iput v1, v0, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.navi_FullMapLoadStatus:I // field@588c
+      858bc8: 7300                                   |0002: return-void-no-barrier
+[new] 858bc8: 0e00                                   |0002: return-void
+   virtual_method #56663: setNavi_FullMapStatus (I)V
+    access=0001 (PUBLIC)
+    codeOff=858bca (8752074)
+    quickening_size=3 (3)
+      858bce: e601 2800                              |0000: iput-quick v1, v0, [obj+0028]
+[new] 858bce: 5901 8d58                              |0000: iput v1, v0, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.navi_FullMapStatus:I // field@588d
+      858bd2: 7300                                   |0002: return-void-no-barrier
+[new] 858bd2: 0e00                                   |0002: return-void
+   virtual_method #56664: toJson ()Ljava/lang/String;
+    access=0001 (PUBLIC)
+    codeOff=858934 (8751412)
+    quickening_size=15 (21)
+      858938: 2200 cf07                              |0000: new-instance v0, Lcom/google/gson/Gson; // type@07cf
+      85893c: 7010 1127 0000                         |0002: invoke-direct {v0}, Lcom/google/gson/Gson;.<init>:()V // method@2711
+      858942: 220d 5f19                              |0005: new-instance v13, Lltd/qisi/adapterproxy/data/QisiNaviInfo$MQisiNaviInfo; // type@195f
+      858946: 7100 35dd 0000                         |0007: invoke-static {}, Lltd/qisi/adapterproxy/data/QisiNaviConnectInfo;.getInstance:()Lltd/qisi/adapterproxy/data/QisiNaviConnectInfo; // method@dd35
+      85894c: 0c01                                   |000a: move-result-object v1
+      85894e: e910 0b00 0100                         |000b: invoke-virtual-quick {v1}, [000b] // vtable #000b
+[new] 85894e: 6e10 36dd 0100                         |000b: invoke-virtual {v1}, Lltd/qisi/adapterproxy/data/QisiNaviConnectInfo;.getNaviInfoStatus:()I // method@dd36
+      858954: 0a04                                   |000e: move-result v4
+      858956: 7100 8bdd 0000                         |000f: invoke-static {}, Lltd/qisi/adapterproxy/data/QisiSourceInfo;.getInstance:()Lltd/qisi/adapterproxy/data/QisiSourceInfo; // method@dd8b
+      85895c: 0c01                                   |0012: move-result-object v1
+      85895e: e910 0b00 0100                         |0013: invoke-virtual-quick {v1}, [000b] // vtable #000b
+[new] 85895e: 6e10 8cdd 0100                         |0013: invoke-virtual {v1}, Lltd/qisi/adapterproxy/data/QisiSourceInfo;.getSourceStatusConnect:()I // method@dd8c
+      858964: 0a05                                   |0016: move-result v5
+      858966: e5e6 1000                              |0017: iget-object-quick v6, v14, [obj+0010]
+[new] 858966: 54e6 8858                              |0017: iget-object v6, v14, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTDistance:Ljava/lang/String; // field@5888
+      85896a: e3e1 1c00                              |0019: iget-quick v1, v14, [obj+001c]
+[new] 85896a: 52e1 8a58                              |0019: iget v1, v14, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTRange:I // field@588a
+      85896e: 7110 1b9a 0100                         |001b: invoke-static {v1}, Ljava/lang/String;.valueOf:(I)Ljava/lang/String; // method@9a1b
+      858974: 0c07                                   |001e: move-result-object v7
+      858976: e5e8 1400                              |001f: iget-object-quick v8, v14, [obj+0014]
+[new] 858976: 54e8 8958                              |001f: iget-object v8, v14, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTNextRoadName:Ljava/lang/String; // field@5889
+      85897a: e5e9 0800                              |0021: iget-object-quick v9, v14, [obj+0008]
+[new] 85897a: 54e9 8558                              |0021: iget-object v9, v14, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviDestinationDistance:Ljava/lang/String; // field@5885
+      85897e: e5ea 0c00                              |0023: iget-object-quick v10, v14, [obj+000c]
+[new] 85897e: 54ea 8658                              |0023: iget-object v10, v14, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviDestinationTime:Ljava/lang/String; // field@5886
+      858982: e3e1 1800                              |0025: iget-quick v1, v14, [obj+0018]
+[new] 858982: 52e1 8758                              |0025: iget v1, v14, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTDirection:I // field@5887
+      858986: 7110 1b9a 0100                         |0027: invoke-static {v1}, Ljava/lang/String;.valueOf:(I)Ljava/lang/String; // method@9a1b
+      85898c: 0c0b                                   |002a: move-result-object v11
+      85898e: e3e1 2000                              |002b: iget-quick v1, v14, [obj+0020]
+[new] 85898e: 52e1 8b58                              |002b: iget v1, v14, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTRoundAboutExitCross:I // field@588b
+      858992: 7110 1b9a 0100                         |002d: invoke-static {v1}, Ljava/lang/String;.valueOf:(I)Ljava/lang/String; // method@9a1b
+      858998: 0c0c                                   |0030: move-result-object v12
+      85899a: 1253                                   |0031: const/4 v3, #int 5 // #5
+      85899c: 07d1                                   |0032: move-object v1, v13
+      85899e: 07e2                                   |0033: move-object v2, v14
+      8589a0: 760c 3edd 0100                         |0034: invoke-direct/range {v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12}, Lltd/qisi/adapterproxy/data/QisiNaviInfo$MQisiNaviInfo;.<init>:(Lltd/qisi/adapterproxy/data/QisiNaviInfo;IIILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V // method@dd3e
+      8589a6: e920 1d00 d000                         |0037: invoke-virtual-quick {v0, v13}, [001d] // vtable #001d
+[new] 8589a6: 6e20 2c27 d000                         |0037: invoke-virtual {v0, v13}, Lcom/google/gson/Gson;.toJson:(Ljava/lang/Object;)Ljava/lang/String; // method@272c
+      8589ac: 0c00                                   |003a: move-result-object v0
+      8589ae: 1100                                   |003b: return-object v0
+   virtual_method #56665: toString ()Ljava/lang/String;
+    access=0001 (PUBLIC)
+    codeOff=8589b0 (8751536)
+    quickening_size=25 (37)
+      8589b4: 1a00 c350                              |0000: const-string v0, "QisiNaviInfo{naviTBTDistance=" // string@50c3
+      8589b8: 7110 7502 0000                         |0002: invoke-static {v0}, Lc/a/a/a/a;.y:(Ljava/lang/String;)Ljava/lang/StringBuilder; // method@0275
+      8589be: 0c00                                   |0005: move-result-object v0
+      8589c0: e541 1000                              |0006: iget-object-quick v1, v4, [obj+0010]
+[new] 8589c0: 5441 8858                              |0006: iget-object v1, v4, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTDistance:Ljava/lang/String; // field@5888
+      8589c4: e920 4b00 1000                         |0008: invoke-virtual-quick {v0, v1}, [004b] // vtable #004b
+[new] 8589c4: 6e20 329a 1000                         |0008: invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;.append:(Ljava/lang/String;)Ljava/lang/StringBuilder; // method@9a32
+      8589ca: 1a01 9404                              |000b: const-string v1, ", naviTBTRange=" // string@0494
+      8589ce: e920 4b00 1000                         |000d: invoke-virtual-quick {v0, v1}, [004b] // vtable #004b
+[new] 8589ce: 6e20 329a 1000                         |000d: invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;.append:(Ljava/lang/String;)Ljava/lang/StringBuilder; // method@9a32
+      8589d4: e341 1c00                              |0010: iget-quick v1, v4, [obj+001c]
+[new] 8589d4: 5241 8a58                              |0010: iget v1, v4, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTRange:I // field@588a
+      8589d8: e920 4600 1000                         |0012: invoke-virtual-quick {v0, v1}, [0046] // vtable #0046
+[new] 8589d8: 6e20 2d9a 1000                         |0012: invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;.append:(I)Ljava/lang/StringBuilder; // method@9a2d
+      8589de: 1a01 9304                              |0015: const-string v1, ", naviTBTNextRoadName='" // string@0493
+      8589e2: e920 4b00 1000                         |0017: invoke-virtual-quick {v0, v1}, [004b] // vtable #004b
+[new] 8589e2: 6e20 329a 1000                         |0017: invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;.append:(Ljava/lang/String;)Ljava/lang/StringBuilder; // method@9a32
+      8589e8: e541 1400                              |001a: iget-object-quick v1, v4, [obj+0014]
+[new] 8589e8: 5441 8958                              |001a: iget-object v1, v4, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTNextRoadName:Ljava/lang/String; // field@5889
+      8589ec: 1302 2700                              |001c: const/16 v2, #int 39 // #27
+      8589f0: 1a03 8b04                              |001e: const-string v3, ", naviDestinationDistance='" // string@048b
+      8589f4: 7140 6302 1032                         |0020: invoke-static {v0, v1, v2, v3}, Lc/a/a/a/a;.V:(Ljava/lang/StringBuilder;Ljava/lang/String;CLjava/lang/String;)V // method@0263
+      8589fa: e541 0800                              |0023: iget-object-quick v1, v4, [obj+0008]
+[new] 8589fa: 5441 8558                              |0023: iget-object v1, v4, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviDestinationDistance:Ljava/lang/String; // field@5885
+      8589fe: 1a03 8c04                              |0025: const-string v3, ", naviDestinationTime='" // string@048c
+      858a02: 7140 6302 1032                         |0027: invoke-static {v0, v1, v2, v3}, Lc/a/a/a/a;.V:(Ljava/lang/StringBuilder;Ljava/lang/String;CLjava/lang/String;)V // method@0263
+      858a08: e541 0c00                              |002a: iget-object-quick v1, v4, [obj+000c]
+[new] 858a08: 5441 8658                              |002a: iget-object v1, v4, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviDestinationTime:Ljava/lang/String; // field@5886
+      858a0c: 1a03 9204                              |002c: const-string v3, ", naviTBTDirection='" // string@0492
+      858a10: 7140 6302 1032                         |002e: invoke-static {v0, v1, v2, v3}, Lc/a/a/a/a;.V:(Ljava/lang/StringBuilder;Ljava/lang/String;CLjava/lang/String;)V // method@0263
+      858a16: e341 1800                              |0031: iget-quick v1, v4, [obj+0018]
+[new] 858a16: 5241 8758                              |0031: iget v1, v4, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTDirection:I // field@5887
+      858a1a: e920 4600 1000                         |0033: invoke-virtual-quick {v0, v1}, [0046] // vtable #0046
+[new] 858a1a: 6e20 2d9a 1000                         |0033: invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;.append:(I)Ljava/lang/StringBuilder; // method@9a2d
+      858a20: e920 4300 2000                         |0036: invoke-virtual-quick {v0, v2}, [0043] // vtable #0043
+[new] 858a20: 6e20 2a9a 2000                         |0036: invoke-virtual {v0, v2}, Ljava/lang/StringBuilder;.append:(C)Ljava/lang/StringBuilder; // method@9a2a
+      858a26: 1a01 9504                              |0039: const-string v1, ", naviTBTRoundAboutExitCross='" // string@0495
+      858a2a: e920 4b00 1000                         |003b: invoke-virtual-quick {v0, v1}, [004b] // vtable #004b
+[new] 858a2a: 6e20 329a 1000                         |003b: invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;.append:(Ljava/lang/String;)Ljava/lang/StringBuilder; // method@9a32
+      858a30: e341 2000                              |003e: iget-quick v1, v4, [obj+0020]
+[new] 858a30: 5241 8b58                              |003e: iget v1, v4, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTRoundAboutExitCross:I // field@588b
+      858a34: e920 4600 1000                         |0040: invoke-virtual-quick {v0, v1}, [0046] // vtable #0046
+[new] 858a34: 6e20 2d9a 1000                         |0040: invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;.append:(I)Ljava/lang/StringBuilder; // method@9a2d
+      858a3a: e920 4300 2000                         |0043: invoke-virtual-quick {v0, v2}, [0043] // vtable #0043
+[new] 858a3a: 6e20 2a9a 2000                         |0043: invoke-virtual {v0, v2}, Ljava/lang/StringBuilder;.append:(C)Ljava/lang/StringBuilder; // method@9a2a
+      858a40: 1301 7d00                              |0046: const/16 v1, #int 125 // #7d
+      858a44: e920 4300 1000                         |0048: invoke-virtual-quick {v0, v1}, [0043] // vtable #0043
+[new] 858a44: 6e20 2a9a 1000                         |0048: invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;.append:(C)Ljava/lang/StringBuilder; // method@9a2a
+      858a4a: e910 0700 0000                         |004b: invoke-virtual-quick {v0}, [0007] // vtable #0007
+[new] 858a4a: 6e10 3c9a 0000                         |004b: invoke-virtual {v0}, Ljava/lang/StringBuilder;.toString:()Ljava/lang/String; // method@9a3c
+      858a50: 0c00                                   |004e: move-result-object v0
+      858a52: 1100                                   |004f: return-object v0
+   virtual_method #56666: writeToParcel (Landroid/os/Parcel;I)V
+    access=0001 (PUBLIC)
+    codeOff=858bd4 (8752084)
+    quickening_size=1d (29)
+      858bd8: e502 1000                              |0000: iget-object-quick v2, v0, [obj+0010]
+[new] 858bd8: 5402 8858                              |0000: iget-object v2, v0, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTDistance:Ljava/lang/String; // field@5888
+      858bdc: e920 9d00 2100                         |0002: invoke-virtual-quick {v1, v2}, [009d] // vtable #009d
+[new] 858bdc: 6e20 aa01 2100                         |0002: invoke-virtual {v1, v2}, Landroid/os/Parcel;.writeString:(Ljava/lang/String;)V // method@01aa
+      858be2: e302 1c00                              |0005: iget-quick v2, v0, [obj+001c]
+[new] 858be2: 5202 8a58                              |0005: iget v2, v0, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTRange:I // field@588a
+      858be6: e920 8700 2100                         |0007: invoke-virtual-quick {v1, v2}, [0087] // vtable #0087
+[new] 858be6: 6e20 a201 2100                         |0007: invoke-virtual {v1, v2}, Landroid/os/Parcel;.writeInt:(I)V // method@01a2
+      858bec: e502 1400                              |000a: iget-object-quick v2, v0, [obj+0014]
+[new] 858bec: 5402 8958                              |000a: iget-object v2, v0, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTNextRoadName:Ljava/lang/String; // field@5889
+      858bf0: e920 9d00 2100                         |000c: invoke-virtual-quick {v1, v2}, [009d] // vtable #009d
+[new] 858bf0: 6e20 aa01 2100                         |000c: invoke-virtual {v1, v2}, Landroid/os/Parcel;.writeString:(Ljava/lang/String;)V // method@01aa
+      858bf6: e502 0800                              |000f: iget-object-quick v2, v0, [obj+0008]
+[new] 858bf6: 5402 8558                              |000f: iget-object v2, v0, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviDestinationDistance:Ljava/lang/String; // field@5885
+      858bfa: e920 9d00 2100                         |0011: invoke-virtual-quick {v1, v2}, [009d] // vtable #009d
+[new] 858bfa: 6e20 aa01 2100                         |0011: invoke-virtual {v1, v2}, Landroid/os/Parcel;.writeString:(Ljava/lang/String;)V // method@01aa
+      858c00: e502 0c00                              |0014: iget-object-quick v2, v0, [obj+000c]
+[new] 858c00: 5402 8658                              |0014: iget-object v2, v0, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviDestinationTime:Ljava/lang/String; // field@5886
+      858c04: e920 9d00 2100                         |0016: invoke-virtual-quick {v1, v2}, [009d] // vtable #009d
+[new] 858c04: 6e20 aa01 2100                         |0016: invoke-virtual {v1, v2}, Landroid/os/Parcel;.writeString:(Ljava/lang/String;)V // method@01aa
+      858c0a: e302 1800                              |0019: iget-quick v2, v0, [obj+0018]
+[new] 858c0a: 5202 8758                              |0019: iget v2, v0, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTDirection:I // field@5887
+      858c0e: e920 8700 2100                         |001b: invoke-virtual-quick {v1, v2}, [0087] // vtable #0087
+[new] 858c0e: 6e20 a201 2100                         |001b: invoke-virtual {v1, v2}, Landroid/os/Parcel;.writeInt:(I)V // method@01a2
+      858c14: e302 2000                              |001e: iget-quick v2, v0, [obj+0020]
+[new] 858c14: 5202 8b58                              |001e: iget v2, v0, Lltd/qisi/adapterproxy/data/QisiNaviInfo;.naviTBTRoundAboutExitCross:I // field@588b
+      858c18: e920 8700 2100                         |0020: invoke-virtual-quick {v1, v2}, [0087] // vtable #0087
+[new] 858c18: 6e20 a201 2100                         |0020: invoke-virtual {v1, v2}, Landroid/os/Parcel;.writeInt:(I)V // method@01a2
+      858c1e: 7300                                   |0023: return-void-no-barrier
+[new] 858c1e: 0e00                                   |0023: return-void

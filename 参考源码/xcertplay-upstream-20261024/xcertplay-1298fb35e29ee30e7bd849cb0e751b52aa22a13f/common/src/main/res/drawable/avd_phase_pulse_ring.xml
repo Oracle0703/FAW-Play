@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ring of the active phase node (about 2dp at the usual 36dp node); breathes on the RenderThread. The view is 1.06x the node, so full scale is the old 1.06 peak. -->
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+    <aapt:attr name="android:drawable">
+        <vector
+            android:width="24dp"
+            android:height="24dp"
+            android:viewportWidth="24"
+            android:viewportHeight="24">
+            <group android:name="pulse" android:pivotX="12" android:pivotY="12">
+                <path android:strokeColor="#FF000000" android:strokeWidth="1.4" android:pathData="M12,0.7 A11.3,11.3 0 1,1 12,23.3 A11.3,11.3 0 1,1 12,0.7 Z" />
+            </group>
+        </vector>
+    </aapt:attr>
+    <target android:name="pulse">
+        <aapt:attr name="android:animation">
+            <set>
+                <objectAnimator
+                    android:duration="700"
+                    android:interpolator="@android:interpolator/fast_out_slow_in"
+                    android:propertyName="scaleX"
+                    android:repeatCount="infinite"
+                    android:repeatMode="reverse"
+                    android:valueFrom="0.849"
+                    android:valueTo="1" />
+                <objectAnimator
+                    android:duration="700"
+                    android:interpolator="@android:interpolator/fast_out_slow_in"
+                    android:propertyName="scaleY"
+                    android:repeatCount="infinite"
+                    android:repeatMode="reverse"
+                    android:valueFrom="0.849"
+                    android:valueTo="1" />
+            </set>
+        </aapt:attr>
+    </target>
+</animated-vector>

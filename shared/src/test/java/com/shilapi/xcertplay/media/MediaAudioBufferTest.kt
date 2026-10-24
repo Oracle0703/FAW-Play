@@ -44,4 +44,9 @@ class MediaAudioBufferTest {
         assertEquals(57_600, MediaAudioBuffer.startBytesFor(57_600, 134_400, 2_048))
         assertEquals(57_600, MediaAudioBuffer.startBytesFor(57_600, 0, 2_048))
     }
+
+    @Test
+    fun `start level never exceeds a tiny granted buffer`() {
+        assertEquals(1_000, MediaAudioBuffer.startBytesFor(57_600, 1_000, 2_048))
+    }
 }

@@ -1,0 +1,18 @@
+# Source: work/update-package-20261009/format-audit/QisiAdapterService/bytecode.dis.txt
+# Original LF start: 1362801
+  class #1713: ICarClusterUpdateManager ('Lltd/qisi/adapterproxy/ICarClusterUpdateManager;')
+   access=0601 (PUBLIC INTERFACE ABSTRACT)
+   source_file=ICarClusterUpdateManager.java, class_data_off=a00466 (10486886)
+   static_fields=0, instance_fields=0, direct_methods=0, virtual_methods=4
+   virtual_method #47723: changeClusterTheme (Ljava/lang/String;)V
+    access=0401 (PUBLIC ABSTRACT)
+    codeOff=0 (0)
+   virtual_method #47724: getClusterThemeVersionCode (Ljava/lang/String;)I
+    access=0401 (PUBLIC ABSTRACT)
+    codeOff=0 (0)
+   virtual_method #47725: getSystemThemeToInt (Ljava/lang/String;)I
+    access=0401 (PUBLIC ABSTRACT)
+    codeOff=0 (0)
+   virtual_method #47726: updateClusterTheme (Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;Lltd/qisi/adapterproxy/listener/IVehicleCarClusterThemeUpdateChangedListener;)V
+    access=0401 (PUBLIC ABSTRACT)
+    codeOff=0 (0)

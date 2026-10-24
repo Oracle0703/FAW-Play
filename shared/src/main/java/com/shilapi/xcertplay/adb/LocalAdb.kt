@@ -10,6 +10,9 @@ import java.net.Socket
 import java.net.SocketTimeoutException
 import java.security.KeyPair
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.ScheduledThreadPoolExecutor
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.ScheduledFuture
 
 /**
  * A shell on the head unit's own adbd ("ADB over network", 127.0.0.1:5555), for the few commands an
@@ -38,9 +41,20 @@ class LocalAdb(
     fun connect(mayAsk: Boolean): Access {
         if (cancelled.get()) return Access.UNREACHABLE
         if (socket?.isClosed == false) return Access.READY
+        val deadlineLock = Any()
+        var finished = false
+        var deadline: ScheduledFuture<*>? = null
         return try {
             val address = InetSocketAddress(host, port)
-            val opened = Socket().also { socket = it }.apply {
+            val opened = Socket().also { candidate ->
+                socket = candidate
+                // Bound the handshake too, including a peer trickling a partial ADB packet.
+                deadline = commandDeadlines.schedule({
+                    synchronized(deadlineLock) {
+                        if (!finished) runCatching { candidate.close() }
+                    }
+                }, (if (mayAsk) APPROVAL_TIMEOUT_MS + READ_TIMEOUT_MS else READ_TIMEOUT_MS).toLong(), TimeUnit.MILLISECONDS)
+            }.apply {
                 if (cancelled.get()) throw IOException("ADB operation cancelled")
                 connect(address, CONNECT_TIMEOUT_MS)
                 soTimeout = READ_TIMEOUT_MS
@@ -57,6 +71,11 @@ class LocalAdb(
         } catch (_: IOException) {
             closeQuietly()
             Access.UNREACHABLE
+        } finally {
+            synchronized(deadlineLock) {
+                finished = true
+                deadline?.cancel(false)
+            }
         }
     }
 
@@ -68,19 +87,33 @@ class LocalAdb(
     fun shell(command: String, readTimeoutMillis: Int): String? {
         if (cancelled.get()) return null
         if (socket?.isClosed != false && connect(mayAsk = false) != Access.READY) return null
+        require(readTimeoutMillis in 1..MAX_COMMAND_TIMEOUT_MS)
+        val commandSocket = socket ?: return null
+        val deadlineLock = Any()
+        var commandFinished = false
+        // SO_TIMEOUT bounds a single read, not a peer continuously trickling bytes or packets.
+        val deadline = commandDeadlines.schedule({
+            synchronized(deadlineLock) {
+                if (!commandFinished) runCatching { commandSocket.close() }
+            }
+        }, readTimeoutMillis.toLong(), TimeUnit.MILLISECONDS)
         return try {
-            require(readTimeoutMillis in 1..MAX_COMMAND_TIMEOUT_MS)
             socket?.soTimeout = readTimeoutMillis
             val local = nextStreamId++
             send(AdbPacket(AdbPacket.OPEN, local, 0, "shell:$command\u0000".toByteArray()))
             var remote = 0
             var finished = false
             val text = StringBuilder()
+            var outputBytes = 0
             while (!finished) {
                 val packet = receive()
                 when {
                     packet.command == AdbPacket.OKAY && packet.arg1 == local -> remote = packet.arg0
                     packet.command == AdbPacket.WRTE && packet.arg1 == local -> {
+                        if (packet.payload.size > MAX_COMMAND_OUTPUT_BYTES - outputBytes) {
+                            throw IOException("ADB shell output exceeds limit")
+                        }
+                        outputBytes += packet.payload.size
                         text.append(String(packet.payload, Charsets.UTF_8))
                         send(AdbPacket(AdbPacket.OKAY, local, packet.arg0, ByteArray(0)))
                     }
@@ -97,6 +130,11 @@ class LocalAdb(
         } catch (_: IOException) {
             closeQuietly()
             null
+        } finally {
+            synchronized(deadlineLock) {
+                commandFinished = true
+                deadline.cancel(false)
+            }
         }
     }
 
@@ -172,5 +210,9 @@ class LocalAdb(
         const val APPROVAL_TIMEOUT_MS = 60_000
         const val APPROVAL_RECHECK_MS = 1_000
         const val MAX_COMMAND_TIMEOUT_MS = 30_000
+        const val MAX_COMMAND_OUTPUT_BYTES = 1024 * 1024
+        val commandDeadlines = ScheduledThreadPoolExecutor(1) { task ->
+            Thread(task, "diplay-adb-deadline").apply { isDaemon = true }
+        }.apply { removeOnCancelPolicy = true }
     }
 }

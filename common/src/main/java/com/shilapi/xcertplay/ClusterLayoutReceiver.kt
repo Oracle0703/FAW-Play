@@ -42,7 +42,7 @@ class ClusterLayoutReceiver : BroadcastReceiver() {
         main.postDelayed(timeout, 5_000L)
         main.post {
             try {
-                check(BuildConfig.FAW_CLUSTER_TUNING_ENABLED && ClusterLayoutTuning.active()) {
+                check(BuildConfig.AUTUNN_CLUSTER_TUNING_ENABLED && ClusterLayoutTuning.active()) {
                     "当前设备未启用红旗 HS5 仪表调试"
                 }
                 val content = CarPlayClusterDisplay.Content.entries.firstOrNull {
@@ -64,7 +64,7 @@ class ClusterLayoutReceiver : BroadcastReceiver() {
     }
 
     private fun execute(context: Context, intent: Intent): JSONObject {
-        check(BuildConfig.FAW_CLUSTER_TUNING_ENABLED) { "当前 APK 未启用仪表布局调试" }
+        check(BuildConfig.AUTUNN_CLUSTER_TUNING_ENABLED) { "当前 APK 未启用仪表布局调试" }
         val op = intent.getStringExtra("op") ?: "get"
         if (op != "get") {
             check(ClusterLayoutTuning.active()) { "当前设备不是已适配的红旗 HS5 仪表" }

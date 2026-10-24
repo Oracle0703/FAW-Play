@@ -1,0 +1,38 @@
+{
+  "date": "2026-10-15",
+  "timezone": "Asia/Shanghai",
+  "packages": [
+    {
+      "component": "server",
+      "archive": "01-server-1.0.0-source-20261015.zip",
+      "sha256": "565e773fe1d4217fb04c2d16c6910c89626629fd84a76c99b9bfeefa37beaa17",
+      "bytes": 690180,
+      "projectFiles": 111,
+      "totalFilesIncludingManifest": 122,
+      "versionName": "1.0.0",
+      "versionCode": null
+    },
+    {
+      "component": "DiPlay",
+      "archive": "02-DiPlay-0.2.49-REFACTOR1-source-20261015.zip",
+      "sha256": "1c747bcb7de2ecbc10499fd7cca18adb9da5e9924df7cff63a16624d1025b978",
+      "bytes": 6243675,
+      "projectFiles": 1178,
+      "totalFilesIncludingManifest": 1190,
+      "versionName": "0.2.49-FAW-REFACTOR1",
+      "versionCode": 123
+    },
+    {
+      "component": "xcertplay",
+      "archive": "03-xcertplay-1.4.0-hs5.8-source-20261015.zip",
+      "sha256": "1e537fdf0304c09e4ebd15930983bf0f11478a666a414ccfd0a150f40bb38a3c",
+      "bytes": 4564415,
+      "projectFiles": 488,
+      "totalFilesIncludingManifest": 501,
+      "versionName": "1.4.0-hs5.8",
+      "versionCode": 1408
+    }
+  ],
+  "sourceIntegrityVerified": true,
+  "zipIntegrityVerified": true
+}

@@ -46,6 +46,7 @@ object AirPlayPersistence {
     private const val KEY_AUDIO_FOCUS_ENABLED = "audio_focus_enabled"
     private const val KEY_MEDIA_AUDIO_CHANNEL = "media_audio_channel"
     private const val KEY_NAVIGATION_AUDIO_CHANNEL = "navigation_audio_channel"
+    private const val KEY_PHONE_AUDIO_CHANNEL = "phone_audio_channel"
     private const val KEY_NAVIGATION_STREAM_TYPE = "navigation_stream_type"
     private const val KEY_WIRELESS_ENABLED = "wireless_enabled"
     private const val KEY_WIRELESS_HOTSPOT_MODE = "wireless_hotspot_mode"
@@ -64,12 +65,14 @@ object AirPlayPersistence {
     private const val KEY_FPS = "display_fps"
     private const val KEY_MEDIA_BUFFER_MS = "media_buffer_ms"
     private const val KEY_CLUSTER_MAP = "cluster_map_enabled"
+    private const val KEY_HS5_ULTRA = "hs5_ultra_experimental_v1"
     private const val KEY_ADB_CLUSTER_ACTIVITY = "adb_cluster_activity_enabled"
     private const val KEY_CENTER_MAP_OVERLAY = "center_map_overlay"
     private const val KEY_CENTER_MAP_AUTO_HIDE = "center_map_auto_hide"
     private const val KEY_LAUNCHER_MAP_SHARING = "launcher_map_sharing"
     private const val KEY_CLUSTER_MAP_SCALE = "cluster_map_scale_percent"
     private const val KEY_CLUSTER_CONTENT = "cluster_content"
+    private const val KEY_HONGQI_NATIVE_CLUSTER_MIGRATED = "hongqi_native_cluster_v1"
     private const val KEY_CLUSTER_MARKER_X = "cluster_marker_horizontal_step"
     private const val KEY_CLUSTER_MARKER_Y = "cluster_marker_vertical_step"
     private const val KEY_CLUSTER_TURN_CARD_OVERLAY_POSITION = "cluster_turn_card_overlay_position"
@@ -95,9 +98,9 @@ object AirPlayPersistence {
     private const val SAFE_AREA_KEY_PREFIX = "safe_area_"
     private const val CUSTOM_ICON_FILE = "airplay-icon.png"
 
-    const val DEFAULT_MANUFACTURER = "FAW Play"
-    const val DEFAULT_MODEL = "FAW Play"
-    const val DEFAULT_OEM_LABEL = "红旗"
+    const val DEFAULT_MANUFACTURER = "Autunn Play"
+    const val DEFAULT_MODEL = "Autunn Play"
+    const val DEFAULT_OEM_LABEL = "Autunn Play"
     const val DEFAULT_MFI_I2C_PATH = "/dev/i2c-1"
 
     fun loadAmbientDelaySeconds(context: Context): Int = 0
@@ -205,6 +208,22 @@ object AirPlayPersistence {
     fun saveNavigationAudioChannel(context: Context, channel: Int) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
             .putInt(KEY_NAVIGATION_AUDIO_CHANNEL, channel.takeIf { it in AUDIO_CHANNELS } ?: 0)
+            .apply()
+    }
+
+    /**
+     * Call audio gets the same channel control media and navigation already have, so the head
+     * unit's volume keys act on the caller's voice. 0 keeps usage-based routing
+     * (`VOICE_COMMUNICATION`); 1..20 select a legacy stream type.
+     */
+    fun loadPhoneAudioChannel(context: Context): Int =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .getInt(KEY_PHONE_AUDIO_CHANNEL, 0)
+            .takeIf { it in AUDIO_CHANNELS } ?: 0
+
+    fun savePhoneAudioChannel(context: Context, channel: Int) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+            .putInt(KEY_PHONE_AUDIO_CHANNEL, channel.takeIf { it in AUDIO_CHANNELS } ?: 0)
             .apply()
     }
 
@@ -395,7 +414,7 @@ object AirPlayPersistence {
             .apply()
     }
 
-    fun loadManufacturer(context: Context): String = "FAW Play"
+    fun loadManufacturer(context: Context): String = DEFAULT_MANUFACTURER
 
     fun saveManufacturer(context: Context, manufacturer: String) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
@@ -403,7 +422,7 @@ object AirPlayPersistence {
             .apply()
     }
 
-    fun loadModel(context: Context): String = "FAW Play"
+    fun loadModel(context: Context): String = DEFAULT_MODEL
 
     fun saveModel(context: Context, model: String) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
@@ -411,11 +430,17 @@ object AirPlayPersistence {
             .apply()
     }
 
-    fun loadOemLabel(context: Context): String =
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getString(KEY_OEM_LABEL, DEFAULT_OEM_LABEL)
-            // iOS hides the car icon without a label.
-            .orEmpty().ifBlank { DEFAULT_OEM_LABEL }
+    fun loadOemLabel(context: Context): String {
+        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val label = prefs.getString(KEY_OEM_LABEL, DEFAULT_OEM_LABEL).orEmpty()
+        // Only migrate shipped brand defaults; custom labels and pairing data stay intact.
+        if (label in setOf("红旗", "HONGQI", "FAW Play", "FAW-Play")) {
+            prefs.edit().putString(KEY_OEM_LABEL, DEFAULT_OEM_LABEL).apply()
+            return DEFAULT_OEM_LABEL
+        }
+        // iOS hides the car icon without a label.
+        return label.ifBlank { DEFAULT_OEM_LABEL }
+    }
 
     fun saveOemLabel(context: Context, oemLabel: String) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
@@ -423,7 +448,7 @@ object AirPlayPersistence {
             .apply()
     }
 
-    fun loadAmbientLightThreshold(context: Context): AmbientLightThreshold = AmbientLightThreshold(FawSystemParameters.AMBIENT_LUX)
+    fun loadAmbientLightThreshold(context: Context): AmbientLightThreshold = AmbientLightThreshold(AutunnSystemParameters.AMBIENT_LUX)
 
     fun saveAmbientLightThreshold(context: Context, threshold: AmbientLightThreshold) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
@@ -437,18 +462,18 @@ object AirPlayPersistence {
             .putString(KEY_CARPLAY_NIGHT_MODE, mode.key).apply()
     }
 
-    fun loadFps(context: Context): Int = FawSystemParameters.fps(context)
+    fun loadFps(context: Context): Int = AutunnSystemParameters.fps(context)
 
-    fun loadMediaBufferMillis(context: Context): Int = FawSystemParameters.MEDIA_BUFFER_MS
+    fun loadMediaBufferMillis(context: Context): Int = AutunnSystemParameters.MEDIA_BUFFER_MS
 
     fun saveMediaBufferMillis(context: Context, millis: Int) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
             .putInt(KEY_MEDIA_BUFFER_MS, com.shilapi.xcertplay.media.MediaAudioBuffer.sanitize(millis)).apply()
     }
 
-    fun saveFps(context: Context, fps: Int) { FawSystemParameters.saveFps(context, fps) }
+    fun saveFps(context: Context, fps: Int) { AutunnSystemParameters.saveFps(context, fps) }
 
-    fun loadWidthPhysicalMm(context: Context): Int = FawSystemParameters.WIDTH_MM
+    fun loadWidthPhysicalMm(context: Context): Int = AutunnSystemParameters.WIDTH_MM
 
     fun saveWidthPhysicalMm(context: Context, widthPhysicalMm: Int) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
@@ -485,7 +510,7 @@ object AirPlayPersistence {
     }
 
     fun loadClusterMapEnabled(context: Context): Boolean =
-        com.shilapi.xcertplay.shared.BuildConfig.FAW_NAVIGATION_OUTPUTS_ENABLED &&
+        com.shilapi.xcertplay.shared.BuildConfig.AUTUNN_NAVIGATION_OUTPUTS_ENABLED &&
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(
             KEY_CLUSTER_MAP, com.shilapi.xcertplay.hud.HongqiNavigation.clusterDefault())
 
@@ -501,6 +526,17 @@ object AirPlayPersistence {
 
     fun saveClusterMapEnabled(context: Context, enabled: Boolean) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(KEY_CLUSTER_MAP, enabled).apply()
+    }
+
+    fun loadHs5UltraEnabled(context: Context): Boolean =
+        com.shilapi.xcertplay.hud.HongqiNavigation.supported() && loadClusterMapEnabled(context) &&
+            context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY_HS5_ULTRA, false)
+
+    fun saveHs5UltraEnabled(context: Context, enabled: Boolean) {
+        val edit = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+            .putBoolean(KEY_HS5_ULTRA, enabled)
+        if (enabled) edit.putBoolean(KEY_CLUSTER_MAP, true)
+        edit.apply()
     }
 
     /** The dashboard map as a card on the centre screen while DiPlay is in the background. */
@@ -544,20 +580,29 @@ object AirPlayPersistence {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(KEY_ADAPT_PIP_RESOLUTION, enabled).apply()
     }
 
+    @Synchronized
     fun loadClusterContent(context: Context): CarPlayClusterDisplay.Content {
-        val content = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_CLUSTER_CONTENT, null)
+        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        if (com.shilapi.xcertplay.hud.HongqiNavigation.clusterDefault() &&
+            !prefs.getBoolean(KEY_HONGQI_NATIVE_CLUSTER_MIGRATED, false)) {
+            // Upgrade HS5's map/custom-card mode once. Later explicit choices remain intact.
+            prefs.edit()
+                .putString(KEY_CLUSTER_CONTENT, CarPlayClusterDisplay.Content.INSTRUMENTS.name)
+                .putBoolean(KEY_HONGQI_NATIVE_CLUSTER_MIGRATED, true).apply()
+        }
+        return prefs.getString(KEY_CLUSTER_CONTENT, null)
             ?.let { name -> CarPlayClusterDisplay.Content.entries.firstOrNull { it.name == name } }
             ?: if (AdbClusterRouter.enabled(context)) CarPlayClusterDisplay.Content.INSTRUMENTS else CarPlayClusterDisplay.Content.MAP
-        // HS5's stock navigator draws its own guidance above the map; sending instrument
-        // data alone does not put ETE/TBT into CarPlay's map-only video stream.
-        return if (com.shilapi.xcertplay.hud.HongqiNavigation.clusterDefault() &&
-            content == CarPlayClusterDisplay.Content.MAP) {
-            CarPlayClusterDisplay.Content.MAP_WITH_CUSTOM_CARD
-        } else content
     }
 
+    @Synchronized
     fun saveClusterContent(context: Context, content: CarPlayClusterDisplay.Content) {
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY_CLUSTER_CONTENT, content.name).apply()
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().apply {
+            putString(KEY_CLUSTER_CONTENT, content.name)
+            if (com.shilapi.xcertplay.hud.HongqiNavigation.clusterDefault()) {
+                putBoolean(KEY_HONGQI_NATIVE_CLUSTER_MIGRATED, true)
+            }
+        }.apply()
         overlaySettingsListener?.invoke()
     }
 
@@ -762,8 +807,24 @@ object AirPlayPersistence {
         if (commit) editor.commit() else editor.apply()
     }
 
-    fun loadCustomAirPlayIconFile(context: Context): File? =
-        File(context.filesDir, CUSTOM_ICON_FILE).takeIf { it.isFile }
+    fun loadCustomAirPlayIconFile(context: Context): File? {
+        val file = File(context.filesDir, CUSTOM_ICON_FILE).takeIf { it.isFile } ?: return null
+        // A saved copy of the previous default must not override the new default.
+        // Keep the file for rollback, and leave every other custom icon untouched.
+        if (file.length() == 11287L && runCatching {
+                val digest = java.security.MessageDigest.getInstance("SHA-256")
+                file.inputStream().use { input ->
+                    val buffer = ByteArray(8192)
+                    while (true) {
+                        val count = input.read(buffer)
+                        if (count < 0) break
+                        digest.update(buffer, 0, count)
+                    }
+                }
+                digest.digest().toHex() == "c86adbada78cad29732a720063778b8e827b67220e6d972f9a5014707c315715"
+            }.getOrDefault(false)) return null
+        return file
+    }
 
     fun saveCustomAirPlayIcon(context: Context, encodedImage: ByteArray) {
         require(encodedImage.isNotEmpty()) { "AirPlay icon data must not be empty" }
@@ -776,13 +837,32 @@ object AirPlayPersistence {
         File(context.filesDir, CUSTOM_ICON_FILE).delete()
     }
 
+    @Synchronized
     fun loadIdentity(context: Context): AirPlayIdentity {
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        val privateKey = prefs.getString(KEY_IDENT_PRIVATE, null)
-        val publicKey = prefs.getString(KEY_IDENT_PUBLIC, null)
-        val pairingId = prefs.getString(KEY_PAIRING_ID, null)
-        if (privateKey != null && publicKey != null && pairingId != null) {
-            return AirPlayIdentity(privateKey.decodeHex(), publicKey.decodeHex(), pairingId)
+        val stored = prefs.all
+        val identityKeys = listOf(KEY_IDENT_PRIVATE, KEY_IDENT_PUBLIC, KEY_PAIRING_ID)
+        if (identityKeys.any(stored::containsKey)) {
+            try {
+                val privateHex = requireNotNull(stored[KEY_IDENT_PRIVATE] as? String)
+                val publicHex = requireNotNull(stored[KEY_IDENT_PUBLIC] as? String)
+                require(privateHex.length == 64 && publicHex.length == 64)
+                val privateKey = privateHex.decodeHex()
+                val publicKey = publicHex.decodeHex()
+                val pairingId = stored[KEY_PAIRING_ID] as? String
+                require(privateKey.size == 32 && publicKey.size == 32 && !pairingId.isNullOrBlank())
+                val identity = AirPlayIdentity(privateKey, publicKey, pairingId)
+                require(identity.hasValidKeyPair())
+                return identity
+            } catch (error: Exception) {
+                // Keep the original record untouched. Rotating it breaks every existing phone's trust.
+                throw IllegalStateException("CarPlay身份资料不完整或损坏，原数据已保留，请恢复备份后重试", error)
+            }
+        }
+        val pairingIndex = stored[KEY_PAIRING_IDS]
+        check((!stored.containsKey(KEY_PAIRING_IDS) || pairingIndex is Set<*> && pairingIndex.isEmpty()) &&
+            stored.keys.none { it.startsWith("pairing.") }) {
+            "CarPlay身份资料缺失，但已有手机配对，原数据已保留，请恢复备份后重试"
         }
         return AirPlayIdentity.generate().also { identity ->
             prefs.edit()
@@ -796,12 +876,28 @@ object AirPlayPersistence {
     fun loadPairings(context: Context, onSave: (String, ByteArray) -> Unit): PairingStore {
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val store = PairingStore(onSave)
-        for (identifier in prefs.getStringSet(KEY_PAIRING_IDS, emptySet()).orEmpty()) {
-            prefs.getString("pairing.$identifier", null)?.let { store.save(identifier, it.decodeHex()) }
+        val stored = prefs.all
+        val index = stored[KEY_PAIRING_IDS]
+        if (stored.containsKey(KEY_PAIRING_IDS) && index !is Set<*>) {
+            android.util.Log.w("Autunn-Persistence", "Invalid CarPlay pairing index; original data retained")
+        }
+        val identifiers = index as? Set<*> ?: emptySet<Any>()
+        for (identifier in identifiers) {
+            try {
+                require(identifier is String && identifier.isNotBlank())
+                val keyHex = requireNotNull(stored["pairing.$identifier"] as? String)
+                require(keyHex.length == 64)
+                val key = keyHex.decodeHex()
+                store.restore(identifier, key)
+            } catch (_: Exception) {
+                // Isolate one damaged entry, without deleting data or logging a phone ID/key.
+                android.util.Log.w("Autunn-Persistence", "Ignored invalid CarPlay pairing; original data retained")
+            }
         }
         return store
     }
 
+    @Synchronized
     fun savePairing(context: Context, identifier: String, longTermPublicKey: ByteArray) {
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val identifiers = prefs.getStringSet(KEY_PAIRING_IDS, emptySet()).orEmpty().toMutableSet()

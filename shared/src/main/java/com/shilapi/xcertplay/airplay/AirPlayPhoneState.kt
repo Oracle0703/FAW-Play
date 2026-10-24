@@ -1,5 +1,6 @@
 package com.shilapi.xcertplay.airplay
 
+import com.shilapi.xcertplay.airplay.AirPlayAppStates.integer
 import com.shilapi.xcertplay.iap2.wire.Iap2Frame
 import com.shilapi.xcertplay.iap2.wire.Iap2ProtocolException
 import java.util.WeakHashMap
@@ -17,6 +18,7 @@ object AirPlayPhoneState {
     private const val DISCONNECTED = 0
     private const val INCOMING = 2
     private const val MAX_CALLS = 8
+    private const val PHONE_APP_STATE = 2L
 
     /** Telephone ownership is also active while ringing; only CallStateUpdate selects Drop. */
     @JvmStatic
@@ -65,19 +67,10 @@ object AirPlayPhoneState {
 
     @JvmStatic
     fun observe(session: Any, type: String, params: Map<String, Any?>) {
-        if (type != "modesChanged") return
-        val entries = params["appStates"] as? List<*> ?: return
-        val phones = entries.filterIsInstance<Map<*, *>>()
-            .filter { integer(it["appStateID"]) == 2L }
-        if (phones.size != 1) return
-        val entity = integer(phones.single()["entity"]) ?: return
+        val entry = AirPlayAppStates.uniqueState(type, params, PHONE_APP_STATE) ?: return
+        val entity = integer(entry["entity"]) ?: return
         if (entity !in 0L..2L) return
         synchronized(entities) { entities[session] = entity.toInt() }
-    }
-
-    private fun integer(value: Any?): Long? = when (value) {
-        is Byte, is Short, is Int, is Long -> (value as Number).toLong()
-        else -> null
     }
 
     /** Null leaves the existing telephone key behavior in place until ownership is known. */

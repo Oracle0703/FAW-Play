@@ -43,12 +43,12 @@ class SiriPlaybackRecoveryTest {
         interrupt()
         modes(false)
         shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(1_199))
-        verify(controller, never()).sendMediaButton(anyInt())
+        verify(controller, never()).resumeMediaAutomatically()
         shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(1))
-        verify(controller, times(1)).sendMediaButton(CarPlayMediaButton.PLAY)
+        verify(controller, times(1)).resumeMediaAutomatically()
         modes(false)
         shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(6))
-        verify(controller, times(1)).sendMediaButton(CarPlayMediaButton.PLAY)
+        verify(controller, times(1)).resumeMediaAutomatically()
     }
 
     @Test fun replacementOfPrimarySessionInvalidatesDelayedResume() {
@@ -116,7 +116,7 @@ class SiriPlaybackRecoveryTest {
 
     private fun verifyNoResume() {
         shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(6))
-        verify(controller, never()).sendMediaButton(anyInt())
+        verify(controller, never()).resumeMediaAutomatically()
     }
 
     private fun invoke(name: String, types: Array<Class<*>>, vararg args: Any) {

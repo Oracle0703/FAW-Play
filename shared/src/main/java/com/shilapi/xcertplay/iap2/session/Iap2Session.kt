@@ -6,6 +6,7 @@ import com.shilapi.xcertplay.iap2.catalog.Iap2Endpoint
 import com.shilapi.xcertplay.iap2.message.Iap2Messages
 import com.shilapi.xcertplay.iap2.trace.Iap2FrameFormatter
 import com.shilapi.xcertplay.iap2.trace.Iap2TraceDirection
+import com.shilapi.xcertplay.iap2.trace.Iap2TraceDispatch
 import com.shilapi.xcertplay.iap2.wire.Iap2Frame
 import com.shilapi.xcertplay.transport.BlockingDuplexByteStream
 import com.shilapi.xcertplay.transport.Iap2CsmChannel
@@ -22,6 +23,7 @@ class Iap2Session private constructor(
     private val channel: Iap2CsmChannel,
     private val traceContext: String,
     private val onTrace: (String) -> Unit,
+    private val traceEnabled: () -> Boolean,
 ) : AutoCloseable {
     val isClosed: Boolean get() = channel.isClosed
 
@@ -91,17 +93,13 @@ class Iap2Session private constructor(
     }
 
     private fun emitFrameTrace(direction: Iap2TraceDirection, frame: Iap2Frame) {
-        try {
-            emitTrace(Iap2FrameFormatter.format(direction, traceContext, frame))
-        } catch (failure: Exception) {
-            emitTrace(
-                Iap2FrameFormatter.formatFailure(
-                    direction,
-                    traceContext,
-                    frame.messageId,
-                    failure,
-                ),
-            )
+        // Do not copy/re-encode/parse a payload on a real-time protocol thread.
+        if (!runCatching(traceEnabled).getOrDefault(false)) return
+        Iap2TraceDispatch.offer {
+            if (!isClosed && runCatching(traceEnabled).getOrDefault(false)) {
+                runCatching { Iap2FrameFormatter.format(direction, traceContext, frame) }
+                    .onSuccess(::emitTrace)
+            }
         }
     }
 
@@ -121,29 +119,33 @@ class Iap2Session private constructor(
             traceContext: String = "wired",
             onTrace: (String) -> Unit = {},
             onArtwork: (Iap2ArtworkTransfer) -> Unit = {},
+            traceEnabled: () -> Boolean = { false },
         ): Iap2Session =
-            Iap2Session(Iap2CsmChannel.open(underlying, onArtwork), traceContext, onTrace)
+            Iap2Session(Iap2CsmChannel.open(underlying, onArtwork), traceContext, onTrace, traceEnabled)
 
         fun openWireless(
             underlying: BlockingDuplexByteStream,
             traceContext: String = "wireless",
             onTrace: (String) -> Unit = {},
             onArtwork: (Iap2ArtworkTransfer) -> Unit = {},
+            traceEnabled: () -> Boolean = { false },
         ): Iap2Session =
-            Iap2Session(Iap2CsmChannel.openWireless(underlying, onArtwork), traceContext, onTrace)
+            Iap2Session(Iap2CsmChannel.openWireless(underlying, onArtwork), traceContext, onTrace, traceEnabled)
 
         fun openTunnel(
             underlying: BlockingDuplexByteStream,
             traceContext: String = "wireless-tunnel",
             onTrace: (String) -> Unit = {},
             onArtwork: (Iap2ArtworkTransfer) -> Unit = {},
+            traceEnabled: () -> Boolean = { false },
         ): Iap2Session =
-            Iap2Session(Iap2CsmChannel.openTunnel(underlying, onArtwork), traceContext, onTrace)
+            Iap2Session(Iap2CsmChannel.openTunnel(underlying, onArtwork), traceContext, onTrace, traceEnabled)
 
         fun wrap(
             channel: Iap2CsmChannel,
             traceContext: String = "iap2",
             onTrace: (String) -> Unit = {},
-        ): Iap2Session = Iap2Session(channel, traceContext, onTrace)
+            traceEnabled: () -> Boolean = { false },
+        ): Iap2Session = Iap2Session(channel, traceContext, onTrace, traceEnabled)
     }
 }

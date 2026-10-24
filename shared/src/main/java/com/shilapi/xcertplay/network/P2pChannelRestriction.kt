@@ -27,6 +27,11 @@ internal object P2pChannelRestriction {
                 }
                 record(false)
             }
+            // Auto carries no restriction after the acknowledged clear above.
+            if (requested == WifiP2pChannels.AUTO) {
+                activeOwner = null
+                return@synchronized WifiP2pChannels.AUTO
+            }
             record(true) // Persist responsibility before the framework accepts a request.
             if (call(requested, deadlineNs, set, report) && stillOwned()) {
                 acquired = true
@@ -55,6 +60,8 @@ internal object P2pChannelRestriction {
                 if (call(0, System.nanoTime() + TimeUnit.SECONDS.toNanos(2), set, report)) record(false)
                 else report("channel cleanup=pending")
             } else if (pending()) report("channel cleanup=unconfirmed_third_party_owner")
+        } catch (_: P2pTransientFailure) {
+            report("channel cleanup=pending_framework_unavailable")
         } finally { if (activeOwner == owner) activeOwner = null }
     }
 
@@ -72,7 +79,11 @@ internal object P2pChannelRestriction {
             }
             val responded = done.await(remaining, TimeUnit.NANOSECONDS)
             report("channel setter=$channel callback=${if (responded) result.get() else "timeout"} elapsedMs=${(System.nanoTime() - started) / 1_000_000}")
-            return responded && result.get()
+            if (!responded) throw P2pTransientFailure("Wi-Fi P2P channel operation has no framework response")
+            return result.get()
+        } catch (failure: P2pTransientFailure) {
+            // The manager retains the cleanup marker and clears through its recovered Channel.
+            throw failure
         } catch (interrupted: InterruptedException) {
             Thread.currentThread().interrupt()
             report("channel setter=$channel interrupted=true")

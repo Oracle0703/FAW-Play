@@ -1,0 +1,34 @@
+# Android Studio and local IDE state
+.idea/
+*.iml
+.vscode/
+
+# Gradle and local tooling
+.gradle/
+.kotlin/
+build/
+local.properties
+
+# Native build output
+.cxx/
+.externalNativeBuild/
+captures/
+
+# Local agent working notes
+agent_docs/
+research/
+
+tools/
+mobile/release/
+mobile/debug/
+
+
+# Local dev using folder
+tools/
+research/
+
+# OS files
+.DS_Store
+Thumbs.db
+*.log
+/.idea

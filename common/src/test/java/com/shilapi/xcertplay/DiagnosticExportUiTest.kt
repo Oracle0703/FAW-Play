@@ -25,7 +25,7 @@ import java.io.File
 @Config(sdk = [28], qualifiers = "en", shadows = [FileProviderPathTestShadow::class])
 class DiagnosticExportUiTest {
     @Test fun missingPickerSavesAReportAndProvidesSelectableTextInsideDiPlay() {
-        val controller = Robolectric.buildActivity(DiPlayActivity::class.java).setup()
+        val controller = Robolectric.buildActivity(DiPlaySettingsActivity::class.java).setup()
         val activity = controller.get()
         val context = activity.applicationContext
         val authority = "${context.packageName}.diagnostic-reports"
@@ -52,7 +52,11 @@ class DiagnosticExportUiTest {
             assertTrue(file.name.endsWith(".txt"))
             assertTrue(descendants(saved.window!!.decorView).filterIsInstance<TextView>()
                 .any { it.text.contains(file.absolutePath) })
-            assertTrue(file.readText().contains("Android 9 / API 28"))
+            val report = file.readText()
+            assertTrue(report.contains("Android 9 / API 28"))
+            assertTrue(report.contains("--- Application update installer diagnostics ---"))
+            assertTrue(report.contains("Vendor update service available="))
+            assertTrue(report.contains("reason="))
             saved.getButton(android.app.AlertDialog.BUTTON_POSITIVE).performClick()
             shadowOf(Looper.getMainLooper()).idle()
             val viewer = ShadowAlertDialog.getLatestAlertDialog()

@@ -1,0 +1,731 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+package com.shilapi.xcertplay;
+
+import android.Manifest;
+import android.app.Activity;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothManager;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.content.pm.ActivityInfo;
+import android.content.res.ColorStateList;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.RippleDrawable;
+import com.shilapi.xcertplay.host.R;
+import com.shilapi.xcertplay.licensing.ProductLicense;
+import android.net.Uri;
+import android.os.Build;
+import android.provider.Settings;
+import android.util.Log;
+import android.view.Gravity;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
+import android.util.TypedValue;
+import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.HorizontalScrollView;
+import android.widget.ImageView;
+import android.widget.Switch;
+import android.widget.TextView;
+import android.widget.Toast;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.WeakHashMap;
+import kotlin.Unit;
+import kotlin.jvm.functions.Function0;
+
+/** Native, classified settings based on the Sunburst design reference. */
+public final class AutunnSettingsPage {
+    private static final String[] TABS = {"连接设置", "画面显示", com.shilapi.xcertplay.shared.BuildConfig.AUTUNN_NAVIGATION_OUTPUTS_ENABLED ? "导航与 HUD" : "定位", "权限与帮助", "诊断", "授权", "关于"};
+    private static final WeakHashMap<Activity, Integer> SELECTED_TAB = new WeakHashMap<>();
+    private static final WeakHashMap<Activity, Boolean> PREPARATION_THEME = new WeakHashMap<>();
+    private AutunnSettingsPage() {}
+    private static AutunnUiTheme.Palette palette(Context context) { return AutunnUiTheme.palette(context); }
+
+    /** Rendering normalizes Activity.page to settings; identify the actual displayed tab. */
+    public static boolean isConnectionPage(Activity activity) {
+        return selected(activity) == 0 && activity.getWindow().getDecorView()
+                .findViewWithTag("autunn_settings_root") != null;
+    }
+
+    public static void show(Activity activity, String page) {
+        activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+        AutunnSystemParameters.enforce(activity);
+        int selected = "about".equals(page) ? TABS.length - 1 : "authorization".equals(page) ? 5 : "connection".equals(page) ? 0 : selected(activity);
+        if ("connection".equals(page) || "about".equals(page) || "authorization".equals(page)) {
+            try { Field state = activity.getClass().getDeclaredField("page"); state.setAccessible(true); state.set(activity, "settings"); }
+            catch (ReflectiveOperationException unavailable) { Log.w("AutunnSettings", "Page state unavailable"); }
+        }
+        SELECTED_TAB.put(activity, selected);
+        LinearLayout root = screen(activity, "返回首页", () -> home(activity)); root.setTag("autunn_settings_root");
+        LinearLayout body = row(activity); body.setGravity(Gravity.TOP);
+        LinearLayout nav = column(activity); nav.setPadding(dp(activity, 6), dp(activity, 6), dp(activity, 6), dp(activity, 6));
+        nav.setBackground(background(activity, palette(activity).surface, Color.TRANSPARENT));
+        for (int i = 0; i < TABS.length; i++) {
+            LinearLayout.LayoutParams item = new LinearLayout.LayoutParams(-1, 0, 1); if (i != 0) item.topMargin = dp(activity, 3);
+            nav.addView(tab(activity, i, selected), item);
+        }
+        body.addView(nav, new LinearLayout.LayoutParams(dp(activity, 190), -1));
+        LinearLayout pageContent = column(activity);
+        String[] hints = {"配对并选择你的 iPhone", "调整 CarPlay 画面的流畅度", "让导航信息出现在合适的位置", "检查权限，解决连接问题", "记录问题并保存诊断报告", "激活 HUD、仪表地图和方向盘键控", "版本、开源说明与语言"};
+        pageContent.addView(label(activity, TABS[selected], 24, palette(activity).text, true), margin(activity, -1, 28, 0));
+        pageContent.addView(label(activity, hints[selected], 13, palette(activity).muted, false), margin(activity, -1, 18, 0));
+        LinearLayout content = row(activity); content.setGravity(Gravity.TOP);
+        switch (selected) {
+            case 0: connection(activity, content); break;
+            case 1: display(activity, content); break;
+            case 2: navigation(activity, content); break;
+            case 3: permissions(activity, content); break;
+            case 4: diagnostics(activity, content); break;
+            case 5: AutunnAuthorizationPanel.attach(activity, content); break;
+            default: about(activity, content);
+        }
+        LinearLayout.LayoutParams cards = new LinearLayout.LayoutParams(-1, 0, 1); cards.topMargin = dp(activity, 8);
+        pageContent.addView(content, cards);
+        LinearLayout.LayoutParams pageParams = new LinearLayout.LayoutParams(0, -1, 1); pageParams.leftMargin = dp(activity, 18);
+        body.addView(pageContent, pageParams);
+        LinearLayout.LayoutParams bodyParams = new LinearLayout.LayoutParams(-1, 0, 1); bodyParams.topMargin = dp(activity, 10);
+        root.addView(body, bodyParams);
+        activity.setContentView(root); LandscapeSettingsLayout.fullscreen(activity);
+    }
+    private static LinearLayout screen(Activity activity, String backTitle, Runnable backAction) {
+        return screen(activity, backTitle, backAction, null);
+    }
+    /** Reuse the settings chrome without sending the update activity through home navigation. */
+    static LinearLayout updateScreen(Activity activity, Runnable redraw, Runnable backAction) {
+        return screen(activity, "返回关于", backAction, redraw);
+    }
+    private static LinearLayout screen(Activity activity, String backTitle, Runnable backAction, Runnable redraw) {
+        LinearLayout root = column(activity); root.setBackgroundColor(palette(activity).background);
+        root.setPadding(dp(activity, 16), dp(activity, 14), dp(activity, 16), dp(activity, 14));
+        root.addView(header(activity, backTitle, backAction, redraw), new LinearLayout.LayoutParams(-1, dp(activity, 46)));
+        return root;
+    }
+    private static LinearLayout header(Activity activity, String backTitle, Runnable backAction) {
+        return header(activity, backTitle, backAction, null);
+    }
+    private static LinearLayout header(Activity activity, String backTitle, Runnable backAction, Runnable redraw) {
+        LinearLayout header = row(activity);
+        header.setPadding(dp(activity, 14), dp(activity, 5), dp(activity, 10), dp(activity, 5));
+        header.setBackground(background(activity, palette(activity).surface, Color.TRANSPARENT));
+        ImageView logo = logo(activity); logo.setContentDescription("Autunn Play 标志");
+        header.addView(logo, new LinearLayout.LayoutParams(dp(activity, 34), -1));
+        TextView brand = label(activity, "Autunn Play", 22, palette(activity).text, true);
+        brand.setPadding(dp(activity, 10), 0, dp(activity, 14), 0);
+        header.addView(brand, new LinearLayout.LayoutParams(-2, -1));
+        View rule = new View(activity); rule.setBackgroundColor(palette(activity).border);
+        header.addView(rule, new LinearLayout.LayoutParams(dp(activity, 1), dp(activity, 18)));
+        TextView carplay = label(activity, "无线 CarPlay", 15, palette(activity).muted, false); carplay.setPadding(dp(activity, 14), 0, 0, 0);
+        header.addView(carplay, new LinearLayout.LayoutParams(-2, -1));
+        header.addView(new View(activity), new LinearLayout.LayoutParams(0, -1, 1));
+        String mode = AutunnUiTheme.mode(activity);
+        Button theme = button(activity, "system".equals(mode) ? "跟随车机" : "light".equals(mode) ? "浅色" : "深色", false, () -> {
+            AutunnUiTheme.setMode(activity, "system".equals(mode) ? "light" : "light".equals(mode) ? "dark" : "system");
+            if (redraw != null) redraw.run();
+            else if (field(activity, "connectionPanel") instanceof ViewGroup) {
+                PREPARATION_THEME.remove(activity);
+                stylePreparation(activity);
+            }
+            else if ("settings".equals(field(activity, "page"))) show(activity, "settings");
+            else showHome(activity);
+        });
+        theme.setTag("autunn_theme_toggle"); theme.setContentDescription("外观：" + theme.getText() + "，点击切换跟随车机、浅色或深色");
+        theme.setCompoundDrawablesWithIntrinsicBounds(new Mark(11, palette(activity).muted, dp(activity, 18)), null, null, null); theme.setCompoundDrawablePadding(dp(activity, 5));
+        header.addView(theme, new LinearLayout.LayoutParams(dp(activity, 106), -1));
+        Button back = button(activity, backTitle, false, backAction); back.setMaxLines(1);
+        LinearLayout.LayoutParams backParams = new LinearLayout.LayoutParams(dp(activity, 116), -1); backParams.leftMargin = dp(activity, 8);
+        header.addView(back, backParams);
+        return header;
+    }
+    private static ImageView logo(Activity activity) {
+        ImageView logo = new ImageView(activity); logo.setImageResource(R.drawable.ic_autunn_logo);
+        logo.setImageTintList(ColorStateList.valueOf(logoColor(palette(activity)))); logo.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        return logo;
+    }
+    private static int logoColor(AutunnUiTheme.Palette colors) {
+        return colors.dark ? 0xFFF5F5F2 : 0xFFDE2910;
+    }
+    private static void goSettings(Activity activity) {
+        cancelAutomaticEntryForUserNavigation(activity);
+        SELECTED_TAB.put(activity, 0);
+        try { Field page = activity.getClass().getDeclaredField("page"); page.setAccessible(true); page.set(activity, "settings"); invoke(activity, "render", new Class<?>[0]); }
+        catch (ReflectiveOperationException unavailable) { Log.w("AutunnSettings", "Settings navigation unavailable"); }
+    }
+    public static void showHome(Activity activity) {
+        activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+        TextView status = label(activity, "准备连接 iPhone", 32, palette(activity).text, true);
+        Button primary = button(activity, "打开 CarPlay", true, () -> openCarPlay(activity));
+        primary.setTag("autunn_open_carplay");
+        LinearLayout root = landing(activity, "返回车机", () -> open(activity, new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)),
+                status, primary, null, () -> goSettings(activity));
+        root.setTag("autunn_home_root");
+        activity.setContentView(root); LandscapeSettingsLayout.fullscreen(activity);
+        Runnable update = new Runnable() {
+            @Override public void run() {
+                if (!status.isAttachedToWindow()) return;
+                Object error = field(activity, "setupError");
+                boolean paired = activity.getSharedPreferences("diplay", 0).getString("phone_address", null) != null;
+                status.setText(error instanceof String ? (String) error : active() ? "CarPlay 已连接" : session() ? "正在连接 iPhone…" : paired ? "准备连接 iPhone" : "先配对你的 iPhone");
+                status.setTextColor(error != null ? palette(activity).accent : palette(activity).text);
+                status.postDelayed(this, 1500);
+            }
+        };
+        status.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+            @Override public void onViewAttachedToWindow(View view) { status.post(update); }
+            @Override public void onViewDetachedFromWindow(View view) { status.removeCallbacks(update); }
+        });
+        if (status.isAttachedToWindow()) status.post(update);
+    }
+    /** Open the projection itself; an in-progress session must not be stopped and restarted. */
+    private static void openCarPlay(Activity activity) {
+        if (active() || session()) {
+            Log.i("AutunnSettings", "Opening current CarPlay projection");
+            invoke(activity, "openProjection", new Class<?>[0]);
+            return;
+        }
+        String address = activity.getSharedPreferences("diplay", 0).getString("phone_address", null);
+        if (address == null || address.trim().isEmpty()) {
+            goSettings(activity);
+            return;
+        }
+        Log.i("AutunnSettings", "Starting CarPlay projection");
+        invoke(activity, "connect", new Class<?>[]{boolean.class}, true);
+    }
+    /** Restyle only the preparation viewport, retaining the engine's live status and action listeners. */
+    public static void stylePreparation(Activity activity) {
+        Object existing = field(activity, "connectionPanel");
+        if (!(existing instanceof ViewGroup)) return;
+        ViewGroup old = (ViewGroup) existing;
+        if ("autunn_connection_preparation".equals(old.getTag())
+                && Boolean.valueOf(AutunnUiTheme.isDark(activity)).equals(PREPARATION_THEME.get(activity))) {
+            View pending = old.findViewWithTag("autunn_connection_pending"); Object retry = field(activity, "startupRetryButton");
+            if (pending != null && retry instanceof View) pending.setVisibility(((View) retry).getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
+            if (retry instanceof View && ((View) retry).getVisibility() == View.VISIBLE) {
+                Object currentStage = field(activity, "stageStatusView"), reason = field(activity, "latestStage");
+                if (currentStage instanceof TextView && reason instanceof String && !((String) reason).isEmpty())
+                    ((TextView) currentStage).setText((String) reason);
+            }
+            return;
+        }
+        if (!(old.getParent() instanceof ViewGroup)) return;
+        Object liveStage = field(activity, "stageStatusView"), retryValue = field(activity, "startupRetryButton"), recoveryValue = field(activity, "wifiRecoveryButton");
+        if (!(liveStage instanceof TextView) || !(retryValue instanceof Button) || !(recoveryValue instanceof Button)) return;
+        FrameLayout replacement = createPreparation(activity, (TextView) liveStage, (Button) retryValue, (Button) recoveryValue);
+        replacement.setVisibility(old.getVisibility());
+        ViewGroup parent = (ViewGroup) old.getParent(); int index = parent.indexOfChild(old); ViewGroup.LayoutParams params = old.getLayoutParams();
+        try {
+            Field state = activity.getClass().getDeclaredField("connectionPanel"); state.setAccessible(true); state.set(activity, replacement);
+            parent.removeViewAt(index); parent.addView(replacement, index, params);
+        } catch (ReflectiveOperationException unavailable) { Log.w("AutunnSettings", "Preparation viewport unavailable"); }
+    }
+    /** Build the final preparation page directly, reusing the engine's live controls. */
+    public static FrameLayout createPreparation(Activity activity, TextView stage, Button retry, Button recovery) {
+        detach(stage); detach(retry); detach(recovery);
+        LinearLayout actions = row(activity);
+        FrameLayout retrySlot = new FrameLayout(activity);
+        Button pending = button(activity, "正在连接…", true, () -> {}); pending.setEnabled(false);
+        pending.setTag("autunn_connection_pending");
+        pending.setVisibility(retry.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
+        retrySlot.addView(pending, new FrameLayout.LayoutParams(-1, -1));
+        retry.setTextColor(palette(activity).onAccent); retry.setTextSize(sp(activity, 14)); retry.setAllCaps(false); retry.setPadding(dp(activity, 6), 0, dp(activity, 6), 0);
+        retry.setMinHeight(0); retry.setMinimumHeight(0); retry.setBackground(background(activity, palette(activity).accent, palette(activity).accent));
+        retrySlot.addView(retry, new FrameLayout.LayoutParams(-1, -1));
+        actions.addView(retrySlot, new LinearLayout.LayoutParams(0, -1, 1));
+        recovery.setTextColor(palette(activity).text); recovery.setTextSize(sp(activity, 13)); recovery.setAllCaps(false); recovery.setPadding(dp(activity, 6), 0, dp(activity, 6), 0);
+        recovery.setMinHeight(0); recovery.setMinimumHeight(0); recovery.setBackground(background(activity, palette(activity).surface, palette(activity).border));
+        LinearLayout.LayoutParams recoveryParams = new LinearLayout.LayoutParams(0, -1, 1); recoveryParams.leftMargin = dp(activity, 6);
+        actions.addView(recovery, recoveryParams);
+        LinearLayout screen = landing(activity, "返回首页", () -> invoke(activity, "showDiPlayHome", new Class<?>[]{String.class}, "home"),
+                stage, null, actions, () -> invoke(activity, "showDiPlayHome", new Class<?>[]{String.class}, "settings"));
+        FrameLayout replacement = new FrameLayout(activity); replacement.setBackgroundColor(palette(activity).background); replacement.setClickable(true);
+        replacement.setTag("autunn_connection_preparation"); replacement.addView(screen, new FrameLayout.LayoutParams(-1, -1));
+        PREPARATION_THEME.put(activity, AutunnUiTheme.isDark(activity));
+        return replacement;
+    }
+    private static Object field(Activity activity, String name) {
+        try { Field f = activity.getClass().getDeclaredField(name); f.setAccessible(true); return f.get(activity); }
+        catch (ReflectiveOperationException unavailable) { Log.w("AutunnSettings", "Page field unavailable: " + name); return null; }
+    }
+    private static void detach(View view) { if (view.getParent() instanceof ViewGroup) ((ViewGroup) view.getParent()).removeView(view); }
+    private static LinearLayout landing(Activity activity, String backTitle, Runnable backAction, TextView status, Button primary, View optionalActions, Runnable settingsAction) {
+        LinearLayout root = screen(activity, backTitle, backAction);
+        LinearLayout content = row(activity); content.setGravity(Gravity.TOP);
+        LinearLayout hero = column(activity); hero.setPadding(dp(activity, 18), dp(activity, 16), dp(activity, 18), dp(activity, 14));
+        hero.setBackground(background(activity, palette(activity).surface, Color.TRANSPARENT));
+        LinearLayout main = row(activity);
+        LinearLayout message = column(activity);
+        message.addView(label(activity, "无线 CarPlay", 14, palette(activity).muted, false), margin(activity, -1, 24, 0));
+        status.setTextColor(palette(activity).text); status.setTypeface(null, Typeface.BOLD); status.setGravity(Gravity.CENTER_VERTICAL);
+        status.setPadding(0, dp(activity, 2), 0, dp(activity, 2)); status.setMaxLines(primary != null ? 3 : 5);
+        status.setAutoSizeTextTypeUniformWithConfiguration(sp(activity, primary != null ? 16 : 12), sp(activity, primary != null ? 32 : 24), sp(activity, 1), TypedValue.COMPLEX_UNIT_SP);
+        message.addView(status, new LinearLayout.LayoutParams(-1, 0, 1));
+        if (primary != null) message.addView(label(activity, "选择已配对的 iPhone，继续你的旅程。", 13, palette(activity).muted, false), margin(activity, -1, -2, 4));
+        if (primary != null) message.addView(primary, margin(activity, -1, 48, 12));
+        if (optionalActions != null) message.addView(optionalActions, margin(activity, -1, 48, 12));
+        if (primary != null) message.addView(label(activity, "每次上车，自动连接", 12, palette(activity).muted, false), margin(activity, -1, 24, 8));
+        main.addView(message, new LinearLayout.LayoutParams(0, -1, 1.25f));
+        ImageView illustration = new ImageView(activity); illustration.setImageDrawable(new ConnectionArt(activity, palette(activity), dp(activity, 240)));
+        illustration.setScaleType(ImageView.ScaleType.FIT_CENTER); illustration.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        LinearLayout.LayoutParams artParams = new LinearLayout.LayoutParams(0, -1, 1); artParams.leftMargin = dp(activity, 20); main.addView(illustration, artParams);
+        hero.addView(main, new LinearLayout.LayoutParams(-1, 0, 1));
+        LinearLayout shortcuts = row(activity);
+        if (primary != null) {
+            shortcut(activity, shortcuts, "连接设置", 0, 0);
+            shortcut(activity, shortcuts, "画面显示", 1, 1);
+            shortcut(activity, shortcuts, TABS[2], 2, 2);
+        } else {
+            shortcuts.addView(label(activity, "连接期间请保持手机与车机的 Wi-Fi、蓝牙开启。", 13, palette(activity).muted, false));
+        }
+        hero.addView(shortcuts, margin(activity, -1, 44, 12));
+        content.addView(hero, new LinearLayout.LayoutParams(0, -1, 1.65f));
+        LinearLayout devices = card(activity, content, "我的设备", null, 10);
+        devices.addView(label(activity, "已配对的 iPhone", 12, palette(activity).muted, false), margin(activity, -1, -2, 8));
+        if (primary != null) addPhoneChoices(activity, devices, true, 62);
+        else {
+            String phone = activity.getSharedPreferences("diplay", 0).getString("phone_name", null);
+            devices.addView(label(activity, phone == null ? "尚未选择 iPhone" : phone, 18, palette(activity).text, true), margin(activity, -1, 62, 8));
+        }
+        spacer(activity, devices);
+        View rule = new View(activity); rule.setBackgroundColor(palette(activity).border); devices.addView(rule, margin(activity, -1, 1, 8));
+        devices.addView(label(activity, bluetoothStatus(activity), 14, palette(activity).text, true), margin(activity, -1, -2, 10));
+        devices.addView(label(activity, wifiStatus(activity), 12, palette(activity).muted, false), margin(activity, -1, -2, 6));
+        LinearLayout actions = row(activity);
+        if (primary != null) action(activity, actions, "配对新手机", false, () -> open(activity, new Intent(Settings.ACTION_BLUETOOTH_SETTINGS)));
+        Button settings = action(activity, actions, "设置", false, settingsAction);
+        settings.setCompoundDrawablesWithIntrinsicBounds(new Mark(9, palette(activity).text, dp(activity, 18)), null, null, null); settings.setCompoundDrawablePadding(dp(activity, 6));
+        devices.addView(actions, margin(activity, -1, 44, 12));
+        LinearLayout.LayoutParams contentParams = new LinearLayout.LayoutParams(-1, 0, 1); contentParams.topMargin = dp(activity, 10);
+        root.addView(content, contentParams); return root;
+    }
+    private static void shortcut(Activity activity, LinearLayout parent, String title, int icon, int tab) {
+        Button shortcut = action(activity, parent, title, false, () -> {
+            goSettings(activity); SELECTED_TAB.put(activity, tab); show(activity, "settings");
+        });
+        shortcut.setTextSize(sp(activity, 12)); shortcut.setCompoundDrawablesWithIntrinsicBounds(new Mark(icon, palette(activity).accent, dp(activity, 20)), null, null, null);
+        shortcut.setCompoundDrawablePadding(dp(activity, 6));
+    }
+    private static String bluetoothStatus(Activity activity) {
+        if (Build.VERSION.SDK_INT >= 31 && activity.checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) return "蓝牙权限待授权";
+        try {
+            BluetoothManager manager = activity.getSystemService(BluetoothManager.class);
+            BluetoothAdapter adapter = manager == null ? null : manager.getAdapter();
+            return adapter != null && adapter.isEnabled() ? "蓝牙已开启" : "蓝牙未开启";
+        } catch (RuntimeException unavailable) { return "请检查蓝牙状态"; }
+    }
+    private static String wifiStatus(Activity activity) {
+        try {
+            android.net.wifi.WifiManager wifi = (android.net.wifi.WifiManager) activity.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+            return wifi != null && wifi.isWifiEnabled() ? "Wi-Fi 已开启" : "请在系统设置中开启 Wi-Fi";
+        } catch (RuntimeException unavailable) { return "请检查 Wi-Fi 状态"; }
+    }
+    private static int selected(Activity activity) {
+        Integer value = SELECTED_TAB.get(activity); return value == null ? 0 : value;
+    }
+    private static View tab(Activity activity, int index, int current) {
+        Button control = button(activity, TABS[index], false, () -> {
+            cancelAutomaticEntryForUserNavigation(activity);
+            SELECTED_TAB.put(activity, index); show(activity, "settings");
+        });
+        control.setTextSize(sp(activity, 14));
+        control.setSelected(index == current);
+        control.setBackground(background(activity, index == current ? palette(activity).selected : palette(activity).surface, Color.TRANSPARENT));
+        control.setTextColor(index == current ? palette(activity).accent : palette(activity).muted);
+        {
+            control.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
+            int icon = index == 5 ? 12 : index == 6 ? 5 : index;
+            control.setCompoundDrawablesWithIntrinsicBounds(new Mark(icon, index == current ? palette(activity).accent : palette(activity).muted, dp(activity, 20)), null, null, null);
+            control.setCompoundDrawablePadding(dp(activity, 8));
+        }
+        return control;
+    }
+    private static void connection(Activity activity, LinearLayout parent) {
+        LinearLayout pairing = card(activity, parent, "配对与连接", null, 0);
+        ((LinearLayout.LayoutParams) pairing.getLayoutParams()).weight = 2;
+        TextView status = label(activity, "", 13, palette(activity).muted, false); pairing.addView(status, margin(activity, -1, -2, 6));
+        pairing.addView(label(activity, "选择 iPhone", 15, palette(activity).text, true), margin(activity, -1, -2, 12));
+        SharedPreferences prefs = activity.getSharedPreferences("diplay", 0);
+        addPhoneChoices(activity, pairing, false, 48);
+        spacer(activity, pairing);
+        LinearLayout actions = row(activity);
+        action(activity, actions, "配对新手机", false, () -> open(activity, new Intent(Settings.ACTION_BLUETOOTH_SETTINGS)));
+        Button connect = action(activity, actions, "连接手机", true, () -> {
+            if (active() || session()) { openCarPlay(activity); return; }
+            if (prefs.getString("phone_address", null) == null) { status.setText("请先配对并选择 iPhone"); return; }
+            openCarPlay(activity);
+        });
+        Button disconnect = action(activity, actions, "断开连接", false, () -> stop(activity));
+        disconnect.setEnabled(session()); disconnect.setAlpha(session() ? 1f : .45f);
+        pairing.addView(actions, margin(activity, -1, 48, 10));
+        Runnable update = new Runnable() {
+            @Override public void run() {
+                if (!status.isAttachedToWindow()) return;
+                boolean running = session(); status.setText(active() ? "CarPlay 已连接" : running ? "正在连接手机…" : "尚未连接");
+                status.setTextColor(active() ? palette(activity).accent : palette(activity).muted);
+                connect.setText(active() ? "进入 CarPlay" : "连接手机"); disconnect.setEnabled(running); disconnect.setAlpha(running ? 1f : .45f); status.postDelayed(this, 1500);
+            }
+        };
+        status.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+            @Override public void onViewAttachedToWindow(View view) { status.post(update); }
+            @Override public void onViewDetachedFromWindow(View view) { status.removeCallbacks(update); }
+        });
+        LinearLayout startup = card(activity, parent, "启动", "打开 Autunn Play 后自动连接已选择的 iPhone。", 6);
+        toggle(activity, startup, "车机启动后打开", Boolean.TRUE.equals(call("AirPlayPersistence", "loadAutoStartOnBoot", new Class<?>[]{Context.class}, activity)),
+                enabled -> call("AirPlayPersistence", "saveAutoStartOnBoot", new Class<?>[]{Context.class, boolean.class}, activity, enabled));
+        spacer(activity, startup);
+        startup.addView(label(activity, "首次使用，请先完成系统蓝牙配对。", 12, palette(activity).muted, false), margin(activity, -1, -2, 6));
+    }
+    private static void addPhoneChoices(Activity activity, LinearLayout parent, boolean homePage, int height) {
+        List<BluetoothDevice> devices = bonded(activity);
+        SharedPreferences prefs = activity.getSharedPreferences("diplay", 0); String address = prefs.getString("phone_address", null);
+        LinearLayout phoneChoices = row(activity); phoneChoices.setGravity(Gravity.CENTER_VERTICAL);
+        // The HS5's wide, shallow screen fits two phones side by side without
+        // consuming a second row or pushing the connection actions below the card.
+        boolean inlinePhones = devices.size() <= 2;
+        View chosenView = null;
+        if (devices.isEmpty()) {
+            phoneChoices.addView(label(activity, "暂无已识别的 iPhone", 14, palette(activity).muted, false), margin(activity, -2, height, 0));
+        } else {
+            for (BluetoothDevice device : devices) {
+                String name = device.getName() == null ? "iPhone" : device.getName();
+                boolean duplicate = false;
+                for (BluetoothDevice other : devices) if (other != device && name.equals(other.getName())) duplicate = true;
+                String title = name + (duplicate ? " · " + device.getAddress().substring(12) : "");
+                boolean chosen = device.getAddress().equals(address);
+                Button select = button(activity, title + (chosen ? "  ✓" : ""), false, () -> {
+                    prefs.edit().putString("phone_address", device.getAddress()).putString("phone_name", device.getName() == null ? "iPhone" : device.getName()).apply();
+                    if (homePage) showHome(activity); else show(activity, "settings");
+                });
+                select.setSelected(chosen); select.setMaxLines(2);
+                if (chosen) { select.setBackground(background(activity, palette(activity).selected, palette(activity).accent)); chosenView = select; }
+                select.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
+                select.setCompoundDrawablesWithIntrinsicBounds(new Mark(10, palette(activity).text, dp(activity, 20)), null, null, null); select.setCompoundDrawablePadding(dp(activity, 8));
+                LinearLayout.LayoutParams item = inlinePhones
+                        ? new LinearLayout.LayoutParams(0, dp(activity, height), 1)
+                        : new LinearLayout.LayoutParams(dp(activity, 160), dp(activity, height));
+                if (phoneChoices.getChildCount() != 0) item.leftMargin = dp(activity, 8);
+                phoneChoices.addView(select, item);
+            }
+        }
+        if (inlinePhones) {
+            parent.addView(phoneChoices, margin(activity, -1, height, 8));
+        } else {
+            HorizontalScrollView phones = new HorizontalScrollView(activity); phones.setFillViewport(false); phones.setHorizontalScrollBarEnabled(false);
+            phones.addView(phoneChoices); View selectedPhone = chosenView;
+            if (selectedPhone != null) phones.post(() -> phones.scrollTo(Math.max(0, selectedPhone.getRight() - phones.getWidth()), 0));
+            parent.addView(phones, margin(activity, -1, height, 8));
+        }
+        IphoneChoicesMonitor.watch(phoneChoices, () -> {
+            if (homePage) showHome(activity); else show(activity, "connection");
+        });
+    }
+    private static void display(Activity activity, LinearLayout parent) {
+        LinearLayout card = card(activity, parent, "画面帧率", "选择画面的流畅度。更改后重新连接生效。", 1);
+        int current = AutunnSystemParameters.fps(activity);
+        LinearLayout segmented = row(activity);
+        int[] values = {30, 50, 60};
+        for (int value : values) {
+            Button option = button(activity, value + " 帧", value == current, () -> {
+                if (AutunnSystemParameters.fps(activity) == value) return;
+                AutunnSystemParameters.saveFps(activity, value);
+                show(activity, "settings");
+            });
+            option.setSelected(value == current);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, dp(activity, 48), 1);
+            params.setMargins(dp(activity, 3), dp(activity, 12), dp(activity, 3), dp(activity, 4));
+            segmented.addView(option, params);
+        }
+        card.addView(segmented);
+        if (session()) card.addView(button(activity, "应用并重新连接", true, () -> invoke(activity, "reconnectForClusterMap", new Class<?>[0])), margin(activity, -1, 48, 10));
+    }
+    private interface Save { void set(boolean value); }
+    private static void navigation(Activity activity, LinearLayout parent) {
+        if (ProductLicense.isRequired()) AutunnSettingsLicenseCard.attach(activity, parent);
+        if (com.shilapi.xcertplay.shared.BuildConfig.AUTUNN_NAVIGATION_OUTPUTS_ENABLED) {
+            LinearLayout hud = card(activity, parent, "HUD 导航", "在抬头显示中查看导航箭头与距离。", 2);
+            SharedPreferences outputs = activity.getSharedPreferences("diplay_byd_outputs", 0);
+            toggle(activity, hud, "HUD 导航提示", outputs.getBoolean("navigation_enabled", true),
+                    enabled -> outputs.edit().putBoolean("navigation_enabled", enabled).apply());
+        }
+        LinearLayout gps = card(activity, parent, "定位", "向 iPhone 提供车机位置，帮助导航定位。", 2);
+        boolean location = Boolean.TRUE.equals(call("AirPlayPersistence", "loadLocationReportingEnabled", new Class<?>[]{Context.class}, activity));
+        toggle(activity, gps, "车机位置上报", location, enabled -> invoke(activity, "onLocationReportingChanged", new Class<?>[]{boolean.class}, enabled));
+        if (com.shilapi.xcertplay.shared.BuildConfig.AUTUNN_NAVIGATION_OUTPUTS_ENABLED) {
+            LinearLayout gesture = card(activity, parent, "仪表导航手势", "CarPlay 导航时三指左滑开启仪表地图，右滑关闭。", 2);
+            gesture.addView(label(activity, "结束导航后，HUD 与仪表自动恢复原厂画面。", 14, palette(activity).muted, false), margin(activity, -1, -2, 10));
+        }
+    }
+    private static void permissions(Activity activity, LinearLayout parent) {
+        LinearLayout access = card(activity, parent, "应用权限", null, 3);
+        access.addView(label(activity, PermissionAccess.status(activity), 13, palette(activity).text, false), margin(activity, -1, -2, 6));
+        access.addView(label(activity, "麦克风：" + (activity.checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED ? "已授权" : "未授权"), 13, palette(activity).text, false), margin(activity, -1, -2, 4));
+        spacer(activity, access);
+        access.addView(button(activity, "申请连接权限", true, () -> PermissionAccess.request(activity)), margin(activity, -1, 44, 6));
+        access.addView(button(activity, "应用权限", false, () -> PermissionAccess.openAppSettings(activity)), margin(activity, -1, 44, 6));
+        LinearLayout system = card(activity, parent, "系统连接", "请保持手机与车机的 Wi-Fi、蓝牙开启。", 3);
+        spacer(activity, system);
+        system.addView(button(activity, "Wi-Fi 设置", false, () -> PermissionAccess.openWifiSettings(activity)), margin(activity, -1, 44, 6));
+        if (com.shilapi.xcertplay.shared.BuildConfig.AUTUNN_NAVIGATION_OUTPUTS_ENABLED)
+            system.addView(button(activity, "允许仪表显示", false, () -> open(activity, new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + activity.getPackageName())))), margin(activity, -1, 44, 6));
+        LinearLayout help = card(activity, parent, "连接帮助", null, 0);
+        help.addView(label(activity, "首次使用：系统蓝牙配对 iPhone，再在连接设置选择手机。", 13, palette(activity).muted, false), margin(activity, -1, -2, 6));
+        help.addView(label(activity, "无法连接时，确认双方 Wi-Fi 与蓝牙开启，再重置连接。", 13, palette(activity).muted, false), margin(activity, -1, -2, 8));
+        spacer(activity, help);
+        help.addView(button(activity, "重置 CarPlay 连接", false,
+                () -> invoke(activity, "confirmWirelessReset", new Class<?>[0])), margin(activity, -1, 44, 6));
+    }
+    private static void diagnostics(Activity activity, LinearLayout parent) {
+        LinearLayout logs = card(activity, parent, "诊断日志", "遇到问题时启用日志，复现后上传报告，并将报告编号发给管理员。", 4);
+        toggle(activity, logs, "启用调试日志", Boolean.TRUE.equals(call("AirPlayPersistence", "loadDebugLogsEnabled", new Class<?>[]{Context.class}, activity)),
+                enabled -> call("AirPlayPersistence", "saveDebugLogsEnabled", new Class<?>[]{Context.class, boolean.class}, activity, enabled));
+        spacer(activity, logs);
+        LinearLayout actions = row(activity);
+        actions.addView(button(activity, "上传诊断报告", true, () -> invoke(activity, "confirmDiagnosticUpload", new Class<?>[0])), new LinearLayout.LayoutParams(0, -1, 1));
+        actions.addView(button(activity, "保存诊断报告", false, () -> invoke(activity, "exportDiagnostics", new Class<?>[]{Uri.class}, (Object) null)), new LinearLayout.LayoutParams(0, -1, 1));
+        logs.addView(actions, margin(activity, -1, 48, 10));
+        LinearLayout export = card(activity, parent, "保存与排查", "将报告保存到指定位置，便于检查连接过程。", 4);
+        spacer(activity, export);
+        if (com.shilapi.xcertplay.network.WifiP2pChannels.INSTANCE.legacySelectionSupported())
+            export.addView(button(activity, "Wi-Fi 信道实验", false, () -> channelExperiment(activity)), margin(activity, -1, 48, 8));
+        LinearLayout vehicleActions = row(activity);
+        vehicleActions.addView(button(activity, "车辆状态（只读）", false, () -> HongqiVehicleDataDialog.show(activity)), new LinearLayout.LayoutParams(0, -1, 1));
+        vehicleActions.addView(button(activity, "空调与座椅", false, () -> HongqiVehicleControlDialog.show(activity)), new LinearLayout.LayoutParams(0, -1, 1));
+        export.addView(vehicleActions, margin(activity, -1, 48, 8));
+        if (com.shilapi.xcertplay.hud.HongqiNavigation.supported()) {
+            toggle(activity, export, "HS5 CarPlay Ultra 实验适配",
+                    Boolean.TRUE.equals(call("AirPlayPersistence", "loadHs5UltraEnabled", new Class<?>[]{Context.class}, activity)),
+                    enabled -> call("AirPlayPersistence", "saveHs5UltraEnabled", new Class<?>[]{Context.class, boolean.class}, activity, enabled));
+            export.addView(label(activity, "开启后重新连接 iPhone。首次仪表验证请停车并挂 P 档；关闭后重连恢复普通 CarPlay。", 13, palette(activity).muted, false), margin(activity, -1, -2, 6));
+        }
+        export.addView(button(activity, "选择保存位置", false, () -> invoke(activity, "chooseReportDestination", new Class<?>[0])), margin(activity, -1, 48, 8));
+    }
+    private static void channelExperiment(Activity activity) {
+        int[] values = {0, -1, 36, 40, 44, 48, 149, 153, 157, 161, 165};
+        LinearLayout panel = column(activity);
+        panel.setPadding(dp(activity, 16), dp(activity, 12), dp(activity, 16), dp(activity, 12));
+        panel.addView(label(activity, "默认 Auto。实验选择在下次重连生效；以诊断中的实际频率为准。", 13, palette(activity).muted, false));
+        final android.app.AlertDialog[] dialog = new android.app.AlertDialog[1];
+        LinearLayout line = null;
+        for (int index = 0; index < values.length; index++) {
+            if (index % 3 == 0) { line = row(activity); panel.addView(line, margin(activity, -1, 48, 6)); }
+            final int value = values[index];
+            String name = value == 0 ? "Auto" : value == -1 ? "5 GHz 优先" : "信道 " + value;
+            line.addView(button(activity, name, false, () -> {
+                call("AirPlayPersistence", "saveWifiP2pPreferredChannel", new Class<?>[]{Context.class, int.class}, activity, value);
+                dialog[0].dismiss();
+                Toast.makeText(activity, "已保存，下次重新连接生效", Toast.LENGTH_SHORT).show();
+            }), new LinearLayout.LayoutParams(0, -1, 1));
+        }
+        dialog[0] = LandscapeSettingsLayout.dialogBuilder(activity).setTitle("Wi-Fi 信道实验")
+                .setView(panel).setNegativeButton("取消", null).create();
+        dialog[0].show();
+    }
+    private static void about(Activity activity, LinearLayout parent) {
+        LinearLayout info = card(activity, parent, "Autunn Play", "无线 CarPlay", 5);
+        try { info.addView(label(activity, "版本 " + activity.getPackageManager().getPackageInfo(activity.getPackageName(), 0).versionName, 13, palette(activity).muted, false), margin(activity, -1, -2, 8)); }
+        catch (PackageManager.NameNotFoundException ignored) {}
+        info.addView(button(activity, "检查更新", false, () -> activity.startActivity(new Intent(activity, AppUpdateActivity.class))), margin(activity, -1, 40, 4));
+        spacer(activity, info);
+        info.addView(label(activity, "开源说明", 16, palette(activity).text, true), margin(activity, -1, -2, 12));
+        info.addView(label(activity, "基于 DiPlay / xcertplay 开源项目开发。保留原项目及依赖的开源许可。", 13, palette(activity).muted, false), margin(activity, -1, -2, 8));
+        info.addView(label(activity, "独立开发与维护，与中国一汽、红旗品牌无隶属或官方授权关系。车型名称仅用于说明兼容性。CarPlay 为 Apple Inc. 的商标。", 12, palette(activity).muted, false), margin(activity, -1, -2, 8));
+        LinearLayout language = card(activity, parent, "语言", null, 5);
+        ((LinearLayout.LayoutParams) language.getLayoutParams()).weight = 1.4f;
+        String[] tags = {"system", "zh", "en", "ar", "ru", "es", "uk"};
+        String[] names = {"跟随系统", "简体中文", "English", "العربية", "Русский", "Español", "Українська"};
+        Object currentLanguage = call("AppLocale", "preference", new Class<?>[]{Context.class}, activity);
+        LinearLayout choices = null;
+        for (int i = 0; i < tags.length; i++) {
+            if (i % 3 == 0) { choices = row(activity); language.addView(choices, margin(activity, -1, 48, 6)); }
+            String tag = tags[i];
+            Button option = action(activity, choices, names[i], tag.equals(currentLanguage), () -> {
+                call("AppLocale", "save", new Class<?>[]{Context.class, String.class}, activity, tag);
+                if (Build.VERSION.SDK_INT < 33) activity.recreate(); else show(activity, "settings");
+            });
+            option.setSelected(tag.equals(currentLanguage));
+        }
+    }
+    private static List<BluetoothDevice> bonded(Activity activity) {
+        try {
+            if (Build.VERSION.SDK_INT >= 31 && activity.checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) return Collections.emptyList();
+            BluetoothManager manager = activity.getSystemService(BluetoothManager.class);
+            BluetoothAdapter adapter = manager == null ? null : manager.getAdapter();
+            if (adapter == null || !adapter.isEnabled()) return Collections.emptyList();
+            List<BluetoothDevice> result = new ArrayList<>(com.shilapi.xcertplay.transport.IphoneBluetoothDevices.bonded(adapter));
+            Collections.sort(result, Comparator.comparing(d -> d.getName() == null ? "" : d.getName()));
+            return result;
+        } catch (RuntimeException unavailable) { return Collections.emptyList(); }
+    }
+    private static boolean session() { return Boolean.TRUE.equals(call("CarPlayBackgroundSession", "hasSession", new Class<?>[0])); }
+    private static boolean active() { return Boolean.TRUE.equals(call("CarPlayBackgroundSession", "getActive", new Class<?>[0])); }
+    private static void stop(Activity activity) {
+        call("CarPlayBackgroundSession", "stop", new Class<?>[]{Function0.class}, new Function0<Unit>() {
+            @Override public Unit invoke() { activity.runOnUiThread(() -> { if (!activity.isFinishing()) show(activity, "settings"); }); return Unit.INSTANCE; }
+        });
+    }
+    private static Object call(String owner, String name, Class<?>[] types, Object... args) {
+        try {
+            Class<?> cls = Class.forName("com.shilapi.xcertplay." + owner);
+            Method method = cls.getDeclaredMethod(name, types); method.setAccessible(true);
+            Object target = Modifier.isStatic(method.getModifiers()) ? null : cls.getField("INSTANCE").get(null);
+            return method.invoke(target, args);
+        } catch (ReflectiveOperationException | RuntimeException unavailable) {
+            Log.w("AutunnSettings", "Setting action unavailable: " + name + " (" + unavailable.getClass().getSimpleName() + ")"); return null;
+        }
+    }
+    private static void invoke(Activity activity, String name, Class<?>[] types, Object... args) {
+        try { Method method = activity.getClass().getDeclaredMethod(name, types); method.setAccessible(true); method.invoke(activity, args); }
+        catch (ReflectiveOperationException | RuntimeException unavailable) {
+            Log.w("AutunnSettings", "Page action unavailable: " + name + " (" + unavailable.getClass().getSimpleName() + ")");
+            Toast.makeText(activity, "操作暂不可用，请检查权限后重试", Toast.LENGTH_SHORT).show();
+        }
+    }
+    private static void cancelAutomaticEntryForUserNavigation(Activity activity) {
+        activity.getIntent().removeExtra("internal_connection_recovery");
+        CarPlayBackgroundSession.INSTANCE.cancelAutomaticEntry("user-settings-navigation");
+    }
+    private static void home(Activity activity) {
+        cancelAutomaticEntryForUserNavigation(activity);
+        try {
+            Field page = activity.getClass().getDeclaredField("page"); page.setAccessible(true); page.set(activity, "home");
+            invoke(activity, "render", new Class<?>[0]);
+        } catch (ReflectiveOperationException unavailable) { activity.onBackPressed(); }
+    }
+    private static void open(Activity activity, Intent intent) {
+        try { activity.startActivity(intent); }
+        catch (RuntimeException unavailable) { PermissionAccess.openAppSettings(activity); }
+    }
+    private static void toggle(Activity activity, LinearLayout parent, String title, boolean checked, Save save) {
+        Switch control = new Switch(activity); control.setText(title); control.setTextSize(sp(activity, compact(activity) ? 14 : 16)); control.setTextColor(palette(activity).text);
+        control.setGravity(Gravity.CENTER_VERTICAL); control.setPadding(0, 0, 0, 0); control.setMinHeight(dp(activity, 48)); control.setChecked(checked);
+        GradientDrawable thumb = new GradientDrawable(); thumb.setShape(GradientDrawable.OVAL);
+        thumb.setColor(Color.WHITE); thumb.setSize(dp(activity, 24), dp(activity, 24));
+        GradientDrawable track = new GradientDrawable(); track.setCornerRadius(dp(activity, 14));
+        track.setColor(palette(activity).muted); track.setSize(dp(activity, 48), dp(activity, 28));
+        control.setThumbDrawable(thumb); control.setTrackDrawable(track); control.setShowText(false);
+        control.setSwitchMinWidth(dp(activity, 48)); control.setSwitchPadding(dp(activity, 12));
+        ColorStateList colors = new ColorStateList(new int[][]{new int[]{android.R.attr.state_checked}, new int[]{}}, new int[]{palette(activity).accent, palette(activity).muted});
+        control.setThumbTintList(ColorStateList.valueOf(Color.WHITE)); control.setTrackTintList(colors);
+        control.setOnCheckedChangeListener((button, value) -> save.set(value)); parent.addView(control, margin(activity, -1, 48, 10));
+    }
+    static LinearLayout card(Activity activity, LinearLayout parent, String title, String hint, int icon) {
+        LinearLayout panel = column(activity); panel.setPadding(dp(activity, 12), dp(activity, 12), dp(activity, 12), dp(activity, 12));
+        panel.setBackground(background(activity, palette(activity).surface, palette(activity).border));
+        TextView heading = label(activity, title, 20, palette(activity).text, true);
+        heading.setCompoundDrawablesWithIntrinsicBounds(new Mark(icon, palette(activity).accent, dp(activity, 20)), null, null, null); heading.setCompoundDrawablePadding(dp(activity, 8));
+        panel.addView(heading, new LinearLayout.LayoutParams(-1, -2));
+        if (hint != null) panel.addView(label(activity, hint, 13, palette(activity).muted, false), margin(activity, -1, -2, 8));
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, -1, 1);
+        if (parent.getChildCount() != 0) params.leftMargin = dp(activity, 10);
+        parent.addView(panel, params); return panel;
+    }
+    private static Button action(Activity activity, LinearLayout row, String title, boolean primary, Runnable run) {
+        Button button = button(activity, title, primary, run);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, -1, 1);
+        if (row.getChildCount() != 0) params.leftMargin = dp(activity, 6);
+        row.addView(button, params); return button;
+    }
+    private static void spacer(Activity activity, LinearLayout parent) { parent.addView(new View(activity), new LinearLayout.LayoutParams(-1, 0, 1)); }
+    private static boolean compact(Activity activity) {
+        return activity.getResources().getConfiguration().screenHeightDp / uiScale(activity) < 420;
+    }
+    static LinearLayout column(Activity activity) { LinearLayout v = new LinearLayout(activity); v.setOrientation(LinearLayout.VERTICAL); return v; }
+    static LinearLayout row(Activity activity) { LinearLayout v = new LinearLayout(activity); v.setOrientation(LinearLayout.HORIZONTAL); v.setGravity(Gravity.CENTER_VERTICAL); return v; }
+    static TextView label(Activity activity, String text, int size, int color, boolean bold) {
+        TextView v = new TextView(activity); v.setText(text); v.setTextSize(sp(activity, compact(activity) && size >= 16 ? size - 2 : size)); v.setTextColor(color); v.setGravity(Gravity.CENTER_VERTICAL);
+        if (bold) v.setTypeface(null, Typeface.BOLD); return v;
+    }
+    static Button button(Activity activity, String title, boolean primary, Runnable action) {
+        Button v = new Button(activity); v.setText(title); v.setTextSize(sp(activity, compact(activity) ? 14 : 16)); v.setAllCaps(false); v.setTextColor(primary ? palette(activity).onAccent : palette(activity).text);
+        v.setGravity(Gravity.CENTER); v.setPadding(dp(activity, 6), 0, dp(activity, 6), 0);
+        v.setMinHeight(0); v.setMinimumHeight(0); v.setMinWidth(0); v.setMinimumWidth(0);
+        v.setStateListAnimator(null); v.setElevation(0);
+        GradientDrawable shape = (GradientDrawable) background(activity, primary ? palette(activity).accent : palette(activity).surface, primary ? palette(activity).accent : palette(activity).border);
+        shape.setCornerRadius(dp(activity, 24));
+        v.setBackground(new RippleDrawable(ColorStateList.valueOf(palette(activity).selected), shape, null));
+        v.setOnClickListener(view -> action.run()); return v;
+    }
+    static Drawable background(Context context, int fill, int stroke) {
+        GradientDrawable bg = new GradientDrawable(); bg.setColor(fill); bg.setCornerRadius(dp(context, 18)); bg.setStroke(dp(context, 1), stroke); return bg;
+    }
+    static LinearLayout.LayoutParams margin(Context c, int width, int height, int top) {
+        LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(width < 0 ? width : dp(c, width), height < 0 ? height : dp(c, height)); p.topMargin = dp(c, top); return p;
+    }
+    /** Keep the landscape layout at a 360 dp reference height on low-density car displays. */
+    private static float uiScale(Context context) {
+        android.util.DisplayMetrics metrics = context.getResources().getDisplayMetrics();
+        float shortEdgeDp = Math.min(metrics.widthPixels, metrics.heightPixels) / metrics.density;
+        return Math.max(1f, shortEdgeDp / 360f);
+    }
+    static int sp(Context context, int value) { return Math.max(1, Math.round(value * uiScale(context))); }
+    static int dp(Context c, int value) { return Math.round(value * c.getResources().getDisplayMetrics().density * uiScale(c)); }
+    /** Flat phone-to-display illustration, drawn at native resolution. */
+    private static final class ConnectionArt extends Drawable {
+        private final AutunnUiTheme.Palette colors; private final int size; private final Drawable mark;
+        ConnectionArt(Context context, AutunnUiTheme.Palette colors, int size) {
+            this.colors = colors; this.size = size;
+            mark = context.getDrawable(R.drawable.ic_autunn_logo).mutate(); mark.setTint(logoColor(colors));
+        }
+        @Override public int getIntrinsicWidth() { return size; }
+        @Override public int getIntrinsicHeight() { return size; }
+        @Override public void draw(Canvas canvas) {
+            canvas.save(); canvas.translate(getBounds().left, getBounds().top);
+            canvas.scale(getBounds().width()/240f, getBounds().height()/240f);
+            Paint line = new Paint(Paint.ANTI_ALIAS_FLAG); line.setStyle(Paint.Style.STROKE); line.setColor(colors.muted); line.setStrokeWidth(2); line.setStrokeCap(Paint.Cap.ROUND);
+            canvas.drawRoundRect(8, 54, 62, 182, 8, 8, line); canvas.drawLine(28,61,42,61,line); canvas.drawLine(29,174,41,174,line);
+            canvas.drawRoundRect(114, 70, 234, 160, 9, 9, line); canvas.drawLine(160,178,188,178,line); canvas.drawLine(174,160,174,178,line);
+            line.setColor(colors.accent); line.setStrokeWidth(4);
+            for (int i=0;i<3;i++) canvas.drawArc(58-i*9, 95-i*9, 84+i*9, 125+i*9, -55, 110, false, line);
+            mark.setBounds(150, 92, 198, 140); mark.draw(canvas);
+            canvas.restore();
+        }
+        @Override public void setAlpha(int alpha) {}
+        @Override public void setColorFilter(android.graphics.ColorFilter filter) {}
+        @Override public int getOpacity() { return android.graphics.PixelFormat.TRANSLUCENT; }
+    }
+    /** Small deterministic line icons; the generated screenshot is not used as a UI bitmap. */
+    private static final class Mark extends Drawable {
+        private final int kind, color, size;
+        Mark(int kind, int color, int size) { this.kind=kind; this.color=color; this.size=size; }
+        @Override public int getIntrinsicWidth() { return size; }
+        @Override public int getIntrinsicHeight() { return size; }
+        @Override public void draw(Canvas canvas) {
+            canvas.save(); canvas.translate(getBounds().left, getBounds().top); canvas.scale(getBounds().width()/24f, getBounds().height()/24f);
+            Paint p = new Paint(Paint.ANTI_ALIAS_FLAG); p.setColor(color); p.setStyle(Paint.Style.STROKE); p.setStrokeWidth(1.7f); p.setStrokeCap(Paint.Cap.ROUND); p.setStrokeJoin(Paint.Join.ROUND);
+            Path path = new Path();
+            switch(kind) {
+                case 0: canvas.drawRoundRect(3, 10, 14, 20, 4, 4, p); canvas.drawRoundRect(10, 3, 21, 13, 4, 4, p); canvas.drawLine(9, 15, 15, 9, p); break;
+                case 1: canvas.drawRoundRect(2, 4, 22, 17, 2, 2, p); canvas.drawLine(8, 21, 16, 21, p); canvas.drawLine(12, 17, 12, 21, p); break;
+                case 2: path.moveTo(12, 2); path.lineTo(21, 22); path.lineTo(12, 17); path.lineTo(3, 22); path.close(); canvas.drawPath(path,p); break;
+                case 3: path.moveTo(12, 2); path.lineTo(21, 6); path.lineTo(19, 16); path.quadTo(17, 21, 12, 23); path.quadTo(7, 21, 5, 16); path.lineTo(3, 6); path.close(); canvas.drawPath(path,p); canvas.drawLine(8,12,11,15,p); canvas.drawLine(11,15,16,9,p); break;
+                case 4: path.moveTo(2,12); path.lineTo(7,12); path.lineTo(10,3); path.lineTo(14,21); path.lineTo(17,12); path.lineTo(22,12); canvas.drawPath(path,p); break;
+                case 7: canvas.drawLine(9, 5, 9, 18, p); canvas.drawLine(9, 5, 20, 3, p); canvas.drawLine(20, 3, 20, 16, p); canvas.drawOval(3, 16, 9, 21, p); canvas.drawOval(14, 14, 20, 19, p); break;
+                case 8: path.moveTo(5, 3); path.lineTo(9, 7); path.lineTo(7, 10); path.quadTo(9, 15, 14, 17); path.lineTo(17, 15); path.lineTo(21, 19); path.quadTo(17, 25, 9, 17); path.quadTo(0, 8, 5, 3); canvas.drawPath(path, p); break;
+                case 9: canvas.drawCircle(12, 12, 7, p); canvas.drawCircle(12, 12, 3, p); for (int i=0;i<8;i++) { double angle=i*Math.PI/4; canvas.drawLine(12+(float)Math.cos(angle)*7,12+(float)Math.sin(angle)*7,12+(float)Math.cos(angle)*10,12+(float)Math.sin(angle)*10,p); } break;
+                case 10: canvas.drawRoundRect(6, 2, 18, 22, 2, 2, p); canvas.drawLine(10, 19, 14, 19, p); break;
+                case 11: canvas.drawCircle(12,12,5,p); for (int i=0;i<8;i++) { double a=i*Math.PI/4; canvas.drawLine(12+(float)Math.cos(a)*8,12+(float)Math.sin(a)*8,12+(float)Math.cos(a)*10,12+(float)Math.sin(a)*10,p); } break;
+                case 12: canvas.drawCircle(8,8,5,p); canvas.drawLine(12,12,21,21,p); canvas.drawLine(16,16,19,13,p); canvas.drawLine(19,19,22,16,p); break;
+                case 5: canvas.drawCircle(12,12,10,p); canvas.drawPoint(12,7,p); canvas.drawLine(12,11,12,17,p); break;
+                default: canvas.drawLine(12,2,12,10,p); canvas.drawArc(3,3,21,21,-55,290,false,p);
+            }
+            canvas.restore();
+        }
+        @Override public void setAlpha(int alpha) {}
+        @Override public void setColorFilter(android.graphics.ColorFilter filter) {}
+        @Override public int getOpacity() { return android.graphics.PixelFormat.TRANSLUCENT; }
+    }
+}

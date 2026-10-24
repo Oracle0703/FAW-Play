@@ -78,6 +78,10 @@ class CarPlayVideoActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (!CarPlayVideo.canPlay()) {
+            finish()
+            return
+        }
         WindowCompat.setDecorFitsSystemWindows(window, false)
         WindowInsetsControllerCompat(window, window.decorView).apply {
             hide(WindowInsetsCompat.Type.systemBars())
@@ -122,6 +126,11 @@ class CarPlayVideoActivity : Activity() {
         CarPlayVideo.activity = this
         load()
         showControls()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (!CarPlayVideo.canPlay()) finish()
     }
 
     private fun controlBar(): View {
@@ -262,6 +271,10 @@ class CarPlayVideoActivity : Activity() {
     }
 
     fun load() {
+        if (!CarPlayVideo.canPlay()) {
+            finish()
+            return
+        }
         val url = CarPlayVideo.url ?: return
         if (url == loadedUrl) return
         loadedUrl = url
@@ -278,7 +291,7 @@ class CarPlayVideoActivity : Activity() {
     }
 
     fun applyRate() {
-        player.playWhenReady = CarPlayVideo.playing
+        player.playWhenReady = CarPlayVideo.playing && CarPlayVideo.canPlay()
         if (controls.visibility == View.VISIBLE) updatePlayPause()
     }
 
@@ -337,7 +350,7 @@ class CarPlayVideoActivity : Activity() {
             CarPlayVideo.activity = null
             CarPlayVideo.onPlayerClosed(if (prepared) player.currentPosition.toInt() else null)
         }
-        player.release()
+        if (::player.isInitialized) player.release()
         super.onDestroy()
     }
 

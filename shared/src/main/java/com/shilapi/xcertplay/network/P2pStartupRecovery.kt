@@ -15,6 +15,18 @@ internal class P2pConfigBuildCompatibilityFailure(cause: NoSuchMethodError) :
 
 /** Only a rejection or recognized pre-create defect permits retry; timeout may still create a group. */
 internal object P2pStartupRecovery {
+    /** API 28 uses system credentials; only an acknowledged channel restriction is requested. */
+    fun legacyPlan(stationFrequency: Int?, preferredChannel: Int, selectionSupported: Boolean,
+                   fiveGhzSupported: Boolean = true): List<P2pCreationRequest> {
+        val system = P2pCreationRequest(P2pCreationMode.SYSTEM_DEFAULT)
+        if (!selectionSupported) return listOf(system)
+        if (preferredChannel != WifiP2pChannels.AUTO && preferredChannel != WifiP2pChannels.PREFER_5_GHZ)
+            return listOf(P2pCreationRequest(P2pCreationMode.PREFERRED_CHANNEL,
+                requireNotNull(WifiP2pChannels.frequencyMhz(preferredChannel))))
+        // Reserve one submission for an unpinned fallback. All candidates share the startup deadline.
+        return plan(stationFrequency).filter { it.frequencyMHz != null &&
+            (fiveGhzSupported || it.frequencyMHz < 5000) }.take(P2pBusyRecovery.MAX_SUBMISSIONS - 1) + system
+    }
     fun rememberedFrequency(frequency: Int): P2pCreationRequest? = when {
         frequency in 2412..2462 && (frequency - 2412) % 5 == 0 ->
             P2pCreationRequest(P2pCreationMode.FIXED_2_GHZ, frequency)

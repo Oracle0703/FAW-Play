@@ -5,6 +5,36 @@ import org.junit.Test
 import java.nio.file.Files
 
 class DiagnosticRedactorTest {
+    @Test fun telephoneOutputMetadataSurvivesEveryRedactionPassWithoutExportingPhoneCaptures() {
+        val lines = listOf(
+            "Audio: focus requested channel=PHONE gain=2 granted=0 activeTracks=1",
+            "Audio: focus volume channel=PHONE gain=0.0 requestResult=0 focusChange=-1 callbackReceived=false mainAudioAllowed=true",
+            "audio stats audioType=telephony channel=PHONE routeType=21 playState=3 playbackAdvanceFrames=240000 writeErrors=0",
+            "Audio: resource mainAudio=IPHONE allowed=true",
+            "Audio: communication mode action=enter current=3 speakerphone=false bluetoothSco=false voiceVolume=8 voiceMaxVolume=15 voiceMuted=false",
+            "Audio: call state gain=0.0 requestResult=0 focusChange=-1 callbackReceived=false mainAudioAllowed=true",
+            "Audio: call output bus=BUS03_CALL pcmRms=100 pcmPeak=200 pcmSamples=240000 ended=false",
+        )
+        val folder = Files.createTempDirectory("diplay-call-output-report").toFile()
+        try {
+            val file = folder.resolve("diplay.log")
+            SessionLogFile(file).use { log ->
+                log.reset("started")
+                lines.forEach { line ->
+                    assertEquals(line, DiagnosticRedactor.redact(line))
+                    log.append(line)
+                }
+                log.append("PHONE private-phone-capture")
+            }
+            val report = RemoteDiagnosticReport.prepare(file.readText()).text
+            lines.forEach { assertTrue(report.contains(it)) }
+            assertFalse(report.contains("private-phone-capture"))
+            for (line in listOf("PHONE private-phone-capture", "10:17:42 PHONE private-phone-capture",
+                "debug PHONE private-phone-capture", "Audio: channel=PHONE payload=private-data"))
+                assertNull(DiagnosticRedactor.redact(line))
+        } finally { folder.deleteRecursively() }
+    }
+
     @Test fun additionalTroubleshootingMetadataSurvivesSavedReportWithoutPayloads() {
         val lines = listOf(
             "wireless startup elapsedMs=10000 authenticated=true wifiConfigs=2 startRequests=1 tcpAccepted=0 sessionActive=false waitingFor=WiFi_discovery_or_AirPlay_TCP startRequestAgeMs=9000 firstTcpAfterStartMs=none",
@@ -104,7 +134,7 @@ class DiagnosticRedactorTest {
                     it.append("password=secret")
                 }
             }
-            val history = SessionLogFile.REPORT_NAMES.map { folder.resolve(it).readText() }
+            val history = SessionLogFile.REPORT_NAMES.map { folder.resolve(it) }.filter { it.isFile }.map { it.readText() }
             assertEquals(8, folder.listFiles()!!.size)
             assertTrue(history.first().contains("session=2"))
             assertTrue(history.last().contains("session=9"))
@@ -112,6 +142,20 @@ class DiagnosticRedactorTest {
             assertFalse(history.any { it.contains("secret") })
         } finally { folder.deleteRecursively() }
     }
+    @Test fun backgroundPowerHistoryDoesNotReplaceTheHostsDiagnosticHistory() {
+        val folder = Files.createTempDirectory("diplay-power-history-test").toFile()
+        try {
+            SessionLogFile(folder.resolve("diplay.log")).use { it.reset("host failure") }
+            repeat(3) { session ->
+                SessionLogFile(folder.resolve("power.log")).use { it.reset("power session=$session") }
+            }
+            val exported = SessionLogFile.REPORT_NAMES.map { folder.resolve(it) }.filter { it.isFile }
+            assertTrue(exported.any { it.readText().contains("host failure") })
+            assertTrue(exported.any { it.readText().contains("power session=0") })
+            assertTrue(exported.any { it.readText().contains("power session=2") })
+        } finally { folder.deleteRecursively() }
+    }
+
     @Test fun safeWifiMetadataSurvivesWithoutWeakeningCredentialFilters() {
         val lines = listOf(
             "Wi-Fi P2P preflight wifiEnabled=true locationEnabled=false permissionGranted=true stationMHz=5180",

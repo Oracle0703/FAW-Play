@@ -2,12 +2,39 @@ package com.shilapi.xcertplay.network
 
 import java.net.InetAddress
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class HotspotInterfaceBssidTest {
-    @Test fun decodesFawBuiltInHotspotAddress() {
+    @Test fun accessPointHintUsesActualInterfaceHardwareAndTakesACopy() {
+        val hardware = byteArrayOf(2, 0x11, 0x22, 0x33, 0x44, 0x55)
+        val hint = HotspotInterfaceBssid.accessPointAddress(hardware,
+            listOf(bytes("fe80::d812:34ff:fe56:789a")))
+        hardware[1] = 0
+        assertArrayEquals(byteArrayOf(2, 0x11, 0x22, 0x33, 0x44, 0x55), hint)
+    }
+
+    @Test fun maskedHardwareCanUseOnlyAnUnambiguousMacDerivedInterfaceAddress() {
+        val masked = byteArrayOf(2, 0, 0, 0, 0, 0)
+        val first = bytes("fe80::d812:34ff:fe56:789a")
+        assertArrayEquals(byteArrayOf(0xda.toByte(), 0x12, 0x34, 0x56, 0x78, 0x9a.toByte()),
+            HotspotInterfaceBssid.accessPointAddress(masked, listOf(first)))
+        assertNull(HotspotInterfaceBssid.accessPointAddress(masked,
+            listOf(first, bytes("fe80::d812:34ff:fe56:789b"))))
+        assertNull(HotspotInterfaceBssid.accessPointAddress(masked,
+            listOf(bytes("fe80::1234:5678:abcd:ef01"))))
+    }
+
+    @Test fun unavailableZeroMulticastAndMaskedAddressesNeverBecomeApHints() {
+        val invalid = listOf(null, ByteArray(0), ByteArray(5), ByteArray(6),
+            byteArrayOf(1, 2, 3, 4, 5, 6), ByteArray(6) { 0xff.toByte() }, byteArrayOf(2, 0, 0, 0, 0, 0))
+        invalid.forEach { assertNull(HotspotInterfaceBssid.accessPointAddress(it, emptyList())) }
+        assertNull(HotspotInterfaceBssid.readAccessPoint("does-not-exist"))
+    }
+
+    @Test fun decodesAutunnBuiltInHotspotAddress() {
         assertEquals("4E:B1:C7:94:48:3F", HotspotInterfaceBssid.decode(bytes("fe80::4cb1:c7ff:fe94:483f")))
     }
 

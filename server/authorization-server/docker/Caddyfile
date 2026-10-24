@@ -1,0 +1,36 @@
+{
+    email {$TLS_EMAIL}
+}
+{$API_DOMAIN} {
+    @apk_upload {
+        method POST
+        path /v1/admin/updates/*/stable
+    }
+    handle @apk_upload {
+        # 513 MiB multipart request; Java still enforces the 512 MiB APK limit and auth.
+        request_body {
+            max_size 537919488
+        }
+        reverse_proxy license-api:8080
+    }
+    @diagnostic_upload {
+        method POST
+        path /v1/diagnostics
+    }
+    handle @diagnostic_upload {
+        # Match DiagnosticService.MAX_REQUEST_BYTES; proof and storage limits remain in Java.
+        request_body {
+            max_size 2113536
+        }
+        reverse_proxy license-api:8080
+    }
+    handle {
+        request_body {
+            max_size 16KB
+        }
+        reverse_proxy license-api:8080
+    }
+}
+{$AUTH_DOMAIN} {
+    reverse_proxy keycloak:8080
+}

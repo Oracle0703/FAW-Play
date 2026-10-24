@@ -9,7 +9,7 @@ import android.widget.Toast
 import com.shilapi.xcertplay.airplay.CarPlayMediaButton
 import com.shilapi.xcertplay.airplay.VideoInCar
 import com.shilapi.xcertplay.host.R
-import com.shilapi.xcertplay.hud.FawNavigationOutputs
+import com.shilapi.xcertplay.hud.HongqiParkedState
 import com.shilapi.xcertplay.orchestration.CarPlayController
 import com.shilapi.xcertplay.orchestration.CarPlayVideoListener
 import java.util.concurrent.CompletableFuture
@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicLong
  * and drives it (setRate, seek, stop); the car plays it in [CarPlayVideoActivity], which opens as soon
  * as the iPhone starts the item (or sends requestUI "videoplayback:") and only while the car is in P.
  */
-internal object CarPlayVideo : CarPlayVideoListener {
+internal object CarPlayVideo {
     private const val TAG = "DiPlay-Video"
     const val SKIP_MILLIS = 10_000
     private const val URL_TIMEOUT_SECONDS = 10L
@@ -32,6 +32,7 @@ internal object CarPlayVideo : CarPlayVideoListener {
     private val sender = Executors.newSingleThreadExecutor { Thread(it, "diplay-video-reply").apply { isDaemon = true } }
     @Volatile private var appContext: Context? = null
     @Volatile private var controller: CarPlayController? = null
+    @Volatile private var parkedState: HongqiParkedState? = null
 
     // Main-thread state; CarPlayVideoActivity applies it. The stream and item are also read by loader threads.
     @Volatile private var streamId: Long? = null
@@ -49,31 +50,53 @@ internal object CarPlayVideo : CarPlayVideoListener {
     var activity: CarPlayVideoActivity? = null
 
     fun attach(context: Context, next: CarPlayController) {
+        parkedState?.close()
+        val parked = HongqiParkedState(context)
         appContext = context.applicationContext
         controller = next
-        next.videoListener = this
-    }
+        parkedState = parked
+        VideoInCar.allowed = false
+        next.videoListener = object : CarPlayVideoListener {
+            override fun readParked(): Boolean? = if (controller === next) parked.parked() else null
 
-    override fun readParked(): Boolean? = appContext?.let(FawNavigationOutputs::parked)
+            override fun onVideoMonitoringStarted() {
+                if (controller === next) parked.start()
+            }
 
-    override fun onVideoAllowedChanged(allowed: Boolean) {
-        if (!allowed) main.post { closePlayer("the car left P") }
-    }
+            override fun onVideoMonitoringStopped() {
+                parked.close()
+                onVideoSessionEnded()
+            }
 
-    override fun onVideoSessionEnded() {
-        main.post {
-            stop()
-            streamId = null
+            override fun onVideoAllowedChanged(allowed: Boolean) {
+                main.post {
+                    if (controller !== next) return@post
+                    if (!allowed) {
+                        setPlaying(false)
+                        closePlayer("the car left P or gear became unknown")
+                    }
+                }
+            }
+
+            override fun onVideoSessionEnded() {
+                main.post {
+                    if (controller !== next) return@post
+                    stop()
+                    streamId = null
+                }
+            }
+
+            override fun onVideoUiRequested() {
+                main.post { if (controller === next) show() }
+            }
+
+            override fun onVideoMessage(streamId: Long, message: Map<String, Any?>) {
+                main.post { if (controller === next) handle(streamId, message) }
+            }
         }
     }
 
-    override fun onVideoUiRequested() {
-        main.post { show() }
-    }
-
-    override fun onVideoMessage(streamId: Long, message: Map<String, Any?>) {
-        main.post { handle(streamId, message) }
-    }
+    fun canPlay(): Boolean = controller?.isClosed() == false && VideoInCar.allowed && parkedState?.parked() == true
 
     /**
      * A steering-wheel media key (CarPlayMediaButton index) while the player is on screen: play and pause
@@ -92,9 +115,9 @@ internal object CarPlayVideo : CarPlayVideoListener {
 
     /** Play or pause from the car (wheel or on-screen button); tells the iPhone at once. Main thread. */
     fun setPlaying(next: Boolean) {
-        playing = next
+        playing = next && canPlay()
         activity?.applyRate()
-        streamId?.let { reply(it, VideoInCar.playbackStateNotification(next, itemUuid)) }
+        streamId?.let { reply(it, VideoInCar.playbackStateNotification(playing, itemUuid)) }
     }
 
     /**
@@ -135,7 +158,9 @@ internal object CarPlayVideo : CarPlayVideoListener {
                 activity?.load()
             }
             "setRate" -> {
-                playing = ((message["rate"] as? Number)?.toDouble() ?: 0.0) > 0.0
+                val requested = ((message["rate"] as? Number)?.toDouble() ?: 0.0) > 0.0
+                playing = requested && canPlay()
+                if (requested && !playing) reply(streamId, VideoInCar.playbackStateNotification(false, itemUuid))
                 // The iPhone starts the item at once, as Apple's receiver plays it straight
                 // away, so open the player now instead of waiting for Now Playing's video button.
                 if (playing && activity == null) show()
@@ -231,7 +256,7 @@ internal object CarPlayVideo : CarPlayVideoListener {
         val context = appContext ?: return
         when {
             url == null -> Log.w(TAG, "video player requested without a playable item")
-            !VideoInCar.allowed -> Log.w(TAG, "video player requested while not parked")
+            !canPlay() -> Log.w(TAG, "video player requested without a fresh P reading")
             activity != null -> Unit
             else -> context.startActivity(
                 Intent(context, CarPlayVideoActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),

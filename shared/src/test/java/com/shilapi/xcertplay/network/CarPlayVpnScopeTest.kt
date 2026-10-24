@@ -77,10 +77,18 @@ class CarPlayVpnScopeTest {
             val oldServer = ReflectionHelpers.getField<ServerSocket>(service, "serverSocket")
 
             VpnScopeBoundary.allowFailure = PackageManager.NameNotFoundException("scope rejected")
-            assertEquals(CarPlayVpnService.AttachResult.Failed("scope rejected"), attachWired(service))
+            assertEquals(CarPlayVpnService.AttachResult.Failed("Previous AirPlay resources are still being released"), attachWired(service))
+            service.detach()
+            awaitScheduledRelease(service)
             assertTrue("Replacement releases the previous listener", oldServer.isClosed)
+            assertEquals(CarPlayVpnService.AttachResult.Failed("scope rejected"), attachWired(service))
             assertEquals(listOf("allow:${service.packageName}"), VpnScopeBoundary.calls)
+            // Failure revokes admission immediately and hands cleanup to its owner. Confirm
+            // that real barrier before asking for another attachment; no timing sleep.
+            service.detach()
+            awaitScheduledRelease(service)
             assertReleased(service)
+            assertFalse(ReflectionHelpers.getField<Boolean>(service, "releaseInProgress"))
 
             assertEquals(CarPlayVpnService.AttachResult.Started, attachWireless(service))
             assertTrue(service.isAttached())
@@ -92,9 +100,37 @@ class CarPlayVpnScopeTest {
         }
     }
 
+    @Test fun delayedOldReleaseCannotCloseFreshAttachment() {
+        withService { service ->
+            val lock = ReflectionHelpers.getField<Any>(service, "releaseLock")
+            lateinit var fresh: ServerSocket
+            synchronized(lock) {
+                assertEquals(CarPlayVpnService.AttachResult.Started, attachWireless(service))
+                assertTrue(attachWired(service) is CarPlayVpnService.AttachResult.Failed)
+                service.detach()
+                assertEquals(CarPlayVpnService.AttachResult.Started, attachWireless(service))
+                fresh = ReflectionHelpers.getField(service, "serverSocket")
+            }
+            awaitScheduledRelease(service)
+            assertTrue(service.isAttached())
+            assertFalse("Fresh listener belongs to a newer generation", fresh.isClosed)
+            service.detach()
+        }
+    }
+
     private fun withService(check: (CarPlayVpnService) -> Unit) {
         val controller = Robolectric.buildService(CarPlayVpnService::class.java).create()
         try { check(controller.get()) } finally { controller.destroy() }
+    }
+
+    private fun awaitScheduledRelease(service: CarPlayVpnService) {
+        // detach() completes its own cleanup, but an already queued owner can still be running.
+        // Wait for that owner as well before asserting that a new attachment may be admitted.
+        val scheduled = ReflectionHelpers.getField<AtomicBoolean>(service, "releaseScheduled")
+        val deadline = System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(2)
+        while (scheduled.get() && System.nanoTime() < deadline) Thread.yield()
+        assertFalse("Queued cleanup worker must finish", scheduled.get())
+        assertFalse(ReflectionHelpers.getField<Boolean>(service, "releaseInProgress"))
     }
 
     private fun attachWired(service: CarPlayVpnService): CarPlayVpnService.AttachResult =

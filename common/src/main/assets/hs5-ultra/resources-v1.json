@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "owner": "Autunn",
+  "resourceVersion": "hs5-2022-3212-v1",
+  "canvas": {"width": 1920, "height": 720},
+  "layouts": [
+    {"id": "autunn.hs5.cluster.navigation.v1", "video": {"x": 0, "y": 0, "width": 1920, "height": 720}, "components": ["navigation"]},
+    {"id": "autunn.hs5.cluster.overview.v1", "video": {"x": 320, "y": 120, "width": 1280, "height": 480}, "leftPanel": {"x": 0, "y": 0, "width": 320, "height": 720}, "rightPanel": {"x": 1600, "y": 0, "width": 320, "height": 720}, "components": ["navigation", "speed", "gear", "vehicleStatus"]}
+  ],
+  "appearanceModes": ["dark", "light"],
+  "appearancePreferences": ["dark", "light", "system"],
+  "focusTokens": false,
+  "fadeTransitions": false,
+  "vehicleSource": "Qisi-3212",
+  "vehicleFreshnessMs": 2500,
+  "speedUnit": null,
+  "rpm": false,
+  "drivingDisplayTakeover": false
+}

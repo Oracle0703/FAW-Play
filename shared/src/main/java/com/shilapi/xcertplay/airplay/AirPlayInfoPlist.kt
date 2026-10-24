@@ -30,11 +30,12 @@ object AirPlayInfoPlist {
     fun features(config: AirPlayConfig): Long =
         if (config.disableAudioOutput) CARPLAY_FEATURES_NO_AUDIO else CARPLAY_FEATURES
 
-    fun build(config: AirPlayConfig): Map<String, Any?> {
+    fun build(config: AirPlayConfig, enabledFeatures: Set<String>? = null): Map<String, Any?> {
         val displays = arrayListOf<Any?>(
             displayEntry(config.main, STREAM_TYPE_MAIN_SCREEN, MAIN_UUID),
         )
-        config.cluster?.let { displays.add(displayEntry(it, STREAM_TYPE_ALT_SCREEN, ALT_UUID)) }
+        config.cluster?.takeIf { enabledFeatures == null || "altScreen" in enabledFeatures }
+            ?.let { displays.add(displayEntry(it, STREAM_TYPE_ALT_SCREEN, ALT_UUID)) }
 
         val info = linkedMapOf<String, Any?>(
             "sourceVersion" to config.sourceVersion,
@@ -74,11 +75,21 @@ object AirPlayInfoPlist {
                 )
             }
         }
-        if (config.hevc) info["hevcInfo"] = emptyMap<String, Any?>()
-        if (config.videoInCar) {
+        if (config.hevc && (enabledFeatures == null || "hevc" in enabledFeatures)) info["hevcInfo"] = emptyMap<String, Any?>()
+        if (config.videoInCar && (enabledFeatures == null || VideoInCar.FEATURE in enabledFeatures)) {
             // The iPhone tears down a session that enables videoPlayback without this key.
             val legacy = features(config)
             info["videoPlaybackInfo"] = VideoInCar.info(legacy, VideoInCar.allowed)
+        }
+        // Preserve classic display/audio declarations. Ultra sidecars are additional contracts,
+        // and must never leak into an ordinary session merely because a codec was compiled in.
+        val ultra = AirPlayFeatureNegotiation.capabilities(config, eventPortAvailable = true)
+        ultra.supportedFeatureSet.filter { it in ULTRA_PROTOCOL_FEATURES }.forEach { feature ->
+            if (enabledFeatures == null || feature.wireName in enabledFeatures) {
+                AirPlayFeatureNegotiation.resolveInfoSidecar(config, feature)?.let { sidecar ->
+                    feature.infoResponseKey?.let { info[it] = sidecar }
+                }
+            }
         }
         return info
     }
@@ -89,7 +100,6 @@ object AirPlayInfoPlist {
         "transferPriority" to PRIORITY_NICE_TO_HAVE,
         "takeConstraint" to CONSTRAINT_ANYTIME,
         "borrowConstraint" to CONSTRAINT_ANYTIME,
-        "unborrowConstraint" to CONSTRAINT_ANYTIME,
     )
 
     private fun modes(): Map<String, Any?> = linkedMapOf(
@@ -175,29 +185,36 @@ object AirPlayInfoPlist {
             "maxFPS" to fps,
             "widthPixels" to display.widthPixels,
             "heightPixels" to display.heightPixels,
+            "widthPixelsMax" to display.widthPixels,
+            "heightPixelsMax" to display.heightPixels,
             "widthPhysical" to widthPhysical,
             "heightPhysical" to heightPhysical,
             "features" to (display.features ?: (DISPLAY_FEATURE_HIGH_FIDELITY_TOUCH or DISPLAY_FEATURE_KNOBS)),
             "primaryInputDevice" to display.primaryInputDevice,
         )
 
-        entry["viewAreas"] = listOf(areaDict(display))
+        entry["viewAreas"] = listOf(areaDict(display, type == STREAM_TYPE_MAIN_SCREEN))
         entry["initialViewArea"] = 0
+        entry["adjacentViewAreas"] = emptyList<Int>()
         if (display.initialUrl != null) entry["initialURL"] = display.initialUrl
         return entry
     }
 
-    private fun areaDict(display: AirPlayDisplayConfig): Map<String, Any?> {
+    private fun areaDict(display: AirPlayDisplayConfig, mainDisplay: Boolean): Map<String, Any?> {
         // The session SETUP response enables "viewAreas", so /info must always describe one.
         // A display without custom insets uses the full panel for both the view and safe areas.
         val view = display.viewArea ?: AirPlayInsets()
         val width = display.widthPixels
         val height = display.heightPixels
         val result = linkedMapOf<String, Any?>(
+            "viewAreaIndex" to 0,
             "widthPixels" to (width - view.left - view.right),
             "heightPixels" to (height - view.top - view.bottom),
             "originXPixels" to view.left,
             "originYPixels" to view.top,
+            "viewAreaTransitionControl" to 0,
+            "viewAreaStatusBarEdge" to 0,
+            "viewAreaSupportsFocusTransfer" to false,
         )
         val safe = display.safeArea ?: AirPlayInsets()
         val safeArea = linkedMapOf<String, Any?>(
@@ -205,8 +222,9 @@ object AirPlayInfoPlist {
             "heightPixels" to (height - safe.top - safe.bottom),
             "originXPixels" to safe.left,
             "originYPixels" to safe.top,
-            "drawUIOutsideSafeArea" to (display.safeAreaDrawOutside ?: true),
         )
+        // WWDC 2023/10150 02:46: this capability is defined only for the main display.
+        if (mainDisplay) safeArea["drawUIOutsideSafeArea"] = display.safeAreaDrawOutside ?: true
         result["safeArea"] = safeArea
         return result
     }

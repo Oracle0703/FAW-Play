@@ -1,0 +1,215 @@
+12:36:17.802  Host started; MFI target=Local files; transport=wireless
+12:36:18.969  Texture surface created
+12:36:19.643  Display detected: 1080x2160
+12:36:19.653  Starting CarPlay controller at 1080x2160 -> 1080x2160 (1.0x) physical=100x200mm video=HEVC decoder=hardware microphone=true location=enabled mfi=Local files
+12:36:22.087  mfi discovery backend=Local documents
+12:36:22.140  mfi local documents ready protocolMajor=3
+12:36:22.156  location provider prewarmed=true
+12:36:22.157  wireless bring-up generation=1 starting
+12:36:22.186  wireless hotspot backend=Manual hotspot iface=wlan1 host=192.168.50.117 bssid=unavailable band=5 GHz channel=0 frequency=unknownMHz
+12:36:22.197  wireless Bluetooth bonded name=Test iPhone address=AA:BB:CC:DD:EE:01 class=7a020c deviceClass=20c
+12:36:22.200  wireless Bluetooth bonded name=test-host address=AA:BB:CC:DD:EE:02 class=1f00 deviceClass=1f00
+12:36:22.202  wireless Bluetooth bonded name=Test Mac address=AA:BB:CC:DD:EE:03 class=38010c deviceClass=10c
+12:36:22.353  STEP mfi/start: preparing the configured MFi authentication provider
+12:36:22.476  STEP mfi/ready: MFi authentication provider is ready
+12:36:22.477  STEP wifi/ap: starting the wireless CarPlay access point
+12:36:22.481  STEP wifi/ap-ready: backend=Manual hotspot ssid=xcertplay-test band=5 GHz channel=0 bssid=02:00:00:00:00:02 address=192.168.50.117
+12:36:22.482  STEP bt/select: waiting for a paired or connected iPhone
+12:36:22.563  wireless Bluetooth PHONE_SMART candidates=1 localBt=02:00:00:00:00:01
+12:36:22.583  STEP network/attach: attaching the AirPlay network transport
+12:36:22.653  wireless AirPlay listener attached bind=:: advertised=192.168.50.117 port=7000
+12:36:22.661  wireless Bonjour services started
+12:36:22.664  wireless RFCOMM attempt=1/1 name=Test iPhone address=AA:BB:CC:DD:EE:01 uuid=00000000-0000-4000-8000-000000000000
+12:36:23.352  STEP bt/rfcomm: connecting to the iPhone iAP2 RFCOMM service
+12:36:24.275  wireless RFCOMM connected address=AA:BB:CC:DD:EE:01
+12:36:24.280  wireless iAP2 CSM channel opened address=AA:BB:CC:DD:EE:01
+12:36:24.282  wireless Bluetooth iAP2 control starting
+12:36:24.332  STEP iap2/wireless: Bluetooth control loop running
+12:36:24.367  IAP2 READY [wireless-rfcomm] ready=true
+12:36:24.402  IAP2 RX [wireless-rfcomm] 0x1d00 StartIdentification frame=6B body=0 params
+12:36:24.422  IAP2 TX [wireless-rfcomm] 0x1d01 IdentificationInformation frame=345B body=16 params
+12:36:24.551  IAP2 RX [wireless-rfcomm] 0x1d02 IdentificationAccepted frame=6B body=0 params
+12:36:24.551  iap2 identification accepted
+12:36:24.552  mfi type=MFI certificate loaded bytes=607 payload bytes=611
+12:36:24.553  IAP2 RX [wireless-rfcomm] 0xaa00 RequestAuthenticationCertificate frame=6B body=0 params
+12:36:24.554  iap2 mfi rx=0xaa00 request-certificate
+12:36:24.557  IAP2 TX [wireless-rfcomm] 0xaa01 AuthenticationCertificate frame=617B body=1 params
+12:36:24.557  iap2 mfi tx=0xaa01 certificate bytes=611
+12:36:24.734  IAP2 RX [wireless-rfcomm] 0xaa02 RequestAuthenticationChallengeResponse frame=42B body=1 params
+12:36:24.736  iap2 mfi rx=0xaa02 challenge bytes=32
+12:36:24.745  IAP2 TX [wireless-rfcomm] 0xaa03 AuthenticationResponse frame=74B body=1 params
+12:36:24.745  iap2 mfi tx=0xaa03 signature bytes=64
+12:36:24.912  IAP2 RX [wireless-rfcomm] 0xaa05 AuthenticationSucceeded frame=6B body=0 params
+12:36:24.913  iap2 mfi rx=0xaa05 authentication-succeeded
+12:36:24.913  iap2 authentication accepted
+12:36:24.919  IAP2 TX [wireless-rfcomm] 0x5000 StartNowPlayingUpdates frame=54B body=2 params
+12:36:24.920  IAP2 TX [wireless-rfcomm] 0x5200 StartRouteGuidanceUpdates frame=6B body=0 params
+12:36:24.921  IAP2 TX [wireless-rfcomm] 0xae00 StartPowerUpdates frame=18B body=3 params
+12:36:24.923  IAP2 TX [wireless-rfcomm] 0x4157 startCommunicationsUpdatesHandler frame=18B body=3 params
+12:36:24.925  IAP2 TX [wireless-rfcomm] 0x4154 startCallStateUpdatesHandler frame=30B body=6 params
+12:36:24.925  iap2 subscriptions sent
+12:36:24.930  IAP2 TX [wireless-rfcomm] 0x6800 hid_StartHIDMsgHandler frame=59B body=4 params
+12:36:24.930  iap2 tx=0x6800 start media playback remote
+12:36:24.934  IAP2 RX [wireless-rfcomm] 0x5702 RequestAccessoryWiFiConfigurationInformation frame=6B body=0 params
+12:36:24.935  iap2 rx=0x5702 request-wifi-configuration
+12:36:24.939  IAP2 TX [wireless-rfcomm] 0x5703 AccessoryWiFiConfigurationInformation frame=57B body=4 params
+12:36:24.939  iap2 tx=0x5703 accessory-wifi-configuration
+12:36:24.941  IAP2 RX [wireless-rfcomm] 0x4e0d WirelessCarPlayUpdate frame=11B body=1 params
+12:36:24.941  iap2 rx=0x4e0d wireless-carplay-update available=true
+12:36:24.944  IAP2 RX [wireless-rfcomm] 0x4e0e DeviceTransportIdentifierNotification frame=57B body=2 params
+12:36:24.944  iap2 rx=0x4e0e device-transport-identifier bluetooth=AA:BB:CC:DD:EE:01 usb=TEST-USB-ID; resending 0x5703
+12:36:24.948  IAP2 TX [wireless-rfcomm] 0x5703 AccessoryWiFiConfigurationInformation frame=57B body=4 params
+12:36:24.948  iap2 tx=0x5703 post-transport accessory-wifi-configuration
+12:36:24.975  IAP2 RX [wireless-rfcomm] 0x4300 CarPlayAvailability frame=84B body=3 params
+12:36:24.975  iap2 rx=0x4300 carplay-availability
+12:36:24.982  IAP2 TX [wireless-rfcomm] 0x4301 CarPlayStartSession frame=190B body=5 params
+12:36:24.982  iap2 tx=0x4301 carplay-start-session
+12:36:25.000  IAP2 RX [wireless-rfcomm] 0x5001 NowPlayingUpdate frame=76B body=2 params
+12:36:25.001  iap2 rx=0x5001
+12:36:25.006  IAP2 RX [wireless-rfcomm] 0x5001 NowPlayingUpdate frame=44B body=1 params
+12:36:25.006  iap2 rx=0x5001
+12:36:25.010  IAP2 RX [wireless-rfcomm] 0x5001 NowPlayingUpdate frame=33B body=1 params
+12:36:25.011  iap2 rx=0x5001
+12:36:25.078  IAP2 RX [wireless-rfcomm] 0x5001 NowPlayingUpdate frame=15B body=1 params
+12:36:25.079  iap2 rx=0x5001
+12:36:25.141  airplay rx POST /pair-setup cseq=0 body=6
+12:36:25.146  IAP2 RX [wireless-rfcomm] 0x4158 CommunicationsUpdate frame=33B body=3 params
+12:36:25.146  iap2 rx=0x4158
+12:36:25.148  IAP2 RX [wireless-rfcomm] 0x4155 CallStateUpdate frame=11B body=1 params
+12:36:25.149  iap2 rx=0x4155
+12:36:25.211  iap2 artwork received id=128 bytes=0
+12:36:25.217  airplay tx status=200 cseq=0 body=409
+12:36:25.280  IAP2 RX [wireless-rfcomm] 0xae01 PowerUpdate frame=11B body=1 params
+12:36:25.281  iap2 rx=0xae01
+12:36:25.282  IAP2 RX [wireless-rfcomm] 0xae01 PowerUpdate frame=11B body=1 params
+12:36:25.283  iap2 rx=0xae01
+12:36:25.285  airplay rx POST /pair-setup cseq=1 body=457
+12:36:25.349  airplay tx status=200 cseq=1 body=69
+12:36:25.380  airplay rx POST /pair-setup cseq=2 body=159
+12:36:25.419  IAP2 RX [wireless-rfcomm] 0xae01 PowerUpdate frame=12B body=1 params
+12:36:25.421  iap2 rx=0xae01
+12:36:25.484  iap2 artwork received id=129 bytes=0
+12:36:25.615  airplay tx status=200 cseq=2 body=159
+12:36:25.768  airplay rx POST /pair-verify cseq=3 body=37
+12:36:25.921  airplay tx status=200 cseq=3 body=159
+12:36:25.974  airplay rx POST /pair-verify cseq=4 body=125
+12:36:26.038  airplay tx status=200 cseq=4 body=3
+12:36:26.043  airplay control encryption enabled
+12:36:26.069  airplay rx POST /auth-setup cseq=5 body=33
+12:36:26.135  airplay tx status=200 cseq=5 body=711
+12:36:26.299  airplay rx SETUP rtsp://192.168.50.117/1000000000000000001 cseq=6 body=796
+12:36:26.329  airplay SETUP keys=[deviceID, features, keepAliveLowPower, macAddress, model, name, osBuildVersion, osName, osVersion, sessionCorrelationUUID, sessionUUID, sourceVersion, statsCollectionEnabled, timingPort, updateSessionRequest]
+12:36:26.330  AirPlay device info name=Test iPhone deviceId=AA:BB:CC:DD:EE:01 wifiMac=02:00:00:00:00:a4 model=iPhone15,4
+12:36:26.337  airplay SETUP feature proposal requested=[uiContext, viewAreas, cornerMasks, focusTransfer, h.264Level5.1, mainBuffered, altScreen, enhancedSiri, hevc, fileTransfer, uiSync, vehicleStateProtocol, sessionManagement, videoPlayback, logTransfer, iAPChannel] supported=[viewAreas, hevc, iAPChannel, altScreen, uiContext] enabled=[uiContext, viewAreas, altScreen, hevc, iAPChannel]
+12:36:26.340  airplay tx status=200 cseq=6 body=177
+12:36:26.366  airplay event connection accepted from /192.168.50.134:49587
+12:36:26.390  airplay rx GET /info cseq=7 body=245
+12:36:26.400  airplay display UI selected uuid=b7e6c5a0-2222-4000-8000-000000000002 url=maps:/car/instrumentcluster/map
+12:36:26.406  airplay /info altScreenURLs=[maps:/car/instrumentcluster/map, maps:/car/instrumentcluster/instructioncard, maps:/car/instrumentcluster] selected=maps:/car/instrumentcluster/map
+12:36:26.406  airplay /info audio=wireless PCM+Opus microphone=true
+12:36:26.407  airplay /info displays=[{uuid=b7e6c5a0-1111-4000-8000-000000000001, type=110, maxFPS=60, widthPixels=1080, heightPixels=2160, widthPixelsMax=1080, heightPixelsMax=2160, widthPhysical=100, heightPhysical=200, features=10, primaryInputDevice=1, viewAreas=[{viewAreaIndex=0, widthPixels=1080, heightPixels=2160, originXPixels=0, originYPixels=0, viewAreaTransitionControl=0, viewAreaStatusBarEdge=0, viewAreaSupportsFocusTransfer=false, safeArea={widthPixels=1080, heightPixels=2160, originXPixels=0, originYPixels=0, drawUIOutsideSafeArea=true}}], initialViewArea=0, adjacentViewAreas=[]}, {uuid=b7e6c5a0-2222-4000-8000-000000000002, type=111, maxFPS=60, widthPixels=1920, heightPixels=720, widthPixelsMax=1920, heightPixelsMax=720, widthPhysical=200, heightPhysical=75, features=10, primaryInputDevice=0, viewAreas=[{viewAreaIndex=0, widthPixels=1920, heightPixels=720, originXPixels=0, originYPixels=0, viewAreaTransitionControl=0, viewAreaStatusBarEdge=0, viewAreaSupportsFocusTransfer=false, safeArea={widthPixels=1920, heightPixels=720, originXPixels=0, originYPixels=0, drawUIOutsideSafeArea=true}}], initialViewArea=0, adjacentViewAreas=[], initialURL=maps:/car/instrumentcluster/map}]
+12:36:26.457  airplay tx status=200 cseq=7 body=39252
+12:36:27.959  airplay rx RECORD rtsp://192.168.50.117/1000000000000000001 cseq=8 body=0
+12:36:27.960  AirPlay session active controller=00000000-0000-4000-8000-000000000000 peer=192.168.50.134
+12:36:27.961  airplay tx status=200 cseq=8 body=0
+12:36:28.012  airplay rx SETUP rtsp://192.168.50.117/1000000000000000001 cseq=9 body=330
+12:36:28.024  airplay SETUP keys=[streams]
+12:36:28.024  airplay SETUP stream type=130 payload={controlType=2, channelID=02:00:00:00:00:02-RCS-422, seed=-8958586947476470172, clientUUID=00000000-0000-4000-8000-000000000000, type=130, wantsDedicatedSocket=true, sendMessageAsIs=true, clientTypeUUID=E9459FD0-BCAD-4C45-820F-1E72447EF2F2}
+12:36:28.025  AirPlay iAP SETUP uuid=E9459FD0-BCAD-4C45-820F-1E72447EF2F2 seed=9488157126233081444 streamConnectionID=none
+12:36:28.036  AirPlay iAP tunnel listening address=:: port=37511
+12:36:28.037  airplay data stream type=130 accepted=true dataPort=37511
+12:36:28.037  airplay SETUP response streams=[{type=130, streamID=1, dataPort=37511}]
+12:36:28.043  airplay tx status=200 cseq=9 body=100
+12:36:28.052  wireless type-130 tunnel data stream accepted
+12:36:28.054  wireless iAP2 tunnel control starting
+12:36:28.071  airplay command type=modesChanged keys=[appStates, resources]
+12:36:28.073  airplay modesChanged resources=id=1 owner=2 permanent=2, id=2 owner=2 permanent=2
+12:36:28.073  AirPlay command type=modesChanged params=appStates,resources
+12:36:28.246  airplay command type=modesChanged keys=[appStates, resources]
+12:36:28.247  airplay modesChanged resources=id=1 owner=1 permanent=1, id=2 owner=2 permanent=2
+12:36:28.247  AirPlay command type=modesChanged params=appStates,resources
+12:36:28.261  airplay rx SETUP rtsp://192.168.50.117/1000000000000000001 cseq=13 body=167
+12:36:28.268  airplay SETUP keys=[streams]
+12:36:28.268  airplay SETUP stream type=111 payload={streamConnectionID=5961060656565797976, latencyMs=75, type=111, uuid=b7e6c5a0-2222-4000-8000-000000000002}
+12:36:28.279  airplay screen stream type=111 dataPort=41567
+12:36:28.280  airplay SETUP response streams=[{type=111, dataPort=41567}]
+12:36:28.285  airplay tx status=200 cseq=13 body=85
+12:36:28.303  airplay display command sent type=showUI params={uuid=b7e6c5a0-2222-4000-8000-000000000002, url=maps:/car/instrumentcluster/map}
+12:36:28.313  airplay command type=disableBluetooth keys=[deviceID]
+12:36:28.313  AirPlay command type=disableBluetooth params=deviceID
+12:36:28.313  wireless CarPlay Bluetooth handoff requested; waiting for tunnel iAP2 readiness
+12:36:28.325  airplay rx SETUP rtsp://192.168.50.117/1000000000000000001 cseq=14 body=167
+12:36:28.332  airplay SETUP keys=[streams]
+12:36:28.332  AirPlay session active
+12:36:28.333  airplay SETUP stream type=110 payload={streamConnectionID=1586959786098771707, latencyMs=75, type=110, uuid=b7e6c5a0-1111-4000-8000-000000000001}
+12:36:28.345  airplay screen stream type=110 dataPort=38469
+12:36:28.346  airplay SETUP response streams=[{type=110, dataPort=38469}]
+12:36:28.352  airplay tx status=200 cseq=14 body=85
+12:36:28.361  IAP2 READY [wireless-tunnel] ready=true
+12:36:28.479  airplay screen config type=110 codec=H265 bytes=154
+12:36:28.487  airplay screen config type=111 codec=H265 bytes=139
+12:36:28.493  IAP2 RX [wireless-tunnel] 0x1d00 StartIdentification frame=6B body=0 params
+12:36:28.503  airplay screen first frame type=111 codec=H265 bytes=487
+12:36:28.513  airplay screen first frame type=110 codec=H265 bytes=1094
+12:36:28.529  IAP2 TX [wireless-tunnel] 0x1d01 IdentificationInformation frame=383B body=17 params
+12:36:28.674  IAP2 RX [wireless-tunnel] 0x1d02 IdentificationAccepted frame=6B body=0 params
+12:36:28.674  iAP tunnel iap2 identification accepted
+12:36:28.676  iAP tunnel mfi type=MFI certificate loaded bytes=607 payload bytes=611
+12:36:28.677  IAP2 RX [wireless-tunnel] 0xaa00 RequestAuthenticationCertificate frame=6B body=0 params
+12:36:28.678  iAP tunnel iap2 mfi rx=0xaa00 request-certificate
+12:36:28.686  IAP2 TX [wireless-tunnel] 0xaa01 AuthenticationCertificate frame=617B body=1 params
+12:36:28.686  iAP tunnel iap2 mfi tx=0xaa01 certificate bytes=611
+12:36:28.920  IAP2 RX [wireless-tunnel] 0xaa02 RequestAuthenticationChallengeResponse frame=42B body=1 params
+12:36:28.924  iAP tunnel iap2 mfi rx=0xaa02 challenge bytes=32
+12:36:28.934  IAP2 TX [wireless-tunnel] 0xaa03 AuthenticationResponse frame=74B body=1 params
+12:36:28.935  iAP tunnel iap2 mfi tx=0xaa03 signature bytes=64
+12:36:29.085  IAP2 RX [wireless-tunnel] 0xaa05 AuthenticationSucceeded frame=6B body=0 params
+12:36:29.085  iAP tunnel iap2 mfi rx=0xaa05 authentication-succeeded
+12:36:29.086  iAP tunnel iap2 authentication accepted
+12:36:29.100  IAP2 TX [wireless-tunnel] 0x5000 StartNowPlayingUpdates frame=54B body=2 params
+12:36:29.101  IAP2 TX [wireless-tunnel] 0x5200 StartRouteGuidanceUpdates frame=6B body=0 params
+12:36:29.103  IAP2 TX [wireless-tunnel] 0xae00 StartPowerUpdates frame=18B body=3 params
+12:36:29.107  IAP2 TX [wireless-tunnel] 0x4157 startCommunicationsUpdatesHandler frame=18B body=3 params
+12:36:29.112  IAP2 TX [wireless-tunnel] 0x4154 startCallStateUpdatesHandler frame=30B body=6 params
+12:36:29.113  iAP tunnel iap2 subscriptions sent
+12:36:29.119  IAP2 TX [wireless-tunnel] 0x6800 hid_StartHIDMsgHandler frame=59B body=4 params
+12:36:29.119  iAP tunnel iap2 tx=0x6800 start media playback remote
+12:36:29.120  wireless iAP2 tunnel ready; handoffRequested=true
+12:36:29.121  wireless handoff ready; closing Bluetooth bootstrap transport
+12:36:29.123  IAP2 RX [wireless-tunnel] 0x5702 RequestAccessoryWiFiConfigurationInformation frame=6B body=0 params
+12:36:29.124  wireless RFCOMM EOF: iap2State=POST_TRANSPORT_WIFI_CONFIG_SENT wirelessCarPlayAvailable=true transportIdentifier=true carPlayStartSessions=1 postTransportConfigs=1 handoffRequested=true tunnelReady=true wirelessActive=true
+12:36:29.124  IAP2 CLOSE [wireless-rfcomm]
+12:36:29.125  iAP tunnel iap2 rx=0x5702 request-wifi-configuration
+12:36:29.137  IAP2 TX [wireless-tunnel] 0x5703 AccessoryWiFiConfigurationInformation frame=57B body=4 params
+12:36:29.138  iAP tunnel iap2 tx=0x5703 accessory-wifi-configuration
+12:36:29.139  STEP handoff/complete: tunnel iAP2 ready; Bluetooth bootstrap released
+12:36:29.140  IAP2 RX [wireless-tunnel] 0x4e0d WirelessCarPlayUpdate frame=11B body=1 params
+12:36:29.140  iAP tunnel iap2 rx=0x4e0d wireless-carplay-update available=true
+12:36:29.144  IAP2 RX [wireless-tunnel] 0x4e0e DeviceTransportIdentifierNotification frame=57B body=2 params
+12:36:29.146  iAP tunnel iap2 rx=0x4e0e device-transport-identifier bluetooth=AA:BB:CC:DD:EE:01 usb=TEST-USB-ID; resending 0x5703
+12:36:29.152  IAP2 TX [wireless-tunnel] 0x5703 AccessoryWiFiConfigurationInformation frame=57B body=4 params
+12:36:29.152  iAP tunnel iap2 tx=0x5703 post-transport accessory-wifi-configuration
+12:36:29.157  IAP2 RX [wireless-tunnel] 0x4300 CarPlayAvailability frame=84B body=3 params
+12:36:29.157  iAP tunnel iap2 rx=0x4300 carplay-availability
+12:36:29.164  IAP2 TX [wireless-tunnel] 0x4301 CarPlayStartSession frame=190B body=5 params
+12:36:29.165  iAP tunnel iap2 tx=0x4301 carplay-start-session
+12:36:29.168  IAP2 RX [wireless-tunnel] 0xfffa StartLocationInformation frame=38B body=5 params
+12:36:29.169  iAP tunnel iap2 rx=0xfffa start-location-information
+12:36:29.175  IAP2 RX [wireless-tunnel] 0x5001 NowPlayingUpdate frame=76B body=2 params
+12:36:29.176  iAP tunnel iap2 rx=0x5001
+12:36:29.180  IAP2 RX [wireless-tunnel] 0x5001 NowPlayingUpdate frame=44B body=1 params
+12:36:29.181  iAP tunnel iap2 rx=0x5001
+12:36:29.186  IAP2 RX [wireless-tunnel] 0x5001 NowPlayingUpdate frame=33B body=1 params
+12:36:29.186  iAP tunnel iap2 rx=0x5001
+12:36:29.191  IAP2 RX [wireless-tunnel] 0x5001 NowPlayingUpdate frame=15B body=1 params
+12:36:29.191  iAP tunnel iap2 rx=0x5001
+12:36:29.234  IAP2 RX [wireless-tunnel] 0xae01 PowerUpdate frame=11B body=1 params
+12:36:29.236  iAP tunnel iap2 rx=0xae01
+12:36:29.238  IAP2 RX [wireless-tunnel] 0xae01 PowerUpdate frame=11B body=1 params
+12:36:29.239  iAP tunnel iap2 rx=0xae01
+12:36:29.241  IAP2 RX [wireless-tunnel] 0xae01 PowerUpdate frame=12B body=1 params
+12:36:29.241  iAP tunnel iap2 rx=0xae01
+12:36:29.245  IAP2 RX [wireless-tunnel] 0x4158 CommunicationsUpdate frame=33B body=3 params
+12:36:29.246  iAP tunnel iap2 rx=0x4158
+12:36:29.248  IAP2 RX [wireless-tunnel] 0x4155 CallStateUpdate frame=11B body=1 params
+12:36:29.248  iAP tunnel iap2 rx=0x4155

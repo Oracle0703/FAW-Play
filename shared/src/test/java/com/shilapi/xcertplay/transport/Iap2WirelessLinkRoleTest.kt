@@ -19,6 +19,7 @@ class Iap2WirelessLinkRoleTest {
         locationInformationEnabled = true,
         vehicleStatusEnabled = true,
         vehicleSpeedEnabled = true,
+        laneGuidanceEnabled = true,
     )
 
     @Test
@@ -31,6 +32,12 @@ class Iap2WirelessLinkRoleTest {
         assertFalse(bootstrap.locationInformationEnabled)
         assertFalse(bootstrap.vehicleSpeedEnabled)
         assertFalse(bootstrap.vehicleStatusEnabled)
+        assertFalse(bootstrap.routeGuidanceEnabled)
+        assertFalse(bootstrap.laneGuidanceEnabled)
+        assertNull(parameters.first(30))
+        assertTrue(sent.none { it == 0x5200 || it == 0x5203 })
+        assertTrue(received.none { it == 0x5201 || it == 0x5202 || it == 0x5204 })
+        assertTrue(Iap2WiredControlClient.subscriptions(bootstrap.routeGuidanceEnabled).none { it.messageId == 0x5200 })
         assertNull(parameters.first(20))
         assertNull(parameters.first(21))
         assertNull(parameters.first(22))
@@ -51,6 +58,12 @@ class Iap2WirelessLinkRoleTest {
         assertTrue(runtime.locationInformationEnabled)
         assertTrue(runtime.vehicleSpeedEnabled)
         assertTrue(runtime.vehicleStatusEnabled)
+        assertTrue(runtime.routeGuidanceEnabled)
+        assertTrue(runtime.laneGuidanceEnabled)
+        assertTrue(parameters.first(30) != null)
+        assertTrue(0x5200 in sent && 0x5203 in sent)
+        assertTrue(0x5201 in received && 0x5202 in received && 0x5204 in received)
+        assertTrue(Iap2WiredControlClient.subscriptions(runtime.routeGuidanceEnabled).any { it.messageId == 0x5200 })
         assertTrue(parameters.first(20) != null)
         assertTrue(parameters.first(21) != null)
         assertTrue(parameters.first(22) != null)

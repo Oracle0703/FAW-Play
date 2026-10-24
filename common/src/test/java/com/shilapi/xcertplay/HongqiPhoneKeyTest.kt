@@ -46,7 +46,36 @@ class HongqiPhoneKeyTest {
     }
 
     @After fun tearDown() {
+        HongqiWheelControls.onPause(app)
         HongqiWheelControls.detach(phone)
+        settleVehicleWorker()
+    }
+
+    @Test fun temporaryOemScreenLossRetainsItsRegistrationAndReturnsOnGain() {
+        HongqiWheelControls.onResume(app); settleVehicleWorker()
+        assertNotNull(vehicle.viewListener)
+        view(-2)
+        HongqiWheelControls.onPause(app); settleVehicleWorker()
+        assertEquals(0, vehicle.viewReleases)
+        assertEquals(listOf(-2), phone.screenFocus)
+        view(1)
+        assertEquals(listOf(-2, 1), phone.screenFocus)
+    }
+
+    @Test fun permanentOemLossIsNotDiscardedWhenItsRegistrationIsRetired() {
+        HongqiWheelControls.onResume(app); settleVehicleWorker()
+        view(-1)
+        assertEquals(listOf(-1), phone.screenFocus)
+    }
+
+    private fun view(change: Int) {
+        val data = Parcel.obtain(); val reply = Parcel.obtain()
+        try {
+            data.writeInterfaceToken("ltd.qisi.systemmanager.IViewFocusChangedListener")
+            data.writeInt(38); data.writeInt(change)
+            assertTrue(vehicle.viewListener!!.transact(1, data, reply, 0))
+            reply.readException()
+        } finally { data.recycle(); reply.recycle() }
         settleVehicleWorker()
     }
 
@@ -198,6 +227,33 @@ class HongqiPhoneKeyTest {
         settleVehicleWorker()
     }
 
+    @Test fun siriLongPressKeepsDownUntilOemCompletionAndIgnoresDuplicates() {
+        press(1, 259); press(1, 259); press(0, 259)
+        phone.touchExecutor.drain()
+        assertEquals(listOf(true), session.siri)
+        press(2, 259); press(2, 259)
+        phone.touchExecutor.drain()
+        assertEquals(listOf(true, false), session.siri)
+        press(0, 259)
+        phone.touchExecutor.drain()
+        assertEquals(listOf(true, false, true, false), session.siri)
+    }
+
+    @Test fun siriReleaseCannotOperateAReplacementPhone() {
+        press(1, 259); phone.touchExecutor.drain()
+        val previous = session
+        phone.activeSession = PhoneSession()
+        press(2, 259); phone.touchExecutor.drain()
+        assertEquals(listOf(true), previous.siri)
+        assertTrue(session.siri.isEmpty())
+    }
+
+    @Test fun detachingHeldSiriReleasesTheOriginalPhone() {
+        press(1, 259); phone.touchExecutor.drain()
+        HongqiWheelControls.detach(phone); settleVehicleWorker(); phone.touchExecutor.drain()
+        assertEquals(listOf(true, false), session.siri)
+    }
+
     private fun callState(state: Int) {
         AirPlayPhoneState.observeCallState(session, Iap2Frame(0x4155, Iap2ParameterList.of(
             Iap2Parameter(2, Iap2WireCodec.u8(state)),
@@ -206,10 +262,23 @@ class HongqiPhoneKeyTest {
     }
 
     class ConnectedPhone {
+        val screenFocus = mutableListOf<Int>()
+        fun nativeScreenFocusChanged(change: Int, token: Any): Boolean {
+            if (token !== activeSession) return false
+            screenFocus += change
+            return true
+        }
         @JvmField var activeSession: PhoneSession? = PhoneSession()
         @JvmField val touchExecutor = QueuedCommands()
         fun isClosed() = false
         fun activeAirPlaySessionToken(): Any? = activeSession
+        fun sendSiriButton(down: Boolean, token: Any? = activeSession): Boolean {
+            val captured = activeSession ?: return false
+            if (token !== captured) return false
+            touchExecutor.execute { if (activeSession === captured && activeSession === token) captured.siri += down }
+            return true
+        }
+        fun requestSiri(): Boolean { sendSiriButton(true); return sendSiriButton(false) }
     }
 
     class QueuedCommands : Executor {
@@ -219,6 +288,7 @@ class HongqiPhoneKeyTest {
     }
 
     class PhoneSession {
+        val siri = mutableListOf<Boolean>()
         @JvmField val eventWriteLock = Any()
         @JvmField var eventCseq = 0
         val telephony = mutableListOf<Int>()
@@ -233,6 +303,8 @@ class HongqiPhoneKeyTest {
     }
 
     class VehicleKeys : Binder() {
+        var viewListener: IBinder? = null
+        var viewReleases = 0
         var registeredKeys = intArrayOf()
         var releasedKeys = intArrayOf()
         var listener: IBinder? = null
@@ -243,6 +315,9 @@ class HongqiPhoneKeyTest {
             if (code == INTERFACE_TRANSACTION) return super.onTransact(code, data, reply, flags)
             data.enforceInterface(DESCRIPTOR)
             when (code) {
+                5 -> { assertEquals(38, data.readInt()); viewListener = data.readStrongBinder() }
+                6 -> { data.readStrongBinder(); viewReleases++ }
+                10 -> assertEquals(38, data.readInt())
                 12 -> {
                     data.readString()
                     data.readString()
@@ -260,6 +335,7 @@ class HongqiPhoneKeyTest {
                 else -> return false
             }
             reply!!.writeNoException()
+            if (code in listOf(5, 6, 10)) reply.writeInt(1)
             return true
         }
 

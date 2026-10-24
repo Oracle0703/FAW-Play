@@ -3,43 +3,16 @@ package com.shilapi.xcertplay
 import android.content.Context
 import android.content.SharedPreferences
 import android.graphics.ColorMatrix
-import android.graphics.ColorMatrixColorFilter
-import android.graphics.Paint
-import android.view.TextureView
 
-/** Pixel adjustments for CarPlay video textures, not Android or OEM UI. */
+/** Legacy picture preferences remain neutral; CarPlay owns video rendering. */
 internal object CarPlayPicture {
     const val BRIGHTNESS = "brightness"
     const val CONTRAST = "contrast"
     const val SATURATION = "saturation"
     const val WARMTH = "warmth"
     val keys = listOf(BRIGHTNESS, CONTRAST, SATURATION, WARMTH)
-    private val previewListeners = mutableSetOf<() -> Unit>()
-    private var originalPreview = false
 
-    /** Transient A/B comparison; never written to preferences or left on after panel closure. */
-    fun showOriginal(show: Boolean) {
-        originalPreview = show
-        previewListeners.toList().forEach { it() }
-    }
-
-    class Binding(private val view: TextureView) : java.io.Closeable {
-        private var closed = false
-        private val prefs = preferences(view.context)
-        private val update: () -> Unit = { if (!closed) apply(view, prefs) }
-        private val handler = android.os.Handler(android.os.Looper.getMainLooper())
-        private val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, _ -> handler.post { update() } }
-        init {
-            prefs.registerOnSharedPreferenceChangeListener(listener)
-            previewListeners.add(update)
-            update()
-        }
-        override fun close() {
-            closed = true
-            prefs.unregisterOnSharedPreferenceChangeListener(listener)
-            previewListeners.remove(update)
-        }
-    }
+    fun showOriginal(show: Boolean) = Unit
 
     fun preferences(context: Context): SharedPreferences =
         context.getSharedPreferences("carplay_picture", Context.MODE_PRIVATE)
@@ -77,11 +50,4 @@ internal object CarPlayPicture {
         }
     }
 
-    fun apply(view: TextureView, prefs: SharedPreferences) {
-        val neutral = originalPreview || keys
-            .all { value(prefs, it) == defaultValue(it) }
-        view.setLayerPaint(if (neutral) null else Paint().apply {
-            colorFilter = ColorMatrixColorFilter(matrix(prefs))
-        })
-    }
 }

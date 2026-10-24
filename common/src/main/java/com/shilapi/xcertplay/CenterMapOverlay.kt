@@ -5,7 +5,6 @@ import android.content.Context
 import android.graphics.Color
 import android.graphics.Outline
 import android.graphics.PixelFormat
-import android.graphics.SurfaceTexture
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
@@ -13,7 +12,6 @@ import android.util.Log
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.Surface
-import android.view.TextureView
 import android.view.View
 import android.view.ViewConfiguration
 import android.view.ViewOutlineProvider
@@ -31,13 +29,13 @@ import kotlin.math.hypot
 internal object CenterMapOverlay {
     const val TAG = "DiPlay-CenterMap"
     private const val SHOW_DELAY_MILLIS = 600L
-    private const val RELEASE_DELAY_MILLIS = 1_000L
     private const val WIDTH_FRACTION = 0.36
     private const val MIN_WIDTH_FRACTION = 0.25
     private const val MIN_PINCH_REFERENCE_DP = 64f
 
     private val main = Handler(Looper.getMainLooper())
     private var root: View? = null
+    private var videoSurface: VideoSurfaceView? = null
 
     /** The CarPlay screen, asked to show the card once no DiPlay screen is in front. */
     var requestShow: (() -> Unit)? = null
@@ -60,8 +58,8 @@ internal object CenterMapOverlay {
     val shown: Boolean get() = root != null
 
     /**
-     * Adds the card. [onSurface] gets its surface, and null when the card goes, before the surface is
-     * released. Main thread.
+     * Adds the card. [onSurface] gets its surface, and null when the card goes, before its holder is
+     * destroyed. Main thread.
      */
     fun show(
         context: Context,
@@ -98,7 +96,7 @@ internal object CenterMapOverlay {
             height,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
-                WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED, // the TextureView needs it
+                WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
             PixelFormat.TRANSLUCENT,
         ).apply {
             gravity = Gravity.TOP or Gravity.START
@@ -106,30 +104,9 @@ internal object CenterMapOverlay {
                 .coerceIn(0, (screenWidth - width).coerceAtLeast(0))
             y = prefs.getInt(KEY_Y, (96 * metrics.density).toInt())
                 .coerceIn(0, (screenHeight - height).coerceAtLeast(0))
-            title = "FAW Play centre map"
+            title = "Autunn Play centre map"
         }
-        var surface: Surface? = null
-        val video = TextureView(context).apply {
-            surfaceTextureListener = object : TextureView.SurfaceTextureListener {
-                override fun onSurfaceTextureAvailable(texture: SurfaceTexture, w: Int, h: Int) {
-                    surface = Surface(texture).also(onSurface)
-                    Log.i(TAG, "card surface ${w}x$h")
-                }
-
-                override fun onSurfaceTextureSizeChanged(texture: SurfaceTexture, w: Int, h: Int) = Unit
-                override fun onSurfaceTextureUpdated(texture: SurfaceTexture) = Unit
-
-                override fun onSurfaceTextureDestroyed(texture: SurfaceTexture): Boolean {
-                    // Stop the mirror first; its decoder stops on its own thread, so the old
-                    // surface stays valid a little longer.
-                    onSurface(null)
-                    val old = surface
-                    surface = null
-                    main.postDelayed({ old?.release(); texture.release() }, RELEASE_DELAY_MILLIS)
-                    return false
-                }
-            }
-        }
+        val video = VideoSurfaceView(context, onSurface = onSurface)
         val card = FrameLayout(context).apply {
             setBackgroundColor(Color.BLACK)
             outlineProvider = object : ViewOutlineProvider() {
@@ -137,6 +114,8 @@ internal object CenterMapOverlay {
                     outline.setRoundRect(0, 0, view.width, view.height, radius)
             }
             clipToOutline = true
+            video.outlineProvider = outlineProvider
+            video.clipToOutline = true
             addView(video, FrameLayout.LayoutParams(-1, -1))
         }
         val slop = ViewConfiguration.get(context).scaledTouchSlop
@@ -241,9 +220,11 @@ internal object CenterMapOverlay {
         return try {
             windows.addView(card, params)
             root = card
+            videoSurface = video
             Log.i(TAG, "card shown ${width}x$height at ${params.x},${params.y}")
             true
         } catch (error: RuntimeException) {
+            video.close()
             Log.w(TAG, "card failed", error)
             false
         }
@@ -253,6 +234,8 @@ internal object CenterMapOverlay {
     fun hide() {
         val view = root ?: return
         root = null
+        videoSurface?.close()
+        videoSurface = null
         runCatching { view.context.getSystemService(WindowManager::class.java)?.removeViewImmediate(view) }
         Log.i(TAG, "card hidden")
     }

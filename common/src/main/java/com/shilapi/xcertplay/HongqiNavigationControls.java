@@ -36,7 +36,7 @@ public final class HongqiNavigationControls {
 
     /** This host hook also compiles against the release APK without shipping API substitute classes. */
     public static boolean onTouch(Activity host, MotionEvent event) {
-        if (!com.shilapi.xcertplay.shared.BuildConfig.FAW_NAVIGATION_OUTPUTS_ENABLED || !HongqiNavigation.supported()) return false;
+        if (!com.shilapi.xcertplay.shared.BuildConfig.AUTUNN_NAVIGATION_OUTPUTS_ENABLED || !HongqiNavigation.supported()) return false;
         try {
             Field outside = host.getClass().getDeclaredField("touchOutsideContent");
             outside.setAccessible(true);
@@ -53,19 +53,26 @@ public final class HongqiNavigationControls {
                 release.setAccessible(true);
                 release.invoke(host);
                 boolean shown = action == 1;
+                if (shown && !com.shilapi.xcertplay.licensing.ProductLicense.featureAllowed(host,
+                        com.shilapi.xcertplay.licensing.LicenseFeatures.INSTRUMENT_MAP)) {
+                    Toast.makeText(host, "仪表地图需要激活，请扫码输入兑换码", Toast.LENGTH_LONG).show();
+                    host.startActivity(new Intent(host, LicenseActivity.class));
+                    return true;
+                }
                 boolean provisioned = provision(host, shown);
                 HongqiNavigation.setMapShown(host, shown);
                 if (shown && !Settings.canDrawOverlays(host)) {
-                    Toast.makeText(host, "请允许 FAW Play 显示在其他应用上层，以显示仪表地图", Toast.LENGTH_LONG).show();
+                    Toast.makeText(host, "请允许 Autunn Play 显示在其他应用上层，以显示仪表地图", Toast.LENGTH_LONG).show();
                     host.startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                             Uri.parse("package:" + host.getPackageName())));
                     return true;
                 }
                 if (provisioned) {
                     Method reconnect = host.getClass().getDeclaredMethod("reconnectAfterLoss", String.class,
-                            Class.forName("com.shilapi.xcertplay.network.WirelessStartupFailure"));
+                            com.shilapi.xcertplay.network.WirelessStartupFailure.class, boolean.class);
                     reconnect.setAccessible(true);
-                    reconnect.invoke(host, "Instrument map enabled; requesting stream", null);
+                    // A newly negotiated display changes the runtime configuration: rebuild it.
+                    reconnect.invoke(host, "Instrument map enabled; requesting stream", null, false);
                 }
                 Toast.makeText(host, shown ? "仪表地图已开启" : "仪表地图已关闭", Toast.LENGTH_SHORT).show();
                 Log.i(TAG, "three-finger horizontal instrument map shown=" + shown);

@@ -34,6 +34,27 @@ import org.robolectric.shadows.ShadowLog
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [29], manifest = Config.NONE, shadows = [TelephonyMicrophoneTest.ConfigurableAudioEffect::class])
 class TelephonyMicrophoneTest {
+    @Test fun vehicleAudioOwnershipDefersCaptureAndStoppedRequestsCannotReviveOnReturn() {
+        val owner = Any()
+        sink.onCarPlaySessionActive(owner)
+        sink.onResourceModes(owner, com.shilapi.xcertplay.airplay.AirPlayResourceModes.State(
+            mainAudio = com.shilapi.xcertplay.airplay.AirPlayResourceModes.Entity.VEHICLE))
+        sink.onMicrophoneStarted(telephony, config("telephony"))
+        assertNull(recorder.get())
+        assertEquals(AudioManager.MODE_NORMAL, manager.mode)
+        sink.onResourceModes(owner, com.shilapi.xcertplay.airplay.AirPlayResourceModes.State(
+            mainAudio = com.shilapi.xcertplay.airplay.AirPlayResourceModes.Entity.IPHONE))
+        val record = awaitCapture()
+        assertEquals(AudioManager.MODE_IN_COMMUNICATION, manager.mode)
+        sink.onResourceModes(owner, com.shilapi.xcertplay.airplay.AirPlayResourceModes.State(
+            mainAudio = com.shilapi.xcertplay.airplay.AirPlayResourceModes.Entity.VEHICLE))
+        assertEquals(AudioRecord.STATE_UNINITIALIZED, record.state)
+        sink.onMicrophoneStopped(telephony)
+        sink.onResourceModes(owner, com.shilapi.xcertplay.airplay.AirPlayResourceModes.State(
+            mainAudio = com.shilapi.xcertplay.airplay.AirPlayResourceModes.Entity.IPHONE))
+        assertEquals(AudioManager.MODE_NORMAL, manager.mode)
+        assertEquals(AudioRecord.STATE_UNINITIALIZED, record.state)
+    }
     private val context get() = RuntimeEnvironment.getApplication()
     private val telephony = AudioStreamId(100, "telephony")
     private val speechRecognition = AudioStreamId(100, "speechrecognition")

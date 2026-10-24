@@ -1,0 +1,267 @@
+# Source: work/update-package-20261009/format-audit/QisiAdapterService/bytecode.dis.txt
+# Original LF start: 1415195
+  class #2108: QisiCallInfo ('Lltd/qisi/adapterproxy/data/QisiCallInfo;')
+   access=0001 (PUBLIC)
+   source_file=QisiCallInfo.java, class_data_off=a08e9a (10522266)
+   static_fields=1, instance_fields=5, direct_methods=5, virtual_methods=14
+   direct_method #56488: <clinit> ()V
+    access=10009 (PUBLIC STATIC CONSTRUCTOR)
+    codeOff=8573fe (8745982)
+    quickening_size=1 (1)
+      857402: 2200 5019                              |0000: new-instance v0, Lltd/qisi/adapterproxy/data/QisiCallInfo$1; // type@1950
+      857406: 7010 a2dc 0000                         |0002: invoke-direct {v0}, Lltd/qisi/adapterproxy/data/QisiCallInfo$1;.<init>:()V // method@dca2
+      85740c: 6900 3b58                              |0005: sput-object v0, Lltd/qisi/adapterproxy/data/QisiCallInfo;.CREATOR:Landroid/os/Parcelable$Creator; // field@583b
+      857410: 7300                                   |0007: return-void-no-barrier
+[new] 857410: 0e00                                   |0007: return-void
+   direct_method #56489: <init> ()V
+    access=10001 (PUBLIC CONSTRUCTOR)
+    codeOff=5d53c0 (6116288)
+      5d53c4: 7010 b699 0000                         |0000: invoke-direct {v0}, Ljava/lang/Object;.<init>:()V // method@99b6
+      5d53ca: 0e00                                   |0003: return-void
+   direct_method #56490: <init> (ILjava/lang/String;ILjava/lang/String;I)V
+    access=10001 (PUBLIC CONSTRUCTOR)
+    codeOff=85745a (8746074)
+    quickening_size=b (11)
+      85745e: 7010 b699 0000                         |0000: invoke-direct {v0}, Ljava/lang/Object;.<init>:()V // method@99b6
+      857464: e601 1800                              |0003: iput-quick v1, v0, [obj+0018]
+[new] 857464: 5901 4058                              |0003: iput v1, v0, Lltd/qisi/adapterproxy/data/QisiCallInfo;.callType:I // field@5840
+      857468: e802 0800                              |0005: iput-object-quick v2, v0, [obj+0008]
+[new] 857468: 5b02 3c58                              |0005: iput-object v2, v0, Lltd/qisi/adapterproxy/data/QisiCallInfo;.callName:Ljava/lang/String; // field@583c
+      85746c: e603 1400                              |0007: iput-quick v3, v0, [obj+0014]
+[new] 85746c: 5903 3f58                              |0007: iput v3, v0, Lltd/qisi/adapterproxy/data/QisiCallInfo;.callTime:I // field@583f
+      857470: e804 0c00                              |0009: iput-object-quick v4, v0, [obj+000c]
+[new] 857470: 5b04 3d58                              |0009: iput-object v4, v0, Lltd/qisi/adapterproxy/data/QisiCallInfo;.callPhone:Ljava/lang/String; // field@583d
+      857474: e605 1000                              |000b: iput-quick v5, v0, [obj+0010]
+[new] 857474: 5905 3e58                              |000b: iput v5, v0, Lltd/qisi/adapterproxy/data/QisiCallInfo;.callStaus:I // field@583e
+      857478: 7300                                   |000d: return-void-no-barrier
+[new] 857478: 0e00                                   |000d: return-void
+   direct_method #56491: <init> (Landroid/os/Parcel;)V
+    access=10001 (PUBLIC CONSTRUCTOR)
+    codeOff=857412 (8746002)
+    quickening_size=15 (21)
+      857416: 7010 b699 0100                         |0000: invoke-direct {v1}, Ljava/lang/Object;.<init>:()V // method@99b6
+      85741c: e910 4600 0200                         |0003: invoke-virtual-quick {v2}, [0046] // vtable #0046
+[new] 85741c: 6e10 9601 0200                         |0003: invoke-virtual {v2}, Landroid/os/Parcel;.readInt:()I // method@0196
+      857422: 0a00                                   |0006: move-result v0
+      857424: e610 1800                              |0007: iput-quick v0, v1, [obj+0018]
+[new] 857424: 5910 4058                              |0007: iput v0, v1, Lltd/qisi/adapterproxy/data/QisiCallInfo;.callType:I // field@5840
+      857428: e910 5c00 0200                         |0009: invoke-virtual-quick {v2}, [005c] // vtable #005c
+[new] 857428: 6e10 9b01 0200                         |0009: invoke-virtual {v2}, Landroid/os/Parcel;.readString:()Ljava/lang/String; // method@019b
+      85742e: 0c00                                   |000c: move-result-object v0
+      857430: e810 0800                              |000d: iput-object-quick v0, v1, [obj+0008]
+[new] 857430: 5b10 3c58                              |000d: iput-object v0, v1, Lltd/qisi/adapterproxy/data/QisiCallInfo;.callName:Ljava/lang/String; // field@583c
+      857434: e910 4600 0200                         |000f: invoke-virtual-quick {v2}, [0046] // vtable #0046
+[new] 857434: 6e10 9601 0200                         |000f: invoke-virtual {v2}, Landroid/os/Parcel;.readInt:()I // method@0196
+      85743a: 0a00                                   |0012: move-result v0
+      85743c: e610 1400                              |0013: iput-quick v0, v1, [obj+0014]
+[new] 85743c: 5910 3f58                              |0013: iput v0, v1, Lltd/qisi/adapterproxy/data/QisiCallInfo;.callTime:I // field@583f
+      857440: e910 5c00 0200                         |0015: invoke-virtual-quick {v2}, [005c] // vtable #005c
+[new] 857440: 6e10 9b01 0200                         |0015: invoke-virtual {v2}, Landroid/os/Parcel;.readString:()Ljava/lang/String; // method@019b
+      857446: 0c00                                   |0018: move-result-object v0
+      857448: e810 0c00                              |0019: iput-object-quick v0, v1, [obj+000c]
+[new] 857448: 5b10 3d58                              |0019: iput-object v0, v1, Lltd/qisi/adapterproxy/data/QisiCallInfo;.callPhone:Ljava/lang/String; // field@583d
+      85744c: e910 4600 0200                         |001b: invoke-virtual-quick {v2}, [0046] // vtable #0046
+[new] 85744c: 6e10 9601 0200                         |001b: invoke-virtual {v2}, Landroid/os/Parcel;.readInt:()I // method@0196
+      857452: 0a02                                   |001e: move-result v2
+      857454: e612 1000                              |001f: iput-quick v2, v1, [obj+0010]
+[new] 857454: 5912 3e58                              |001f: iput v2, v1, Lltd/qisi/adapterproxy/data/QisiCallInfo;.callStaus:I // field@583e
+      857458: 7300                                   |0021: return-void-no-barrier
+[new] 857458: 0e00                                   |0021: return-void
+   direct_method #56492: access$000 (Lltd/qisi/adapterproxy/data/QisiCallInfo;)Ljava/lang/String;
+    access=1009 (PUBLIC STATIC SYNTHETIC)
+    codeOff=8572f6 (8745718)
+    quickening_size=3 (3)
+      8572fa: e500 0800                              |0000: iget-object-quick v0, v0, [obj+0008]
+[new] 8572fa: 5400 3c58                              |0000: iget-object v0, v0, Lltd/qisi/adapterproxy/data/QisiCallInfo;.callName:Ljava/lang/String; // field@583c
+      8572fe: 1100                                   |0002: return-object v0
+   virtual_method #56493: describeContents ()I
+    access=0001 (PUBLIC)
+    codeOff=5d9bd6 (6134742)
+      5d9bda: 1200                                   |0000: const/4 v0, #int 0 // #0
+      5d9bdc: 0f00                                   |0001: return v0
+   virtual_method #56494: getCallName ()Ljava/lang/String;
+    access=0001 (PUBLIC)
+    codeOff=857300 (8745728)
+    quickening_size=3 (3)
+      857304: e510 0800                              |0000: iget-object-quick v0, v1, [obj+0008]
+[new] 857304: 5410 3c58                              |0000: iget-object v0, v1, Lltd/qisi/adapterproxy/data/QisiCallInfo;.callName:Ljava/lang/String; // field@583c
+      857308: 1100                                   |0002: return-object v0
+   virtual_method #56495: getCallPhone ()Ljava/lang/String;
+    access=0001 (PUBLIC)
+    codeOff=85730a (8745738)
+    quickening_size=3 (3)
+      85730e: e510 0c00                              |0000: iget-object-quick v0, v1, [obj+000c]
+[new] 85730e: 5410 3d58                              |0000: iget-object v0, v1, Lltd/qisi/adapterproxy/data/QisiCallInfo;.callPhone:Ljava/lang/String; // field@583d
+      857312: 1100                                   |0002: return-object v0
+   virtual_method #56496: getCallStaus ()I
+    access=0001 (PUBLIC)
+    codeOff=8572d8 (8745688)
+    quickening_size=3 (3)
+      8572dc: e310 1000                              |0000: iget-quick v0, v1, [obj+0010]
+[new] 8572dc: 5210 3e58                              |0000: iget v0, v1, Lltd/qisi/adapterproxy/data/QisiCallInfo;.callStaus:I // field@583e
+      8572e0: 0f00                                   |0002: return v0
+   virtual_method #56497: getCallTime ()I
+    access=0001 (PUBLIC)
+    codeOff=8572e2 (8745698)
+    quickening_size=3 (3)
+      8572e6: e310 1400                              |0000: iget-quick v0, v1, [obj+0014]
+[new] 8572e6: 5210 3f58                              |0000: iget v0, v1, Lltd/qisi/adapterproxy/data/QisiCallInfo;.callTime:I // field@583f
+      8572ea: 0f00                                   |0002: return v0
+   virtual_method #56498: getCallType ()I
+    access=0001 (PUBLIC)
+    codeOff=8572ec (8745708)
+    quickening_size=3 (3)
+      8572f0: e310 1800                              |0000: iget-quick v0, v1, [obj+0018]
+[new] 8572f0: 5210 4058                              |0000: iget v0, v1, Lltd/qisi/adapterproxy/data/QisiCallInfo;.callType:I // field@5840
+      8572f4: 0f00                                   |0002: return v0
+   virtual_method #56499: setCallName (Ljava/lang/String;)V
+    access=0001 (PUBLIC)
+    codeOff=85747a (8746106)
+    quickening_size=3 (3)
+      85747e: e801 0800                              |0000: iput-object-quick v1, v0, [obj+0008]
+[new] 85747e: 5b01 3c58                              |0000: iput-object v1, v0, Lltd/qisi/adapterproxy/data/QisiCallInfo;.callName:Ljava/lang/String; // field@583c
+      857482: 7300                                   |0002: return-void-no-barrier
+[new] 857482: 0e00                                   |0002: return-void
+   virtual_method #56500: setCallPhone (Ljava/lang/String;)V
+    access=0001 (PUBLIC)
+    codeOff=857484 (8746116)
+    quickening_size=3 (3)
+      857488: e801 0c00                              |0000: iput-object-quick v1, v0, [obj+000c]
+[new] 857488: 5b01 3d58                              |0000: iput-object v1, v0, Lltd/qisi/adapterproxy/data/QisiCallInfo;.callPhone:Ljava/lang/String; // field@583d
+      85748c: 7300                                   |0002: return-void-no-barrier
+[new] 85748c: 0e00                                   |0002: return-void
+   virtual_method #56501: setCallStaus (I)V
+    access=0001 (PUBLIC)
+    codeOff=85748e (8746126)
+    quickening_size=3 (3)
+      857492: e601 1000                              |0000: iput-quick v1, v0, [obj+0010]
+[new] 857492: 5901 3e58                              |0000: iput v1, v0, Lltd/qisi/adapterproxy/data/QisiCallInfo;.callStaus:I // field@583e
+      857496: 7300                                   |0002: return-void-no-barrier
+[new] 857496: 0e00                                   |0002: return-void
+   virtual_method #56502: setCallTime (I)V
+    access=0001 (PUBLIC)
+    codeOff=857498 (8746136)
+    quickening_size=3 (3)
+      85749c: e601 1400                              |0000: iput-quick v1, v0, [obj+0014]
+[new] 85749c: 5901 3f58                              |0000: iput v1, v0, Lltd/qisi/adapterproxy/data/QisiCallInfo;.callTime:I // field@583f
+      8574a0: 7300                                   |0002: return-void-no-barrier
+[new] 8574a0: 0e00                                   |0002: return-void
+   virtual_method #56503: setCallType (I)V
+    access=0001 (PUBLIC)
+    codeOff=8574a2 (8746146)
+    quickening_size=3 (3)
+      8574a6: e601 1800                              |0000: iput-quick v1, v0, [obj+0018]
+[new] 8574a6: 5901 4058                              |0000: iput v1, v0, Lltd/qisi/adapterproxy/data/QisiCallInfo;.callType:I // field@5840
+      8574aa: 7300                                   |0002: return-void-no-barrier
+[new] 8574aa: 0e00                                   |0002: return-void
+   virtual_method #56504: toJson ()Ljava/lang/String;
+    access=0001 (PUBLIC)
+    codeOff=857314 (8745748)
+    quickening_size=11 (17)
+      857318: 2200 cf07                              |0000: new-instance v0, Lcom/google/gson/Gson; // type@07cf
+      85731c: 7010 1127 0000                         |0002: invoke-direct {v0}, Lcom/google/gson/Gson;.<init>:()V // method@2711
+      857322: 220b 5119                              |0005: new-instance v11, Lltd/qisi/adapterproxy/data/QisiCallInfo$MQisiCallInfo; // type@1951
+      857326: 7100 35dd 0000                         |0007: invoke-static {}, Lltd/qisi/adapterproxy/data/QisiNaviConnectInfo;.getInstance:()Lltd/qisi/adapterproxy/data/QisiNaviConnectInfo; // method@dd35
+      85732c: 0c01                                   |000a: move-result-object v1
+      85732e: e910 0b00 0100                         |000b: invoke-virtual-quick {v1}, [000b] // vtable #000b
+[new] 85732e: 6e10 36dd 0100                         |000b: invoke-virtual {v1}, Lltd/qisi/adapterproxy/data/QisiNaviConnectInfo;.getNaviInfoStatus:()I // method@dd36
+      857334: 0a04                                   |000e: move-result v4
+      857336: 7100 8bdd 0000                         |000f: invoke-static {}, Lltd/qisi/adapterproxy/data/QisiSourceInfo;.getInstance:()Lltd/qisi/adapterproxy/data/QisiSourceInfo; // method@dd8b
+      85733c: 0c01                                   |0012: move-result-object v1
+      85733e: e910 0b00 0100                         |0013: invoke-virtual-quick {v1}, [000b] // vtable #000b
+[new] 85733e: 6e10 8cdd 0100                         |0013: invoke-virtual {v1}, Lltd/qisi/adapterproxy/data/QisiSourceInfo;.getSourceStatusConnect:()I // method@dd8c
+      857344: 0a05                                   |0016: move-result v5
+      857346: e3c6 1800                              |0017: iget-quick v6, v12, [obj+0018]
+[new] 857346: 52c6 4058                              |0017: iget v6, v12, Lltd/qisi/adapterproxy/data/QisiCallInfo;.callType:I // field@5840
+      85734a: e5c7 0800                              |0019: iget-object-quick v7, v12, [obj+0008]
+[new] 85734a: 54c7 3c58                              |0019: iget-object v7, v12, Lltd/qisi/adapterproxy/data/QisiCallInfo;.callName:Ljava/lang/String; // field@583c
+      85734e: e3c8 1400                              |001b: iget-quick v8, v12, [obj+0014]
+[new] 85734e: 52c8 3f58                              |001b: iget v8, v12, Lltd/qisi/adapterproxy/data/QisiCallInfo;.callTime:I // field@583f
+      857352: e5c9 0c00                              |001d: iget-object-quick v9, v12, [obj+000c]
+[new] 857352: 54c9 3d58                              |001d: iget-object v9, v12, Lltd/qisi/adapterproxy/data/QisiCallInfo;.callPhone:Ljava/lang/String; // field@583d
+      857356: e3ca 1000                              |001f: iget-quick v10, v12, [obj+0010]
+[new] 857356: 52ca 3e58                              |001f: iget v10, v12, Lltd/qisi/adapterproxy/data/QisiCallInfo;.callStaus:I // field@583e
+      85735a: 1243                                   |0021: const/4 v3, #int 4 // #4
+      85735c: 07b1                                   |0022: move-object v1, v11
+      85735e: 07c2                                   |0023: move-object v2, v12
+      857360: 760a a7dc 0100                         |0024: invoke-direct/range {v1, v2, v3, v4, v5, v6, v7, v8, v9, v10}, Lltd/qisi/adapterproxy/data/QisiCallInfo$MQisiCallInfo;.<init>:(Lltd/qisi/adapterproxy/data/QisiCallInfo;IIIILjava/lang/String;ILjava/lang/String;I)V // method@dca7
+      857366: e920 1d00 b000                         |0027: invoke-virtual-quick {v0, v11}, [001d] // vtable #001d
+[new] 857366: 6e20 2c27 b000                         |0027: invoke-virtual {v0, v11}, Lcom/google/gson/Gson;.toJson:(Ljava/lang/Object;)Ljava/lang/String; // method@272c
+      85736c: 0c00                                   |002a: move-result-object v0
+      85736e: 1100                                   |002b: return-object v0
+   virtual_method #56505: toString ()Ljava/lang/String;
+    access=0001 (PUBLIC)
+    codeOff=857370 (8745840)
+    quickening_size=23 (35)
+      857374: 1a00 b550                              |0000: const-string v0, "QisiCallInfo{callType='" // string@50b5
+      857378: 7110 7502 0000                         |0002: invoke-static {v0}, Lc/a/a/a/a;.y:(Ljava/lang/String;)Ljava/lang/StringBuilder; // method@0275
+      85737e: 0c00                                   |0005: move-result-object v0
+      857380: e341 1800                              |0006: iget-quick v1, v4, [obj+0018]
+[new] 857380: 5241 4058                              |0006: iget v1, v4, Lltd/qisi/adapterproxy/data/QisiCallInfo;.callType:I // field@5840
+      857384: e920 4600 1000                         |0008: invoke-virtual-quick {v0, v1}, [0046] // vtable #0046
+[new] 857384: 6e20 2d9a 1000                         |0008: invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;.append:(I)Ljava/lang/StringBuilder; // method@9a2d
+      85738a: 1301 2700                              |000b: const/16 v1, #int 39 // #27
+      85738e: e920 4300 1000                         |000d: invoke-virtual-quick {v0, v1}, [0043] // vtable #0043
+[new] 85738e: 6e20 2a9a 1000                         |000d: invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;.append:(C)Ljava/lang/StringBuilder; // method@9a2a
+      857394: 1a02 2004                              |0010: const-string v2, ", callName='" // string@0420
+      857398: e920 4b00 2000                         |0012: invoke-virtual-quick {v0, v2}, [004b] // vtable #004b
+[new] 857398: 6e20 329a 2000                         |0012: invoke-virtual {v0, v2}, Ljava/lang/StringBuilder;.append:(Ljava/lang/String;)Ljava/lang/StringBuilder; // method@9a32
+      85739e: e542 0800                              |0015: iget-object-quick v2, v4, [obj+0008]
+[new] 85739e: 5442 3c58                              |0015: iget-object v2, v4, Lltd/qisi/adapterproxy/data/QisiCallInfo;.callName:Ljava/lang/String; // field@583c
+      8573a2: 1a03 2304                              |0017: const-string v3, ", callTime='" // string@0423
+      8573a6: 7140 6302 2031                         |0019: invoke-static {v0, v2, v1, v3}, Lc/a/a/a/a;.V:(Ljava/lang/StringBuilder;Ljava/lang/String;CLjava/lang/String;)V // method@0263
+      8573ac: e342 1400                              |001c: iget-quick v2, v4, [obj+0014]
+[new] 8573ac: 5242 3f58                              |001c: iget v2, v4, Lltd/qisi/adapterproxy/data/QisiCallInfo;.callTime:I // field@583f
+      8573b0: e920 4600 2000                         |001e: invoke-virtual-quick {v0, v2}, [0046] // vtable #0046
+[new] 8573b0: 6e20 2d9a 2000                         |001e: invoke-virtual {v0, v2}, Ljava/lang/StringBuilder;.append:(I)Ljava/lang/StringBuilder; // method@9a2d
+      8573b6: e920 4300 1000                         |0021: invoke-virtual-quick {v0, v1}, [0043] // vtable #0043
+[new] 8573b6: 6e20 2a9a 1000                         |0021: invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;.append:(C)Ljava/lang/StringBuilder; // method@9a2a
+      8573bc: 1a02 2104                              |0024: const-string v2, ", callPhone=" // string@0421
+      8573c0: e920 4b00 2000                         |0026: invoke-virtual-quick {v0, v2}, [004b] // vtable #004b
+[new] 8573c0: 6e20 329a 2000                         |0026: invoke-virtual {v0, v2}, Ljava/lang/StringBuilder;.append:(Ljava/lang/String;)Ljava/lang/StringBuilder; // method@9a32
+      8573c6: e542 0c00                              |0029: iget-object-quick v2, v4, [obj+000c]
+[new] 8573c6: 5442 3d58                              |0029: iget-object v2, v4, Lltd/qisi/adapterproxy/data/QisiCallInfo;.callPhone:Ljava/lang/String; // field@583d
+      8573ca: e920 4b00 2000                         |002b: invoke-virtual-quick {v0, v2}, [004b] // vtable #004b
+[new] 8573ca: 6e20 329a 2000                         |002b: invoke-virtual {v0, v2}, Ljava/lang/StringBuilder;.append:(Ljava/lang/String;)Ljava/lang/StringBuilder; // method@9a32
+      8573d0: 1a02 2204                              |002e: const-string v2, ", callStaus='" // string@0422
+      8573d4: e920 4b00 2000                         |0030: invoke-virtual-quick {v0, v2}, [004b] // vtable #004b
+[new] 8573d4: 6e20 329a 2000                         |0030: invoke-virtual {v0, v2}, Ljava/lang/StringBuilder;.append:(Ljava/lang/String;)Ljava/lang/StringBuilder; // method@9a32
+      8573da: e342 1000                              |0033: iget-quick v2, v4, [obj+0010]
+[new] 8573da: 5242 3e58                              |0033: iget v2, v4, Lltd/qisi/adapterproxy/data/QisiCallInfo;.callStaus:I // field@583e
+      8573de: e920 4600 2000                         |0035: invoke-virtual-quick {v0, v2}, [0046] // vtable #0046
+[new] 8573de: 6e20 2d9a 2000                         |0035: invoke-virtual {v0, v2}, Ljava/lang/StringBuilder;.append:(I)Ljava/lang/StringBuilder; // method@9a2d
+      8573e4: e920 4300 1000                         |0038: invoke-virtual-quick {v0, v1}, [0043] // vtable #0043
+[new] 8573e4: 6e20 2a9a 1000                         |0038: invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;.append:(C)Ljava/lang/StringBuilder; // method@9a2a
+      8573ea: 1301 7d00                              |003b: const/16 v1, #int 125 // #7d
+      8573ee: e920 4300 1000                         |003d: invoke-virtual-quick {v0, v1}, [0043] // vtable #0043
+[new] 8573ee: 6e20 2a9a 1000                         |003d: invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;.append:(C)Ljava/lang/StringBuilder; // method@9a2a
+      8573f4: e910 0700 0000                         |0040: invoke-virtual-quick {v0}, [0007] // vtable #0007
+[new] 8573f4: 6e10 3c9a 0000                         |0040: invoke-virtual {v0}, Ljava/lang/StringBuilder;.toString:()Ljava/lang/String; // method@9a3c
+      8573fa: 0c00                                   |0043: move-result-object v0
+      8573fc: 1100                                   |0044: return-object v0
+   virtual_method #56506: writeToParcel (Landroid/os/Parcel;I)V
+    access=0001 (PUBLIC)
+    codeOff=8574ac (8746156)
+    quickening_size=15 (21)
+      8574b0: e302 1800                              |0000: iget-quick v2, v0, [obj+0018]
+[new] 8574b0: 5202 4058                              |0000: iget v2, v0, Lltd/qisi/adapterproxy/data/QisiCallInfo;.callType:I // field@5840
+      8574b4: e920 8700 2100                         |0002: invoke-virtual-quick {v1, v2}, [0087] // vtable #0087
+[new] 8574b4: 6e20 a201 2100                         |0002: invoke-virtual {v1, v2}, Landroid/os/Parcel;.writeInt:(I)V // method@01a2
+      8574ba: e502 0800                              |0005: iget-object-quick v2, v0, [obj+0008]
+[new] 8574ba: 5402 3c58                              |0005: iget-object v2, v0, Lltd/qisi/adapterproxy/data/QisiCallInfo;.callName:Ljava/lang/String; // field@583c
+      8574be: e920 9d00 2100                         |0007: invoke-virtual-quick {v1, v2}, [009d] // vtable #009d
+[new] 8574be: 6e20 aa01 2100                         |0007: invoke-virtual {v1, v2}, Landroid/os/Parcel;.writeString:(Ljava/lang/String;)V // method@01aa
+      8574c4: e302 1400                              |000a: iget-quick v2, v0, [obj+0014]
+[new] 8574c4: 5202 3f58                              |000a: iget v2, v0, Lltd/qisi/adapterproxy/data/QisiCallInfo;.callTime:I // field@583f
+      8574c8: e920 8700 2100                         |000c: invoke-virtual-quick {v1, v2}, [0087] // vtable #0087
+[new] 8574c8: 6e20 a201 2100                         |000c: invoke-virtual {v1, v2}, Landroid/os/Parcel;.writeInt:(I)V // method@01a2
+      8574ce: e502 0c00                              |000f: iget-object-quick v2, v0, [obj+000c]
+[new] 8574ce: 5402 3d58                              |000f: iget-object v2, v0, Lltd/qisi/adapterproxy/data/QisiCallInfo;.callPhone:Ljava/lang/String; // field@583d
+      8574d2: e920 9d00 2100                         |0011: invoke-virtual-quick {v1, v2}, [009d] // vtable #009d
+[new] 8574d2: 6e20 aa01 2100                         |0011: invoke-virtual {v1, v2}, Landroid/os/Parcel;.writeString:(Ljava/lang/String;)V // method@01aa
+      8574d8: e302 1000                              |0014: iget-quick v2, v0, [obj+0010]
+[new] 8574d8: 5202 3e58                              |0014: iget v2, v0, Lltd/qisi/adapterproxy/data/QisiCallInfo;.callStaus:I // field@583e
+      8574dc: e920 8700 2100                         |0016: invoke-virtual-quick {v1, v2}, [0087] // vtable #0087
+[new] 8574dc: 6e20 a201 2100                         |0016: invoke-virtual {v1, v2}, Landroid/os/Parcel;.writeInt:(I)V // method@01a2
+      8574e2: 7300                                   |0019: return-void-no-barrier
+[new] 8574e2: 0e00                                   |0019: return-void

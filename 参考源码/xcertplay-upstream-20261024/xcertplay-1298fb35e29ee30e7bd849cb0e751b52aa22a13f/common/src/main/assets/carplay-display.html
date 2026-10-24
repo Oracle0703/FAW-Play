@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#141218">
+<title>xcertplay</title>
+<style>
+/* Lavender (the app's Material 3 dark scheme). Sizes follow the app: 1u per dp on a 375dp short edge. */
+:root{color-scheme:dark;
+  --u:clamp(.85px,100vmin/375,2.2px);
+  --surface:#141218;--on-surface:#e4e1e9;--on-surface-variant:#c9c4d5;
+  --primary:#cdbdff;--primary-container:#483e7c;--on-primary-container:#e7deff;
+  --secondary-container:#49435c;--on-secondary-container:#e7defc;
+  --container-high:#2b292f;--container-highest:#36343a;
+  --error:#ffb4ab;--on-error:#68000f;--error-container:#93001a;--on-error-container:#ffdad6;
+  --success-container:#005235;--on-success-container:#a9f2cc;
+  --inverse-surface:#e4e1e9;--inverse-on-surface:#313035;
+  --ease:cubic-bezier(.2,0,0,1);
+  --sans:"Plus Jakarta Sans",system-ui,-apple-system,"PingFang SC","Noto Sans SC","Roboto",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  font-family:var(--sans);background:var(--surface);color:var(--on-surface)}
+*{box-sizing:border-box}
+body{margin:0;height:100vh;height:100dvh;overflow:hidden;background:var(--surface);transition:background .3s var(--ease)}
+body.live{background:#000}
+button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+svg{display:block;fill:currentColor;flex:none}
+main{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+canvas,video{width:100%;height:100%;object-fit:contain;pointer-events:none}
+canvas[hidden],video[hidden]{display:none}
+/* Status card: the app's hero card, shown until the first picture arrives. */
+#card{position:fixed;left:50%;top:50%;width:min(calc(440*var(--u)),calc(100% - 32*var(--u)));transform:translate(-50%,-50%);
+  padding:calc(24*var(--u));border-radius:calc(28*var(--u));background:var(--primary-container);color:var(--on-primary-container);
+  display:flex;flex-direction:column;gap:calc(16*var(--u));transition:opacity .25s var(--ease),transform .25s var(--ease),visibility .25s}
+body.live #card{opacity:0;visibility:hidden;transform:translate(-50%,-50%) scale(.96);pointer-events:none}
+.head{display:flex;align-items:flex-start;gap:calc(16*var(--u))}
+.head>div{min-width:0}
+#heading{margin:0;font-size:calc(24*var(--u));line-height:calc(32*var(--u));font-weight:400;overflow-wrap:anywhere}
+#card.failed #heading{color:var(--error)}
+#detail{margin:calc(4*var(--u)) 0 0;font-size:calc(14*var(--u));line-height:calc(20*var(--u));letter-spacing:.2px;opacity:.8;overflow-wrap:anywhere}
+#detail:empty{display:none}
+.glyph{width:calc(40*var(--u));height:calc(40*var(--u));flex:none;display:grid;place-items:center;border-radius:50%}
+.glyph.active svg{width:100%;height:100%;animation:spin .9s linear infinite}
+.glyph.active circle{fill:none}.glyph.active .track{stroke:var(--secondary-container)}.glyph.active .arc{stroke:var(--primary)}
+.glyph.idle{border:calc(1.5*var(--u)) solid #938e9e;transform:scale(.68)}
+.glyph.failed{background:var(--error);color:var(--on-error)}.glyph.failed svg{width:66%;height:66%}
+@keyframes spin{to{transform:rotate(360deg)}}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:calc(8*var(--u))}
+.pill{height:calc(28*var(--u));display:inline-flex;align-items:center;gap:calc(6*var(--u));padding:0 calc(12*var(--u)) 0 calc(8*var(--u));border-radius:999px;
+  font-size:calc(12*var(--u));line-height:calc(16*var(--u));font-weight:600;letter-spacing:.4px;white-space:nowrap;
+  background:var(--container-highest);color:var(--on-surface-variant)}
+.pill svg{width:calc(16*var(--u));height:calc(16*var(--u))}
+.pill.ok{background:var(--success-container);color:var(--on-success-container)}
+.pill.err{background:var(--error-container);color:var(--on-error-container)}
+.tonal{height:calc(40*var(--u));display:inline-flex;align-items:center;gap:calc(8*var(--u));padding:0 calc(24*var(--u)) 0 calc(16*var(--u));margin-left:auto;border-radius:999px;
+  background:var(--secondary-container);color:var(--on-secondary-container);font-size:calc(14*var(--u));font-weight:600;letter-spacing:.1px}
+.tonal svg{width:calc(18*var(--u));height:calc(18*var(--u))}
+.tonal:active,.fab:active{filter:brightness(1.15)}
+/* Live controls: float over the picture, appear on demand, then fade away. */
+#controls{position:fixed;top:calc(16*var(--u) + env(safe-area-inset-top));right:calc(16*var(--u) + env(safe-area-inset-right));
+  display:flex;align-items:center;gap:calc(8*var(--u));opacity:0;visibility:hidden;transform:translateY(calc(-8*var(--u)));
+  transition:opacity .2s var(--ease),transform .2s var(--ease),visibility .2s}
+#controls.shown{opacity:1;visibility:visible;transform:none}
+.chip{height:calc(32*var(--u));display:inline-flex;align-items:center;padding:0 calc(12*var(--u));border-radius:999px;
+  background:rgba(43,41,47,.78);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);color:var(--on-surface-variant);
+  font-family:var(--mono);font-size:calc(12*var(--u));font-variant-numeric:tabular-nums;white-space:nowrap}
+.fab{width:calc(48*var(--u));height:calc(48*var(--u));display:grid;place-items:center;border-radius:50%;
+  background:var(--secondary-container);color:var(--on-secondary-container);box-shadow:0 2px 8px rgba(0,0,0,.4)}
+.fullscreen[hidden]{display:none}
+.fab svg{width:calc(24*var(--u));height:calc(24*var(--u))}
+/* Snackbar-style notice: never takes touches away from CarPlay. */
+#toast{position:fixed;left:50%;bottom:calc(24*var(--u) + env(safe-area-inset-bottom));transform:translateX(-50%);max-width:calc(100% - 32*var(--u));
+  display:flex;align-items:center;gap:calc(8*var(--u));padding:calc(10*var(--u)) calc(16*var(--u)) calc(10*var(--u)) calc(12*var(--u));border-radius:calc(12*var(--u));
+  background:var(--inverse-surface);color:var(--inverse-on-surface);box-shadow:0 4px 12px rgba(0,0,0,.45);
+  font-size:calc(14*var(--u));line-height:calc(20*var(--u));letter-spacing:.2px;pointer-events:none;transition:opacity .2s var(--ease),transform .2s var(--ease),visibility .2s}
+#toast[hidden]{display:flex;opacity:0;visibility:hidden;transform:translate(-50%,calc(8*var(--u)))}
+#toast svg{width:calc(20*var(--u));height:calc(20*var(--u))}
+@media (prefers-reduced-motion:reduce){*,::before,::after{transition-duration:0s!important}.glyph.active svg{animation-duration:2.4s}}
+</style>
+<main id="surface"><canvas id="canvas" hidden></canvas><video id="video" hidden muted playsinline autoplay disablepictureinpicture disableremoteplayback></video></main>
+<section id="card" role="status" aria-live="polite">
+  <div class="head"><span id="glyph" class="glyph"></span><div><h1 id="heading">Connecting</h1><p id="detail"></p></div></div>
+  <div class="row"><span id="state" class="pill"></span><span id="kind" class="pill"></span><button id="fullscreen-card" class="tonal fullscreen"></button></div>
+</section>
+<div id="controls"><span id="stats" class="chip"></span><button id="fullscreen" class="fab fullscreen"></button></div>
+<div id="toast" role="status" aria-live="polite" hidden></div>
+<script>
+'use strict';
+// The phone forwards CarPlay's own H.264/H.265 stream; this page decodes it with WebCodecs, or through
+// Media Source Extensions where WebCodecs cannot. The main display also plays CarPlay's audio.
+const $=id=>document.getElementById(id);
+const surface=$('surface'),canvas=$('canvas'),video=$('video'),card=$('card'),controls=$('controls'),toast=$('toast');
+const route=location.pathname.replace(/\/$/,''),main=route==='/main';
+document.title=main?'Main display · xcertplay':'Instrument display · xcertplay';
+const stream={enabled:true,active:false,width:0,height:0,control:false};
+let socket=null,connection=0,retry=0,stopped=false,reached=false,notice='',noticeUntil=0;
+
+// ---- connection --------------------------------------------------------------------------------
+function send(text){if(socket?.readyState!==WebSocket.OPEN)return false;socket.send(text);return true;}
+function connect(){
+  if(stopped||socket)return;
+  const token=++connection,url=new URL(`${route}/ws`,location.href);
+  url.protocol='wss:';url.search='';
+  const ws=new WebSocket(url);ws.binaryType='arraybuffer';socket=ws;let opened=false;
+  ws.onopen=()=>{opened=reached=true;retry=0;render();};
+  ws.onmessage=event=>{if(token===connection)receive(event.data);};
+  ws.onclose=()=>{
+    if(token!==connection)return;
+    socket=null;pointers.clear();setStream({active:false});
+    setTimeout(connect,Math.min(3000,250*2**retry++));render();
+  };
+}
+function receive(data){
+  if(typeof data==='string'){
+    const message=JSON.parse(data);
+    if(message.type==='state')setStream(message);
+    else if(message.type==='busy')flash('Another browser is controlling CarPlay');
+    return;
+  }
+  const bytes=new Uint8Array(data);
+  switch(bytes[0]){
+    case 1:videoOut.configure(bytes[1]===1?'h265':'h264',bytes.slice(2));break;
+    case 2:videoOut.decode(bytes.subarray(10),(bytes[1]&1)===1,Number(new DataView(data).getBigUint64(2)));break;
+    case 3:audio.play(bytes[1],new DataView(data).getUint32(2),bytes[6],data);break;
+    case 4:audio.stop(bytes[1]);break;
+  }
+}
+function setStream(next){
+  Object.assign(stream,next);
+  if(!stream.active){videoOut.reset();audio.reset();}
+  render();
+}
+function flash(text,ms=2500){notice=text;noticeUntil=performance.now()+ms;render();}
+
+// ---- interface ---------------------------------------------------------------------------------
+// Material Symbols Rounded, the same glyphs the app draws.
+const ICONS={
+  hourglass:'M320-160h320v-120q0-66-47-113t-113-47q-66 0-113 47t-47 113v120Zm160-360q66 0 113-47t47-113v-120H320v120q0 66 47 113t113 47ZM200-80q-17 0-28.5-11.5T160-120q0-17 11.5-28.5T200-160h40v-120q0-61 28.5-114.5T348-480q-51-32-79.5-85.5T240-680v-120h-40q-17 0-28.5-11.5T160-840q0-17 11.5-28.5T200-880h560q17 0 28.5 11.5T800-840q0 17-11.5 28.5T760-800h-40v120q0 61-28.5 114.5T612-480q51 32 79.5 85.5T720-280v120h40q17 0 28.5 11.5T800-120q0 17-11.5 28.5T760-80H200Z',
+  check:'m424-408-86-86q-11-11-28-11t-28 11q-11 11-11 28t11 28l114 114q12 12 28 12t28-12l226-226q11-11 11-28t-11-28q-11-11-28-11t-28 11L424-408Zm56 328q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Z',
+  error:'M480-280q17 0 28.5-11.5T520-320q0-17-11.5-28.5T480-360q-17 0-28.5 11.5T440-320q0 17 11.5 28.5T480-280Zm0-160q17 0 28.5-11.5T520-480v-160q0-17-11.5-28.5T480-680q-17 0-28.5 11.5T440-640v160q0 17 11.5 28.5T480-440Zm0 360q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Z',
+  info:'M480-280q17 0 28.5-11.5T520-320v-160q0-17-11.5-28.5T480-520q-17 0-28.5 11.5T440-480v160q0 17 11.5 28.5T480-280Zm0-320q17 0 28.5-11.5T520-640q0-17-11.5-28.5T480-680q-17 0-28.5 11.5T440-640q0 17 11.5 28.5T480-600Zm0 520q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Z',
+  close:'M480-424 284-228q-11 11-28 11t-28-11q-11-11-11-28t11-28l196-196-196-196q-11-11-11-28t11-28q11-11 28-11t28 11l196 196 196-196q11-11 28-11t28 11q11 11 11 28t-11 28L536-480l196 196q11 11 11 28t-11 28q-11 11-28 11t-28-11L480-424Z',
+  fullscreen:'M200-200h80q17 0 28.5 11.5T320-160q0 17-11.5 28.5T280-120H160q-17 0-28.5-11.5T120-160v-120q0-17 11.5-28.5T160-320q17 0 28.5 11.5T200-280v80Zm560 0v-80q0-17 11.5-28.5T800-320q17 0 28.5 11.5T840-280v120q0 17-11.5 28.5T800-120H680q-17 0-28.5-11.5T640-160q0-17 11.5-28.5T680-200h80ZM200-760v80q0 17-11.5 28.5T160-640q-17 0-28.5-11.5T120-680v-120q0-17 11.5-28.5T160-840h120q17 0 28.5 11.5T320-800q0 17-11.5 28.5T280-760h-80Zm560 0h-80q-17 0-28.5-11.5T640-800q0-17 11.5-28.5T680-840h120q17 0 28.5 11.5T840-800v120q0 17-11.5 28.5T800-640q-17 0-28.5-11.5T760-680v-80Z',
+  sound:'M280-280v-400q0-17 11.5-28.5T320-720q17 0 28.5 11.5T360-680v400q0 17-11.5 28.5T320-240q-17 0-28.5-11.5T280-280Zm160 160v-720q0-17 11.5-28.5T480-880q17 0 28.5 11.5T520-840v720q0 17-11.5 28.5T480-80q-17 0-28.5-11.5T440-120ZM120-440v-80q0-17 11.5-28.5T160-560q17 0 28.5 11.5T200-520v80q0 17-11.5 28.5T160-400q-17 0-28.5-11.5T120-440Zm480 160v-400q0-17 11.5-28.5T640-720q17 0 28.5 11.5T680-680v400q0 17-11.5 28.5T640-240q-17 0-28.5-11.5T600-280Zm160-160v-80q0-17 11.5-28.5T800-560q17 0 28.5 11.5T840-520v80q0 17-11.5 28.5T800-400q-17 0-28.5-11.5T760-440Z',
+  cast:'M480-480Zm400-240v480q0 33-23.5 56.5T800-160H638q-17 0-28.5-11.5T598-200q0-17 11.5-28.5T638-240h162v-480H160v6q0 17-11.5 28.5T120-674q-17 0-28.5-11.5T80-714v-6q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720ZM320-160q-16 0-28-9.5T277-195q-11-63-56.5-107T112-357q-15-2-23.5-14.5T80-400q0-17 11-28.5t26-9.5q94 12 160.5 79T357-198q2 16-9 27t-28 11Zm160 0q-17 0-28.5-11T438-199q-14-128-104.5-217T115-518q-16-2-25.5-14T80-560q0-17 10.5-29t25.5-10q161 13 274 125t128 273q2 17-9.5 29T480-160Zm-350 0q-21 0-35.5-14.5T80-210q0-21 14.5-35.5T130-260q21 0 35.5 14.5T180-210q0 21-14.5 35.5T130-160Z',
+  car:'M240-200v20q0 25-17.5 42.5T180-120q-25 0-42.5-17.5T120-180v-286q0-7 1-14t3-13l75-213q8-24 29-39t47-15h410q26 0 47 15t29 39l75 213q2 6 3 13t1 14v286q0 25-17.5 42.5T780-120q-25 0-42.5-17.5T720-180v-20H240Zm-8-360h496l-42-120H274l-42 120Zm-32 80v200-200Zm100 160q25 0 42.5-17.5T360-380q0-25-17.5-42.5T300-440q-25 0-42.5 17.5T240-380q0 25 17.5 42.5T300-320Zm360 0q25 0 42.5-17.5T720-380q0-25-17.5-42.5T660-440q-25 0-42.5 17.5T600-380q0 25 17.5 42.5T660-320Zm-460 40h560v-200H200v200Z',
+};
+const icon=name=>`<svg viewBox="0 -960 960 960" aria-hidden="true"><path d="${ICONS[name]}"/></svg>`;
+const SPINNER='<svg viewBox="0 0 40 40" aria-hidden="true" fill="none" stroke-width="5.6"><circle class="track" cx="20" cy="20" r="16.2"/><circle class="arc" cx="20" cy="20" r="16.2" stroke-linecap="round" stroke-dasharray="28.3 102"/></svg>';
+// Writes only what changed: render() runs every second.
+function paint(element,html){if(element.dataset.html!==html){element.dataset.html=html;element.innerHTML=html;}}
+const pill=(kind,glyph,text)=>`${icon(glyph)}<span>${text}</span>`;
+paint($('kind'),main?pill('','cast','Main display'):pill('','car','Instrument display'));
+
+// Controls float over a live picture only when asked for: mouse movement, a tap the phone does not
+// take (outside the picture, a third finger, anywhere on the view-only instrument display), or briefly
+// once the picture appears.
+const overlay={
+  timer:0,
+  show(ms=3000){
+    if(!document.body.classList.contains('live'))return;
+    controls.classList.add('shown');clearTimeout(this.timer);
+    this.timer=setTimeout(()=>{if(controls.matches(':hover'))this.show();else controls.classList.remove('shown');},ms);
+  },
+  hide(){clearTimeout(this.timer);controls.classList.remove('shown');},
+};
+let wasLive=false;
+function render(){
+  const live=stream.active&&videoOut.shown,open=socket?.readyState===WebSocket.OPEN;
+  document.body.classList.toggle('live',live);
+  if(live&&!wasLive)overlay.show(4000);else if(!live)overlay.hide();
+  wasLive=live;
+
+  let glyph='active',heading,detail,state;
+  if(videoOut.error){glyph='failed';heading='Cannot play video';detail=videoOut.error;state=['err','error','Playback failed'];}
+  else if(!open){heading=reached?'Reconnecting':'Connecting';detail=reached?'Lost the head unit. Trying again…':'Reaching the head unit…';state=['','hourglass','Connecting']}
+  else if(!stream.enabled){glyph='idle';heading=`${main?'Main':'Instrument'} display is off`;detail='Turn it on under Web displays in Settings on the head unit. This page picks it up by itself.';state=['','info','Turned off'];}
+  else if(!stream.active){heading='Waiting for CarPlay';detail=main?'The picture appears here once CarPlay starts on the head unit.':'The instrument display appears once the iPhone sends its stream.';state=['ok','check','Head unit connected'];}
+  else{heading='Starting video';detail=[`${stream.width} × ${stream.height}`,videoOut.label].filter(Boolean).join(' · ');state=['ok','check','CarPlay connected'];}
+  card.classList.toggle('failed',glyph==='failed');
+  paint($('glyph'),glyph==='failed'?icon('close'):glyph==='idle'?'':SPINNER);$('glyph').className=`glyph ${glyph}`;
+  paint($('heading'),heading);paint($('detail'),detail);
+  paint($('state'),pill(...state));$('state').className=`pill ${state[0]}`;
+  $('stats').textContent=[`${stream.width} × ${stream.height}`,videoOut.label,`${videoOut.fps} fps`].filter(Boolean).join(' · ');
+
+  let message=null;
+  if(performance.now()<noticeUntil)message=['info',notice];
+  else if(main&&live&&audio.context&&!audio.running())message=['sound','Tap the screen to turn on sound'];
+  if(message)paint(toast,pill('',...message));
+  toast.hidden=!message;
+}
+setInterval(()=>send('p'),2000);
+
+// ---- video -------------------------------------------------------------------------------------
+function codecString(codec,d){
+  const hex=n=>n.toString(16).padStart(2,'0');
+  if(codec==='h264')return d.length>3?`avc1.${hex(d[1])}${hex(d[2])}${hex(d[3])}`:'avc1.42e01f';
+  if(d.length<13)return 'hvc1.1.6.L93.B0';
+  let compat=((d[2]<<24)|(d[3]<<16)|(d[4]<<8)|d[5])>>>0,reversed=0;
+  for(let i=0;i<32;i++){reversed=(reversed<<1)|(compat&1);compat>>>=1;}
+  const constraints=[...d.slice(6,12)];
+  while(constraints.length&&!constraints[constraints.length-1])constraints.pop();
+  return ['hvc1',['','A','B','C'][d[1]>>6]+(d[1]&31),(reversed>>>0).toString(16),((d[1]>>5)&1?'H':'L')+d[12],
+    ...constraints.map(n=>n.toString(16).toUpperCase())].join('.');
+}
+const videoOut={
+  decoder:null,config:null,pending:null,generation:0,shown:false,fps:0,frames:0,error:'',label:'',failures:0,failedAt:0,
+  async configure(codec,description){
+    const same=this.config&&this.config.codec===codec&&this.config.description.length===description.length&&
+      this.config.description.every((b,i)=>b===description[i]);
+    if(same&&(this.decoder||this.pending))return;
+    const token=++this.generation;this.close();
+    this.config={codec,description,string:codecString(codec,description)};this.pending=[];this.error='';
+    let decoder=null;
+    try{decoder=await webCodecsDecoder(this.config)||await mseDecoder(this.config);}
+    catch(error){console.warn(error);}
+    if(token!==this.generation){decoder?.close();return;}
+    if(!decoder){
+      this.pending=null;
+      this.error=`This browser cannot decode ${codec==='h265'?'H.265 (HEVC)':'H.264'} (${this.config.string}).`+
+        (codec==='h265'?' Use a browser with HEVC support, or turn off HEVC (H.265) on the phone.':'');
+      render();return;
+    }
+    this.decoder=decoder;this.label=`${codec==='h265'?'H.265':'H.264'} · ${decoder.kind}`;
+    const pending=this.pending;this.pending=null;
+    for(const frame of pending)decoder.decode(...frame);
+    render();
+  },
+  decode(data,keyFrame,timestamp){
+    if(this.pending){if(this.pending.length<240)this.pending.push([data.slice(),keyFrame,timestamp]);return;}
+    this.decoder?.decode(data,keyFrame,timestamp);
+  },
+  failed(reason){
+    console.warn('video decoder failed',reason);
+    const config=this.config;this.generation++;this.close();this.config=null;
+    this.failures=performance.now()-this.failedAt<3000?this.failures+1:1;this.failedAt=performance.now();
+    if(this.failures>3){this.error='The browser could not decode the video stream.';render();return;}
+    // Start over at the next random access picture; the server drops queued pictures for us.
+    if(config&&stream.active){send('k');this.configure(config.codec,config.description);}
+  },
+  presented(){
+    this.frames++;
+    if(!this.shown){this.shown=true;render();}
+  },
+  close(){this.decoder?.close();this.decoder=null;this.pending=null;canvas.hidden=true;video.hidden=true;if(this.shown){this.shown=false;render();}},
+  reset(){this.generation++;this.close();this.config=null;this.error='';this.label='';},
+};
+setInterval(()=>{videoOut.fps=videoOut.frames;videoOut.frames=0;render();},1000);
+
+async function webCodecsDecoder(config){
+  if(!window.isSecureContext||!('VideoDecoder' in window))return null;
+  const settings={codec:config.string,description:config.description,optimizeForLatency:true};
+  try{if(!(await VideoDecoder.isConfigSupported(settings)).supported)return null;}catch(_){return null;}
+  const context=canvas.getContext('2d',{alpha:false,desynchronized:true});
+  let needKey=true,closed=false;
+  const decoder=new VideoDecoder({
+    output(frame){
+      if(closed){frame.close();return;}
+      if(canvas.width!==frame.displayWidth||canvas.height!==frame.displayHeight){canvas.width=frame.displayWidth;canvas.height=frame.displayHeight;}
+      context.drawImage(frame,0,0);frame.close();
+      canvas.hidden=false;videoOut.presented();
+    },
+    error(error){if(!closed)videoOut.failed(error);},
+  });
+  decoder.configure(settings);
+  return {
+    kind:'WebCodecs',
+    decode(data,keyFrame,timestamp){
+      if(closed||decoder.state!=='configured')return;
+      if(needKey){if(!keyFrame)return;needKey=false;}
+      // Decoding slower than real time: skip to the next random access picture.
+      if(decoder.decodeQueueSize>6){needKey=true;send('k');return;}
+      decoder.decode(new EncodedVideoChunk({type:keyFrame?'key':'delta',timestamp,data}));
+    },
+    close(){closed=true;if(decoder.state!=='closed')decoder.close();},
+  };
+}
+
+// Minimal fragmented MP4: one video track, one sample per fragment, samples stay length-prefixed.
+const ascii=text=>Uint8Array.from(text,c=>c.charCodeAt(0));
+function concat(parts){const out=new Uint8Array(parts.reduce((n,p)=>n+p.length,0));let at=0;for(const p of parts){out.set(p,at);at+=p.length;}return out;}
+function uint(bytes,value){const out=new Uint8Array(bytes);for(let i=bytes-1;i>=0;i--){out[i]=value%256;value=Math.floor(value/256);}return out;}
+const u8=v=>uint(1,v),u16=v=>uint(2,v),u24=v=>uint(3,v),u32=v=>uint(4,v),u64=v=>uint(8,v),zero=n=>new Uint8Array(n);
+const box=(type,...parts)=>{const body=concat(parts);return concat([u32(body.length+8),ascii(type),body]);};
+const full=(type,version,flags,...parts)=>box(type,u8(version),u24(flags),...parts);
+function initSegment(config,width,height){
+  const matrix=[0x10000,0,0,0,0x10000,0,0,0,0x40000000].map(u32),hevc=config.codec==='h265';
+  const entry=box(hevc?'hvc1':'avc1',zero(6),u16(1),zero(16),u16(width),u16(height),u32(0x480000),u32(0x480000),u32(0),u16(1),
+    zero(32),u16(0x18),u16(0xffff),box(hevc?'hvcC':'avcC',config.description));
+  const stbl=box('stbl',full('stsd',0,0,u32(1),entry),full('stts',0,0,u32(0)),full('stsc',0,0,u32(0)),full('stsz',0,0,u32(0),u32(0)),full('stco',0,0,u32(0)));
+  const minf=box('minf',full('vmhd',0,1,zero(8)),box('dinf',full('dref',0,0,u32(1),full('url ',0,1))),stbl);
+  const mdia=box('mdia',full('mdhd',0,0,u32(0),u32(0),u32(90000),u32(0),u16(0x55c4),u16(0)),
+    full('hdlr',0,0,u32(0),ascii('vide'),zero(12),ascii('VideoHandler'),u8(0)),minf);
+  const trak=box('trak',full('tkhd',0,3,u32(0),u32(0),u32(1),u32(0),u32(0),zero(8),u16(0),u16(0),u16(0),u16(0),...matrix,u32(width*65536),u32(height*65536)),mdia);
+  const moov=box('moov',full('mvhd',0,0,u32(0),u32(0),u32(1000),u32(0),u32(0x10000),u16(0x100),zero(10),...matrix,zero(24),u32(2)),
+    trak,box('mvex',full('trex',0,0,u32(1),u32(1),u32(0),u32(0),u32(0))));
+  return concat([box('ftyp',ascii('isom'),u32(0x200),ascii('isom'),ascii('iso6'),ascii('mp41')),moov]);
+}
+function mediaSegment(sequence,data,keyFrame,decodeTime,duration){
+  const moof=offset=>box('moof',full('mfhd',0,0,u32(sequence)),box('traf',full('tfhd',0,0x020000,u32(1)),full('tfdt',1,0,u64(decodeTime)),
+    full('trun',0,0x000701,u32(1),u32(offset),u32(duration),u32(data.length),u32(keyFrame?0x02000000:0x01010000))));
+  return concat([moof(moof(0).length+8),box('mdat',data)]);
+}
+
+async function mseDecoder(config){
+  const Source=window.ManagedMediaSource||window.MediaSource;
+  const mime=`video/mp4; codecs="${config.string}"`;
+  if(!Source||!Source.isTypeSupported(mime))return null;
+  const source=new Source(),url=URL.createObjectURL(source);
+  video.disableRemotePlayback=true;video.src=url;
+  await new Promise((resolve,reject)=>{source.addEventListener('sourceopen',resolve,{once:true});setTimeout(()=>reject(new Error('MediaSource did not open')),3000);});
+  URL.revokeObjectURL(url);
+  try{source.duration=Infinity;}catch(_){}
+  const buffer=source.addSourceBuffer(mime);
+  video.hidden=false;// frame callbacks need a rendered element; the status card stays up until the first one
+  const queue=[initSegment(config,stream.width||1280,stream.height||720)];
+  let closed=false,needKey=true,sequence=0,decodeTime=0,lastArrival=0,keyTime=0,keyAt=performance.now(),bytesSinceKey=0;
+  function pump(){
+    if(closed||buffer.updating||!queue.length)return;
+    try{buffer.appendBuffer(queue.length===1?queue.pop():concat(queue.splice(0)));}
+    catch(error){videoOut.failed(error);}
+  }
+  buffer.addEventListener('updateend',()=>{if(!closed){pump();if(video.paused)video.play().catch(()=>{});}});
+  buffer.addEventListener('error',()=>{if(!closed)videoOut.failed('SourceBuffer error');});
+  const onFrame=()=>{if(closed)return;videoOut.presented();video.hidden=false;watchFrames();};
+  const watchFrames=()=>{if('requestVideoFrameCallback' in video)video.requestVideoFrameCallback(onFrame);};
+  if('requestVideoFrameCallback' in video)watchFrames();else video.addEventListener('timeupdate',onFrame);
+  // Follow the live edge by speeding up rather than seeking: random access pictures are rare.
+  const timer=setInterval(()=>{
+    if(closed||!video.buffered.length)return;
+    const end=video.buffered.end(video.buffered.length-1),lag=end-video.currentTime;
+    const rate=lag>0.3?1.5:lag>0.12?1.15:1;
+    if(video.playbackRate!==rate)video.playbackRate=rate;
+    if(video.paused)video.play().catch(()=>{});
+    // Buffered pictures can only be released up to a random access picture; ask for one now and then.
+    if(performance.now()-keyAt>20000||bytesSinceKey>24e6){keyAt=performance.now();send('K');}
+    if(!buffer.updating&&keyTime>video.buffered.start(0)+1&&keyTime<=video.currentTime){
+      try{buffer.remove(0,keyTime);}catch(_){}
+    }
+  },100);
+  return {
+    kind:'Media Source',
+    decode(data,keyFrame,arrivalUs){
+      if(closed)return;
+      if(needKey){if(!keyFrame)return;needKey=false;}
+      // A contiguous timeline; each picture lasts as long as the gap before it (clamped), and a
+      // static screen simply waits at the end of the buffer for the next picture.
+      const duration=lastArrival?Math.max(450,Math.min(9000,Math.round((arrivalUs-lastArrival)*0.09))):1500;
+      lastArrival=arrivalUs;
+      if(keyFrame){keyTime=decodeTime/90000;keyAt=performance.now();bytesSinceKey=0;}
+      bytesSinceKey+=data.length;
+      if(queue.length>60){needKey=true;queue.length=0;send('k');return;}
+      queue.push(mediaSegment(++sequence,data,keyFrame,decodeTime,duration));
+      decodeTime+=duration;pump();
+    },
+    close(){
+      closed=true;clearInterval(timer);video.removeEventListener('timeupdate',onFrame);
+      try{if(source.readyState==='open')source.endOfStream();}catch(_){}
+      video.removeAttribute('src');video.load();video.playbackRate=1;
+    },
+  };
+}
+
+// ---- audio (main display only) -----------------------------------------------------------------
+// The phone sends its audio here while this page is open. Browsers only start sound after a tap or key
+// press (pointerdown does not count on touch screens), so any of those turns it on; audio that arrives
+// before then is dropped. Playback runs on the audio thread from a jitter buffer per stream: it grows
+// after an underrun, and playing slightly faster or slower keeps it filled despite network bursts and
+// the two devices' clock drift, without the gaps and clicks of scheduling every packet separately.
+const PLAYER=`
+const MIN=0.08,MAX=0.3,STEP=0.04,LIMIT=0.6;
+registerProcessor('carplay-audio',class extends AudioWorkletProcessor{
+  constructor(){super();this.streams=new Map();this.port.onmessage=e=>this.receive(e.data);}
+  receive(m){
+    if(m.reset){this.streams.clear();return;}
+    let s=this.streams.get(m.id);
+    if(!s||s.rate!==m.rate||s.channels!==m.channels){
+      const capacity=Math.ceil(m.rate*LIMIT*2);
+      s={rate:m.rate,channels:m.channels,capacity,ring:new Float32Array(capacity*m.channels),written:0,read:0,
+        playing:false,target:MIN,starvedAt:-1};
+      this.streams.set(m.id,s);
+    }
+    const pcm=new Int16Array(m.pcm),frames=pcm.length/s.channels|0;
+    for(let i=0;i<frames;i++){
+      const at=(s.written+i)%s.capacity*s.channels;
+      for(let c=0;c<s.channels;c++)s.ring[at+c]=pcm[i*s.channels+c]/32768;
+    }
+    s.written+=frames;
+    // Far behind (a stall or a background tab): skip ahead rather than keep the latency.
+    if(s.written-s.read>s.rate*LIMIT)s.read=s.written-s.rate*s.target;
+  }
+  process(_,outputs){
+    const out=outputs[0],n=out[0].length;
+    for(const s of this.streams.values()){
+      let fill=s.written-s.read;
+      if(!s.playing){
+        if(fill<s.rate*s.target)continue;
+        // Starved and back within half a second: the network needs a deeper buffer.
+        if(s.starvedAt>=0&&currentTime-s.starvedAt<0.5)s.target=Math.min(MAX,s.target+STEP);
+        s.playing=true;
+      }
+      const error=fill/s.rate-s.target,speed=1+Math.max(-0.01,Math.min(0.01,error*0.05));
+      const step=s.rate/sampleRate*speed,C=s.channels;
+      for(let i=0;i<n;i++){
+        const index=Math.floor(s.read);
+        if(index+1>=s.written){s.playing=false;s.starvedAt=currentTime;break;}
+        const f=s.read-index,p=index%s.capacity*C,q=(index+1)%s.capacity*C;
+        for(let c=0;c<out.length;c++){
+          const k=Math.min(c,C-1),a=s.ring[p+k];
+          out[c][i]+=a+(s.ring[q+k]-a)*f;
+        }
+        s.read+=step;
+      }
+    }
+    return true;
+  }
+});`;
+const audio={
+  context:null,node:null,
+  running(){return this.context?.state==='running';},
+  create(){
+    const Context=window.AudioContext||window.webkitAudioContext;if(!main||!Context)return;
+    // Safari: play through the ring/silent switch like a media app.
+    try{if(navigator.audioSession)navigator.audioSession.type='playback';}catch(_){}
+    const context=new Context({latencyHint:'interactive'});this.context=context;
+    context.onstatechange=()=>{if(!this.running())this.reset();render();};
+    if(!context.audioWorklet){console.warn('AudioWorklet unavailable');return;}
+    const url=URL.createObjectURL(new Blob([PLAYER],{type:'text/javascript'}));
+    context.audioWorklet.addModule(url).then(()=>{
+      this.node=new AudioWorkletNode(context,'carplay-audio',{numberOfInputs:0,outputChannelCount:[2]});
+      this.node.connect(context.destination);
+    }).catch(error=>console.warn('audio player failed',error)).finally(()=>URL.revokeObjectURL(url));
+  },
+  unlock(){
+    const context=this.context;
+    if(context&&context.state!=='running'&&context.state!=='closed')context.resume().then(()=>render(),()=>{});
+  },
+  play(id,rate,channels,data){
+    if(!this.node||!this.running()||!channels||!rate)return;
+    const pcm=data.slice(7,7+Math.floor((data.byteLength-7)/(2*channels))*2*channels);// s16le, realigned
+    if(pcm.byteLength)this.node.port.postMessage({id,rate,channels,pcm},[pcm]);
+  },
+  // A stopped stream simply drains; its next packets may already be on their way.
+  stop(_){},
+  reset(){this.node?.port.postMessage({reset:true});},
+};
+audio.create();
+for(const name of ['pointerup','touchend','click','keydown'])document.addEventListener(name,()=>audio.unlock(),{capture:true,passive:true});
+
+// ---- touch (main display only) -----------------------------------------------------------------
+// Every message carries all pressed contacts, sent in order over the socket the moment it changes.
+const pointers=new Map();
+function mapPoint(x,y,clamp){
+  const rect=surface.getBoundingClientRect(),width=stream.width,height=stream.height;
+  if(!rect.width||!rect.height||!width||!height)return null;
+  const scale=Math.min(rect.width/width,rect.height/height),w=width*scale,h=height*scale;
+  const px=(x-rect.left-(rect.width-w)/2)/w,py=(y-rect.top-(rect.height-h)/2)/h;
+  if(!clamp&&(px<0||px>1||py<0||py>1))return null;
+  return {x:Math.max(0,Math.min(1,px)),y:Math.max(0,Math.min(1,py))};
+}
+function sendTouch(){
+  const contacts=[...pointers.values()].sort((a,b)=>a.id-b.id).map(p=>`${p.id},${p.x.toFixed(5)},${p.y.toFixed(5)}`).join(';');
+  if(!send('t:'+contacts))pointers.clear();
+}
+function release(){if(pointers.size){pointers.clear();sendTouch();}}
+surface.addEventListener('pointerdown',event=>{
+  if(!main||!stream.active||!stream.control||pointers.size>=2){overlay.show();return;}
+  if(event.pointerType==='mouse'&&event.button!==0)return;
+  const point=mapPoint(event.clientX,event.clientY,false);if(!point){overlay.show();return;}
+  event.preventDefault();
+  const id=[...pointers.values()].some(p=>p.id===0)?1:0;
+  pointers.set(event.pointerId,{id,...point});
+  try{surface.setPointerCapture(event.pointerId);}catch(_){}
+  sendTouch();
+});
+surface.addEventListener('pointermove',event=>{
+  const pointer=pointers.get(event.pointerId);if(!pointer)return;
+  const point=mapPoint(event.clientX,event.clientY,true);
+  if(!point||(point.x===pointer.x&&point.y===pointer.y))return;
+  Object.assign(pointer,point);sendTouch();
+});
+// The phone lifts a finger where it was last reported, so report where it actually left first.
+function lift(event){
+  const pointer=pointers.get(event.pointerId);if(!pointer)return;
+  const point=event.type==='pointerup'?mapPoint(event.clientX,event.clientY,true):null;
+  if(point&&(point.x!==pointer.x||point.y!==pointer.y)){Object.assign(pointer,point);sendTouch();}
+  pointers.delete(event.pointerId);sendTouch();
+}
+for(const name of ['pointerup','pointercancel','lostpointercapture'])surface.addEventListener(name,lift);
+// Keeps the phone's touch lease alive while a finger rests without moving.
+setInterval(()=>{if(pointers.size)sendTouch();},250);
+for(const name of ['touchstart','touchmove','gesturestart'])surface.addEventListener(name,event=>{if(event.cancelable)event.preventDefault();},{passive:false});
+surface.addEventListener('contextmenu',event=>event.preventDefault());
+window.addEventListener('blur',release);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)release();else connect();});
+window.addEventListener('pagehide',()=>{release();stopped=true;socket?.close();});
+window.addEventListener('pageshow',event=>{if(event.persisted){stopped=false;connect();}});
+document.addEventListener('pointermove',event=>{if(event.pointerType==='mouse')overlay.show();});
+// iPhone Safari only lets a <video> go full screen, in its own player without touch; opened from the
+// Home Screen the page runs without Safari's bars instead.
+const fullscreen={
+  supported:!!(document.fullscreenEnabled||document.webkitFullscreenEnabled),
+  standalone:navigator.standalone===true||matchMedia('(display-mode: standalone),(display-mode: fullscreen)').matches,
+  ios:/iP(hone|od|ad)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1),
+  element:()=>document.fullscreenElement||document.webkitFullscreenElement,
+};
+async function toggleFullscreen(){
+  if(!fullscreen.supported){
+    flash(fullscreen.ios?'To hide Safari’s bars, tap Share, then Add to Home Screen, and open the display from there':'Use the browser menu for full screen',8000);
+    return;
+  }
+  try{
+    if(fullscreen.element())await (document.exitFullscreen?document.exitFullscreen():document.webkitExitFullscreen());
+    else{const root=document.documentElement;await (root.requestFullscreen?root.requestFullscreen():root.webkitRequestFullscreen());}
+  }catch(_){flash('Use the browser menu for full screen');}
+}
+function paintFullscreen(){
+  const on=!!fullscreen.element(),label=on?'Exit full screen':'Full screen';
+  for(const button of document.querySelectorAll('.fullscreen')){
+    // Already without browser bars and nothing more to offer.
+    button.hidden=fullscreen.standalone&&!fullscreen.supported;
+    button.setAttribute('aria-label',label);button.title=label;
+    paint(button,icon(on?'close':'fullscreen')+(button.classList.contains('tonal')?`<span>${label}</span>`:''));
+  }
+}
+for(const button of document.querySelectorAll('.fullscreen'))button.addEventListener('click',toggleFullscreen);
+for(const name of ['fullscreenchange','webkitfullscreenchange'])document.addEventListener(name,()=>{paintFullscreen();overlay.show();});
+paintFullscreen();render();
+connect();
+</script>
+</html>

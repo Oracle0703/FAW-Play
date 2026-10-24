@@ -19,10 +19,24 @@ class DashboardMapEligibilityTest {
     }
 
     @Test fun supportsMapAndCombinedInstrumentsButNotOnlyATurnCard() {
+        assertTrue(eligible(url = CarPlayClusterDisplay.Content.MAP.url))
         assertTrue(eligible(url = CarPlayClusterDisplay.Content.MAP_WITH_CUSTOM_CARD.url))
         assertTrue(eligible(url = CarPlayClusterDisplay.Content.INSTRUMENTS.url))
         assertFalse(eligible(url = CarPlayClusterDisplay.Content.TURN_CARD.url))
         assertFalse(eligible(url = null))
         assertFalse(eligible(url = "unrecognized:/content"))
+    }
+
+    @Test fun etaQueriesKeepMapZoomEligibleWithoutAdmittingOtherContent() {
+        for (base in listOf("maps:/car/instrumentcluster/map", "maps:/car/instrumentcluster")) {
+            for (query in listOf("", "?showETA=yes", "?showCompass=user&showETA=yes", "?showETA=no")) {
+                assertTrue(eligible(url = base + query))
+                assertFalse(eligible(url = base + query, physical = false))
+                assertFalse(eligible(url = base + query, shown = false))
+            }
+        }
+        assertFalse(eligible(url = "maps:/car/instrumentcluster/instructioncard?showETA=yes"))
+        assertFalse(eligible(url = "maps:/car/instrumentcluster/map/other?showETA=yes"))
+        assertFalse(eligible(url = "unrecognized:/content?url=maps:/car/instrumentcluster&showETA=yes"))
     }
 }

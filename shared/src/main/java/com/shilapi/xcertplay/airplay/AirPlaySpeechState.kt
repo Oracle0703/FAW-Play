@@ -1,5 +1,6 @@
 package com.shilapi.xcertplay.airplay
 
+import com.shilapi.xcertplay.airplay.AirPlayAppStates.integer
 import java.util.WeakHashMap
 
 /** Speech ownership is independent of navigation and telephone ownership. */
@@ -9,12 +10,7 @@ object AirPlaySpeechState {
 
     @JvmStatic
     fun observe(session: Any, type: String, params: Map<String, Any?>) {
-        if (type != "modesChanged") return
-        val entries = params["appStates"] as? List<*> ?: return
-        val speech = entries.filterIsInstance<Map<*, *>>()
-            .filter { integer(it["appStateID"]) == SPEECH_APP_STATE }
-        if (speech.size != 1) return
-        val entry = speech.single()
+        val entry = AirPlayAppStates.uniqueState(type, params, SPEECH_APP_STATE) ?: return
         val entity = integer(entry["entity"]) ?: return
         val mode = integer(entry["speechMode"]) ?: return
         val state = when {
@@ -33,11 +29,6 @@ object AirPlaySpeechState {
             State.ACTIVE -> true
             else -> null
         }
-    }
-
-    private fun integer(value: Any?): Long? = when (value) {
-        is Byte, is Short, is Int, is Long -> (value as Number).toLong()
-        else -> null
     }
 
     private const val SPEECH_APP_STATE = 1L

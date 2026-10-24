@@ -1,0 +1,114 @@
+{
+  "date": "2026-10-15",
+  "result": "pass",
+  "scope": "documentation/catalog only; no live HS5 verification",
+  "summary": {
+    "classes": 2003,
+    "declaredMethods": 23049,
+    "interfaces": 594,
+    "exactBinderMethods": 2726,
+    "moduleMappings": 55,
+    "categories": {
+      "其他厂商类": 448,
+      "常量与类型": 161,
+      "接口声明": 168,
+      "Binder生成辅助类": 500,
+      "回调合约": 257,
+      "内部实现": 236,
+      "HIDL合约": 26,
+      "HIDL传输与数据": 58,
+      "SDK管理器": 72,
+      "数据模型": 77
+    },
+    "qisiCarPlayGroups": 41
+  },
+  "checks": [
+    {
+      "check": "unique class descriptors",
+      "status": "pass",
+      "detail": 2003
+    },
+    {
+      "check": "method counts",
+      "status": "pass",
+      "detail": null
+    },
+    {
+      "check": "all transaction values linked to actual Stub fields",
+      "status": "pass",
+      "detail": 2726
+    },
+    {
+      "check": "unique module IDs",
+      "status": "pass",
+      "detail": 55
+    },
+    {
+      "check": "module targets exist in catalog",
+      "status": "pass",
+      "detail": null
+    },
+    {
+      "check": "methods CSV complete",
+      "status": "pass",
+      "detail": null
+    },
+    {
+      "check": "transaction CSV complete",
+      "status": "pass",
+      "detail": null
+    },
+    {
+      "check": "copied evidence and examples preserve source hashes",
+      "status": "pass",
+      "detail": null
+    },
+    {
+      "check": "selected UI evidence methods present",
+      "status": "pass",
+      "detail": 32
+    },
+    {
+      "check": "critical signatures and types",
+      "status": "pass",
+      "detail": 5
+    },
+    {
+      "check": "CarPlay groups",
+      "status": "pass",
+      "detail": null
+    },
+    {
+      "check": "independent previous constant extraction matches",
+      "status": "pass",
+      "detail": 818
+    },
+    {
+      "check": "all original extraction input hashes match",
+      "status": "pass",
+      "detail": null
+    },
+    {
+      "check": "all relative documentation links resolve",
+      "status": "pass",
+      "detail": 126
+    },
+    {
+      "check": "offline HTML embeds data and has no external scripts/styles",
+      "status": "pass",
+      "detail": null
+    }
+  ],
+  "manualVerification": {
+    "python": "py_compile and diagnostics --help passed; diagnostics not run against adb",
+    "java": "javac source/target8 using Android35 android.jar passed (3 obsolete option warnings); not a device/runtime test",
+    "browser": "Local HTTP preview: module33, float transaction12, FT=4, multiword/Chinese search, empty result, pagination and rendered handbook passed; file:// direct-open blocked by browser URL policy and not counted as a pass",
+    "notRun": [
+      "HS5 runtime",
+      "vehicle writes",
+      "ADB diagnostics against a device",
+      "APK installation",
+      "Apple official Ultra integration"
+    ]
+  }
+}

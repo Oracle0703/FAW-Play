@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "app": null,
+  "firmware": {
+    "versionName": "3222 · 250626",
+    "model": "hs5y22",
+    "sizeBytes": 3384026361,
+    "sha256": "f2f399850ea1d005bc2920b23b1dfc0dcc2f1b5ac2db44d6217f3aa7491bf499",
+    "downloadUrl": null,
+    "fileName": "HS5-3222-full.zip",
+    "releaseNotes": "3222 完整固件包，包内版本 250626。\n车型标识：hs5y22。\n包内零件号：7901010-DD52-C、7901010-DD51-C。\n包含完整 hs5y22_update 目录、固件载荷、MD5 与 ui_cmd_info 配套文件。\n\n下载的是外层完整 ZIP，请保持原始升级目录及配套文件。ZIP 的 SHA-256 与包内升级载荷的 MD5 是不同文件的校验值。\n\n请按车机型号、当前版本及零件号确认适用，并遵循设备提供方的升级说明。尚无完整刷写验收记录，不代表所有 HS5 年款通用。"
+  }
+}

@@ -16,14 +16,81 @@ import org.robolectric.annotation.Implementation
 import org.robolectric.annotation.Implements
 import org.robolectric.shadow.api.Shadow
 import org.robolectric.shadows.ShadowAudioManager
+import org.robolectric.shadows.ShadowAudioTrack
+import org.robolectric.annotation.RealObject
 
 @RunWith(RobolectricTestRunner::class)
 @Config(
     manifest = Config.NONE,
     sdk = [28],
-    shadows = [AudioFocusRecoveryTest.FailedThenGrantedAudioManager::class],
+    shadows = [AudioFocusRecoveryTest.FailedThenGrantedAudioManager::class, AudioFocusRecoveryTest.VolumeTrack::class],
 )
 class AudioFocusRecoveryTest {
+    @Test fun resourceOwnershipMutesMainAudioButKeepsAlternateNavigationWithFocusDisabled() {
+        val app = RuntimeEnvironment.getApplication()
+        val coordinator = AudioFocusCoordinator(app, false)
+        val attrs = AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).build()
+        val music = track(attrs); val nav = track(attrs)
+        try {
+            coordinator.acquire(music, AudioChannel.MEDIA, attrs)
+            coordinator.acquire(nav, AudioChannel.NAVIGATION, attrs)
+            coordinator.setMainAudioAllowed(false)
+            assertEquals(0f, VolumeTrack.gains[music])
+            assertEquals(1f, VolumeTrack.gains[nav])
+            coordinator.setMainAudioAllowed(true)
+            assertEquals(1f, VolumeTrack.gains[music])
+        } finally { coordinator.close(); music.release(); nav.release() }
+    }
+
+    @Test fun temporaryNativeBorrowRetainsGainNotificationEvenAfterThePhoneStopsItsTrack() {
+        val app = RuntimeEnvironment.getApplication()
+        shadowOf(app.packageManager).setSystemFeature(PackageManager.FEATURE_AUTOMOTIVE, true)
+        val focus = Shadow.extract<FailedThenGrantedAudioManager>(app.getSystemService(AudioManager::class.java))
+        focus.responses.clear()
+        val changes = mutableListOf<Int>()
+        val coordinator = AudioFocusCoordinator(app, true, onNativeMainAudioFocusChanged = changes::add)
+        val attrs = AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).build()
+        val music = track(attrs)
+        try {
+            coordinator.acquire(music, AudioChannel.MEDIA, attrs); advance(1000)
+            val request = focus.lastRequest!!
+            val listener = org.robolectric.util.ReflectionHelpers.callInstanceMethod<AudioManager.OnAudioFocusChangeListener>(
+                request, "getOnAudioFocusChangeListener")
+            listener.onAudioFocusChange(AudioManager.AUDIOFOCUS_LOSS_TRANSIENT)
+            coordinator.setMainAudioAllowed(false)
+            coordinator.release(music)
+            advance(60_000)
+            assertEquals(2, focus.responses.size)
+            listener.onAudioFocusChange(AudioManager.AUDIOFOCUS_GAIN)
+            assertEquals(listOf(AudioManager.AUDIOFOCUS_LOSS_TRANSIENT, AudioManager.AUDIOFOCUS_GAIN), changes)
+            coordinator.setMainAudioAllowed(true)
+            coordinator.close()
+            listener.onAudioFocusChange(AudioManager.AUDIOFOCUS_LOSS)
+            assertEquals(2, changes.size)
+        } finally { coordinator.close(); music.release() }
+    }
+
+    @Test fun permanentNativeSelectionDoesNotReclaimFocusFromIncomingMusic() {
+        val app = RuntimeEnvironment.getApplication()
+        val focus = Shadow.extract<FailedThenGrantedAudioManager>(app.getSystemService(AudioManager::class.java))
+        focus.responses.clear()
+        val coordinator = AudioFocusCoordinator(app, true)
+        val attrs = AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).build()
+        val music = track(attrs); val next = track(attrs)
+        try {
+            coordinator.acquire(music, AudioChannel.MEDIA, attrs); advance(1000)
+            val listener = org.robolectric.util.ReflectionHelpers.callInstanceMethod<AudioManager.OnAudioFocusChangeListener>(
+                focus.lastRequest!!, "getOnAudioFocusChangeListener")
+            listener.onAudioFocusChange(AudioManager.AUDIOFOCUS_LOSS)
+            coordinator.setMainAudioAllowed(false)
+            coordinator.acquire(next, AudioChannel.MEDIA, attrs)
+            coordinator.selectMediaSource(); advance(60_000)
+            assertEquals(2, focus.responses.size)
+            assertEquals(0f, VolumeTrack.gains[next])
+            coordinator.setMainAudioAllowed(true)
+            assertEquals(3, focus.responses.size)
+        } finally { coordinator.close(); music.release(); next.release() }
+    }
     @Test
     fun phoneAcquireRetriesAfterFirstRequestFails() {
         expectSameChannelRetry(
@@ -80,6 +147,68 @@ class AudioFocusRecoveryTest {
             request, "getOnAudioFocusChangeListener").onAudioFocusChange(AudioManager.AUDIOFOCUS_LOSS)
         advance(120_000)
         assertEquals(2, focus.responses.size)
+    }
+
+    @Test fun deniedAndLostFocusSilenceTracksUntilGainWithoutReclaiming() = lifecycle { coordinator, track, attrs, focus ->
+        coordinator.acquire(track, AudioChannel.PHONE, attrs)
+        assertEquals(0f, VolumeTrack.gains[track])
+        advance(1000)
+        assertEquals(1f, VolumeTrack.gains[track])
+        val listener = org.robolectric.util.ReflectionHelpers.callInstanceMethod<AudioManager.OnAudioFocusChangeListener>(
+            focus.lastRequest!!, "getOnAudioFocusChangeListener")
+        listener.onAudioFocusChange(AudioManager.AUDIOFOCUS_LOSS_TRANSIENT)
+        assertEquals(0f, VolumeTrack.gains[track])
+        advance(60_000)
+        assertEquals(2, focus.responses.size)
+        listener.onAudioFocusChange(AudioManager.AUDIOFOCUS_GAIN)
+        assertEquals(1f, VolumeTrack.gains[track])
+    }
+
+    @Test fun mediaDuckRecoversAndOldGenerationCannotMuteAReplacementTrack() = lifecycle { coordinator, track, _, focus ->
+        val media = AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).build()
+        coordinator.acquire(track, AudioChannel.MEDIA, media)
+        advance(1000)
+        val stale = org.robolectric.util.ReflectionHelpers.callInstanceMethod<AudioManager.OnAudioFocusChangeListener>(
+            focus.lastRequest!!, "getOnAudioFocusChangeListener")
+        stale.onAudioFocusChange(AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK)
+        assertEquals(0.2f, VolumeTrack.gains[track])
+        stale.onAudioFocusChange(AudioManager.AUDIOFOCUS_GAIN)
+        assertEquals(1f, VolumeTrack.gains[track])
+        coordinator.release(track)
+        coordinator.acquire(track, AudioChannel.MEDIA, media)
+        stale.onAudioFocusChange(AudioManager.AUDIOFOCUS_LOSS)
+        assertEquals(1f, VolumeTrack.gains[track])
+    }
+
+    @Test fun explicitSourceSelectionRestoresPermanentLossWithoutASecondOwner() = lifecycle { coordinator, track, _, focus ->
+        coordinator.selectMediaSource() // Source selection is valid even while music is paused.
+        advance(1000)
+        val media = AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA)
+            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build()
+        coordinator.acquire(track, AudioChannel.MEDIA, media)
+        val count = focus.responses.size
+        val listener = org.robolectric.util.ReflectionHelpers.callInstanceMethod<AudioManager.OnAudioFocusChangeListener>(
+            focus.lastRequest!!, "getOnAudioFocusChangeListener")
+        listener.onAudioFocusChange(AudioManager.AUDIOFOCUS_LOSS)
+        assertEquals(0f, VolumeTrack.gains[track])
+        advance(60_000)
+        assertEquals(count, focus.responses.size)
+        coordinator.selectMediaSource()
+        assertEquals(count + 1, focus.responses.size)
+        assertEquals(1f, VolumeTrack.gains[track])
+        coordinator.close()
+        coordinator.selectMediaSource()
+        assertEquals(count + 1, focus.responses.size)
+    }
+
+    @Implements(AudioTrack::class)
+    class VolumeTrack : ShadowAudioTrack() {
+        @RealObject private lateinit var track: AudioTrack
+        @Implementation fun setStereoVolume(left: Float, right: Float): Int {
+            gains[track] = left
+            return AudioTrack.SUCCESS
+        }
+        companion object { val gains = java.util.IdentityHashMap<AudioTrack, Float>() }
     }
 
     private fun advance(millis: Long) = shadowOf(android.os.Looper.getMainLooper())

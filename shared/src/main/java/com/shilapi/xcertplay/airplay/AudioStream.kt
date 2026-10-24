@@ -6,6 +6,8 @@ import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.InetAddress
 import java.net.InetSocketAddress
+import java.net.SocketTimeoutException
+import com.shilapi.xcertplay.media.AudioPacketOrder
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -30,10 +32,13 @@ class AudioStream(
     private val key: ByteArray,
     private val streamType: Int = -1,
     private val onDiagnostic: (String) -> Unit = {},
+    private val audioType: String = "media",
 ) : Closeable {
     interface Listener {
         fun onStarted(firstSample: Int) {}
         fun onRtp(rtp: ByteArray, sample: Int) {}
+        /** All accepted packets, including a reordered tail, precede this graceful end. */
+        fun onEnded() {}
         fun onPacket(
             wire: ByteArray,
             rtp: ByteArray?,
@@ -43,6 +48,7 @@ class AudioStream(
     }
 
     private val closed = AtomicBoolean(false)
+    private val finishing = AtomicBoolean(false)
     private val receivedPackets = AtomicInteger()
     private val decryptedPackets = AtomicInteger()
     private val authenticationFailures = AtomicInteger()
@@ -51,6 +57,8 @@ class AudioStream(
     private var dataThread: Thread? = null
     private var controlThread: Thread? = null
     private var started = false
+
+    private data class OrderedPacket(val rtp: ByteArray, val sample: Int)
 
     fun listen(listener: Listener): Pair<Int, Int> {
         val data = bindAnyPort()
@@ -83,17 +91,40 @@ class AudioStream(
         controlThread?.interrupt()
     }
 
+    /** Wake the receiver without canceling its already authenticated, reordered tail. */
+    fun finish() {
+        if (closed.get() || !finishing.compareAndSet(false, true)) return
+        dataSocket?.close()
+        controlSocket?.close()
+    }
+
     private fun runData(socket: DatagramSocket, listener: Listener) {
         val stats = StreamReceiveStats("audio type=$streamType", onDiagnostic)
         val buffer = ByteArray(DATAGRAM_BYTES)
+        val gapWaitNs = if (audioType.equals("media", true)) 40_000_000L else 20_000_000L
+        val order = AudioPacketOrder<OrderedPacket>(gapWaitNs)
+        fun deliver(packets: List<OrderedPacket>) {
+            packets.forEach { packet ->
+                if (closed.get()) return@forEach
+                if (!started) {
+                    started = true
+                    listener.onStarted(packet.sample)
+                }
+                listener.onRtp(packet.rtp, packet.sample)
+            }
+        }
         try {
-            while (!closed.get()) {
+            while (!closed.get() && !finishing.get()) {
+                deliver(order.flush(System.nanoTime()))
                 val packet = DatagramPacket(buffer, buffer.size)
                 try {
+                    socket.soTimeout = order.receiveTimeoutMillis(System.nanoTime())
                     stats.reading()
                     socket.receive(packet)
+                } catch (_: SocketTimeoutException) {
+                    continue
                 } catch (_: Exception) {
-                    if (closed.get()) return else continue
+                    if (closed.get() || finishing.get()) return else continue
                 }
                 stats.received(
                     size = packet.length,
@@ -136,7 +167,7 @@ class AudioStream(
                         android.util.Log.w(
                             TAG,
                             "audio stream type=$streamType first decrypt failure " +
-                                "wire=${wire.toHexString()}",
+                                "wireBytes=${wire.size}",
                             error,
                         )
                     }
@@ -150,8 +181,7 @@ class AudioStream(
                     android.util.Log.i(
                         TAG,
                         "audio stream type=$streamType packet=$decryptedNumber sample=$sample " +
-                            "wireBytes=${wire.size} payloadBytes=${payload.size} " +
-                            "payloadHead=${payload.copyOf(minOf(payload.size, 16)).toHexString()}",
+                            "wireBytes=${wire.size} payloadBytes=${payload.size}",
                     )
                 } else if (decryptedNumber % PACKET_LOG_INTERVAL == 0) {
                     android.util.Log.i(
@@ -161,23 +191,31 @@ class AudioStream(
                     )
                 }
                 listener.onPacket(wire, rtp, sample, null)
-                if (!started) {
-                    started = true
-                    listener.onStarted(sample)
-                }
-                listener.onRtp(rtp, sample)
+                val sequence = ((wire[2].toInt() and 0xff) shl 8) or (wire[3].toInt() and 0xff)
+                deliver(order.offer(sequence, OrderedPacket(rtp, sample), System.nanoTime(), readU32Be(wire, 8)))
                 stats.processed()
             }
-        } finally { stats.flush(ended = true) }
+        } finally {
+            // Finish on the receiver, outside the engine lifecycle monitor. A replacement or
+            // whole-session close still cancels delivery through closed + the listener's owner guard.
+            if (finishing.get() && !closed.get()) {
+                deliver(order.drain(System.nanoTime()))
+                if (!closed.get()) listener.onEnded()
+            }
+            stats.flush(ended = true)
+            runCatching { onDiagnostic("Audio: RTP order type=$streamType reordered=${order.reordered} " +
+                "duplicateOrLate=${order.duplicatesOrLate} missing=${order.missing} sourceChanges=${order.sourceChanges} " +
+                "retiredSourcePackets=${order.retiredSourcePackets} gapWaitMs=${gapWaitNs / 1_000_000}") }
+        }
     }
 
     private fun runControl(socket: DatagramSocket) {
         val buffer = ByteArray(DATAGRAM_BYTES)
-        while (!closed.get()) {
+        while (!closed.get() && !finishing.get()) {
             try {
                 socket.receive(DatagramPacket(buffer, buffer.size))
             } catch (_: Exception) {
-                if (closed.get()) return
+                if (closed.get() || finishing.get()) return
             }
         }
     }
@@ -194,9 +232,6 @@ class AudioStream(
             ((source[offset + 1].toInt() and 0xff) shl 16) or
             ((source[offset + 2].toInt() and 0xff) shl 8) or
             (source[offset + 3].toInt() and 0xff)
-
-    private fun ByteArray.toHexString(): String =
-        joinToString("") { byte -> "%02x".format(byte.toInt() and 0xff) }
 
     private companion object {
         const val TAG = "xcertplay-usb"

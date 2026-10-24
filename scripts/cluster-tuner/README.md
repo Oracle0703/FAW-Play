@@ -1,10 +1,10 @@
-# FAW Play 仪表调节工具（NAVI30）
+# Autunn Play 仪表调节工具（NAVI30）
 
 适用于 NAVI30 配套车机包和已适配的红旗 HS5 东软 Android 9 车机，兼容 TUNE2～TUNE5 的布局调节。在 Mac 本机运行，不上传数据，不需要 root。旧 TUNE 包的“恢复默认”仍使用各自 APK 的默认值。
 
 ## 使用
 
-1. 覆盖安装使用原包名和原签名的 NAVI30 配套车机包，打开 FAW Play，保留配对和设置。模拟器包使用独立 `.hudtest` 包名，不用于替换车机安装。
+1. 覆盖安装使用原包名和原签名的 NAVI30 配套车机包，打开 Autunn Play，保留配对和设置。模拟器包使用独立 `.hudtest` 包名，不用于替换车机安装。
 2. 车机开启「工程模式 → 东软工程模式 → 开发模式 → ADB 开关」，连接电脑 USB。
 3. 停稳、没有通话时，连接 CarPlay 并开始导航；三指左滑开启仪表地图。
 4. 解压工具，双击 `启动仪表调节.command`，保持终端窗口打开。浏览器打开 `http://127.0.0.1:8765`。
@@ -80,4 +80,4 @@ adb -s emulator-5554 shell am start -n com.shihab.diplay.hudtest/com.shilapi.xce
 
 Python 3 标准库，无需安装依赖。自动查找 PATH、Android SDK 环境变量及 `~/Library/Android/sdk/platform-tools/adb`。双击无法运行时在工具目录终端执行 `python3 tuner.py`；自定义 ADB 路径用 `--adb /实际路径/adb`；端口占用时用 `--port 8766`，或退出旧的工具终端后重开。
 
-调节接口由 `fawClusterTuning` 编译开关启用，NAVI30 配套包已开启；发送者必须持有系统 `DUMP` 权限。普通第三方 App 不能调用；Mac 面板仅绑定本机地址。当前面板支持协议 2 的 TUNE2／TUNE3／TUNE4／TUNE5／NAVI30；原生内容切换在 TUNE5 起且设备适配时启用。TUNE1 的旧接口不支持独立宽高，会明确报接口版本不匹配。关闭编译开关仅关闭调节接口，不改变 NAVI30 的默认布局绘制。
+调节接口由 `autunnClusterTuning` 编译开关启用，NAVI30 配套包已开启；发送者必须持有系统 `DUMP` 权限。普通第三方 App 不能调用；Mac 面板仅绑定本机地址。当前面板支持协议 2 的 TUNE2／TUNE3／TUNE4／TUNE5／NAVI30；原生内容切换在 TUNE5 起且设备适配时启用。TUNE1 的旧接口不支持独立宽高，会明确报接口版本不匹配。关闭编译开关仅关闭调节接口，不改变 NAVI30 的默认布局绘制。

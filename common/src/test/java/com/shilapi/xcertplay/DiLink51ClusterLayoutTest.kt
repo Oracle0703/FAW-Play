@@ -27,31 +27,22 @@ class DiLink51ClusterLayoutTest {
         assertTrue(plan.top + plan.height <= 624)
         assertEquals(0, plan.left)
         assertEquals(1920, plan.width)
-        assertEquals(0, plan.sourceLeft)
-        assertEquals(240, plan.sourceTop)
-        assertNull(DiLink51ClusterLayout.streamConfig().safeArea)
+        assertNull(DiLink51ClusterLayout.streamConfig(Theme.MAP).safeArea)
     }
 
-    @Test fun oneContinuousStreamSupportsBothViewportsWithoutStretching() {
-        val config = DiLink51ClusterLayout.streamConfig()
-        assertEquals(1920, config.widthPixels)
-        assertEquals(720, config.heightPixels)
-        assertEquals(292, config.widthPhysicalMm)
-        assertEquals(110, config.heightPhysicalMm)
-        assertEquals(0, config.features)
+    @Test fun eachThemeRequestsItsVisibleViewportWithoutCroppingAFullPanelStream() {
         for (theme in Theme.entries) {
             val plan = DiLink51ClusterLayout.plan(1920, 720, theme)!!
-            assertTrue(plan.sourceLeft >= 0)
-            assertTrue(plan.sourceTop >= 0)
-            assertTrue(plan.sourceLeft + plan.width <= config.widthPixels)
-            assertEquals(config.heightPixels, plan.sourceTop + plan.height)
-            // Preserve the centered, bottom-anchored car marker in every crop.
-            assertTrue(960 in plan.sourceLeft until plan.sourceLeft + plan.width)
-            assertTrue(640 in plan.sourceTop until plan.sourceTop + plan.height)
+            val config = DiLink51ClusterLayout.streamConfig(theme,
+                com.shilapi.xcertplay.airplay.CarPlayClusterDisplay.Content.INSTRUMENTS)
+            assertEquals(plan.width, config.widthPixels)
+            assertEquals(plan.height, config.heightPixels)
+            assertNull(config.safeArea)
+            assertEquals(com.shilapi.xcertplay.airplay.CarPlayClusterDisplay.Content.INSTRUMENTS.url, config.initialUrl)
+            assertEquals(0, config.features)
         }
-        val side = DiLink51ClusterLayout.plan(1920, 720, Theme.SIMPLE)!!
-        assertEquals(660, side.sourceLeft)
-        assertEquals(0, side.sourceTop)
+        assertEquals(600, DiLink51ClusterLayout.streamConfig(Theme.SIMPLE).widthPixels)
+        assertEquals(480, DiLink51ClusterLayout.streamConfig(Theme.MAP).heightPixels)
     }
 
     @Test fun diLink5AndUnknownFirmwareRetainThePrDisplaySelection() {

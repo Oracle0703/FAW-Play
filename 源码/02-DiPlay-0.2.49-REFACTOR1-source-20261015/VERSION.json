@@ -1,0 +1,12 @@
+{
+  "component": "DiPlay",
+  "versionName": "0.2.50-FAW-AUTH1",
+  "versionCode": 124,
+  "snapshotDate": "2026-10-15",
+  "timezone": "Asia/Shanghai",
+  "type": "source-working-tree-snapshot",
+  "releaseArtifactReproductionClaimed": false,
+  "localModification": "offline-30-days-online-update-authorization-and-Autunn-header",
+  "originalSnapshotVersionName": "0.2.49-FAW-REFACTOR1",
+  "originalSnapshotVersionCode": 123
+}
